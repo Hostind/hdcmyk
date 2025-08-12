@@ -1,0 +1,45 @@
+{
+  "name": "lab-color-matching-calculator",
+  "version": "1.0.0",
+  "description": "Professional CMYK to LAB color difference calculator for printing industry",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . --listen 3000",
+    "test": "node tests/run-tests.js",
+    "build": "echo 'No build step required for vanilla JS app'",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "color",
+    "printing",
+    "cmyk",
+    "lab",
+    "delta-e",
+    "color-matching",
+    "pwa",
+    "calculator"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/lab-color-calculator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/lab-color-calculator/issues"
+  },
+  "homepage": "https://github.com/your-username/lab-color-calculator#readme",
+  "devDependencies": {
+    "serve": "^14.2.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "name": "LAB Color Matching Calculator",
+  "short_name": "LAB Calculator",
+  "description": "Professional CMYK to LAB color difference calculator for printing industry",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "src/assets/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Calculate",
+      "short_name": "Calculate",
+      "description": "Start a new color calculation",
+      "url": "/?action=calculate",
+      "icons": [
+        {
+          "src": "src/assets/icons/icon.svg",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

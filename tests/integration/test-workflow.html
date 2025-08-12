@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Workflow Enhancements</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin: 5px; }
+        input { padding: 5px; margin: 5px; width: 80px; }
+        .success { background-color: #28a745 !important; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Test Workflow Enhancements</h1>
+    
+    <div class="test-section">
+        <h2>Test Copy to Clipboard</h2>
+        <input type="number" id="test-c" placeholder="C%" value="15.2">
+        <input type="number" id="test-m" placeholder="M%" value="78.4">
+        <input type="number" id="test-y" placeholder="Y%" value="65.1">
+        <input type="number" id="test-k" placeholder="K%" value="8.3">
+        <button onclick="testCopy()">Copy CMYK</button>
+        <div id="copy-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Preset Colors</h2>
+        <select id="test-preset" onchange="testPreset()">
+            <option value="">Select preset...</option>
+            <option value="Process Cyan">Process Cyan</option>
+            <option value="Pantone Red 032">Pantone Red 032</option>
+            <option value="Rich Black">Rich Black</option>
+        </select>
+        <div id="preset-result"></div>
+    </div>
+
+    <script>
+        // Preset colors (subset for testing)
+        const PRESET_COLORS = {
+            'Process Cyan': { c: 100, m: 0, y: 0, k: 0 },
+            'Pantone Red 032': { c: 0, m: 91, y: 76, k: 0 },
+            'Rich Black': { c: 30, m: 30, y: 30, k: 100 }
+        };
+        
+        // Copy functionality test
+        async function testCopy() {
+            const c = document.getElementById('test-c').value || 0;
+            const m = document.getElementById('test-m').value || 0;
+            const y = document.getElementById('test-y').value || 0;
+            const k = document.getElementById('test-k').value || 0;
+            
+            const cmykString = `C:${parseFloat(c).toFixed(1)}% M:${parseFloat(m).toFixed(1)}% Y:${parseFloat(y).toFixed(1)}% K:${parseFloat(k).toFixed(1)}%`;
+            
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(cmykString);
+                } else {
+                    // Fallback
+                    const textArea = document.createElement('textarea');
+                    textArea.value = cmykString;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                }
+                
+                document.getElementById('copy-result').innerHTML = `<p style="color: green;">✓ Copied: ${cmykString}</p>`;
+            } catch (error) {
+                document.getElementById('copy-result').innerHTML = `<p style="color: red;">✗ Copy failed: ${error.message}</p>`;
+            }
+        }
+        
+        // Preset test
+        function testPreset() {
+            const select = document.getElementById('test-preset');
+            const presetName = select.value;
+            
+            if (!presetName || !PRESET_COLORS[presetName]) {
+                document.getElementById('preset-result').innerHTML = '';
+                return;
+            }
+            
+            const preset = PRESET_COLORS[presetName];
+            document.getElementById('test-c').value = preset.c.toFixed(1);
+            document.getElementById('test-m').value = preset.m.toFixed(1);
+            document.getElementById('test-y').value = preset.y.toFixed(1);
+            document.getElementById('test-k').value = preset.k.toFixed(1);
+            
+            document.getElementById('preset-result').innerHTML = `<p style="color: green;">✓ Applied ${presetName}: C:${preset.c}% M:${preset.m}% Y:${preset.y}% K:${preset.k}%</p>`;
+            
+            // Reset dropdown
+            select.value = '';
+        }
+    </script>
+</body>
+</html>

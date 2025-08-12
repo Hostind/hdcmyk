@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAB Color Matching Calculator - Comprehensive Test Suite</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .test-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .test-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .test-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .test-controls {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+            background: #fafafa;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .test-status {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .status-label {
+            font-weight: 500;
+        }
+        
+        .status-value {
+            font-family: 'Courier New', monospace;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+        }
+        
+        .status-value.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-value.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-value.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .test-output {
+            padding: 30px;
+            min-height: 400px;
+        }
+        
+        .console-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .test-suite-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .test-suite-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        
+        .test-suite-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .suite-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .suite-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .suite-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+        
+        .suite-status.running {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .suite-status.passed {
+            background: #28a745;
+        }
+        
+        .suite-status.failed {
+            background: #dc3545;
+        }
+        
+        .suite-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .suite-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Console output styling */
+        .console-output .test-pass { color: #4ade80; }
+        .console-output .test-fail { color: #f87171; }
+        .console-output .test-error { color: #fbbf24; }
+        .console-output .test-info { color: #60a5fa; }
+        .console-output .test-header { color: #a78bfa; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Comprehensive Test Suite</h1>
+            <p>LAB Color Matching Calculator - Complete Testing Framework</p>
+        </div>
+        
+        <div class="test-controls">
+            <div class="control-group">
+                <button id="run-all-tests" class="btn btn-primary">🚀 Run All Tests</button>
+                <button id="run-unit-tests" class="btn btn-secondary">🔬 Unit Tests</button>
+                <button id="run-integration-tests" class="btn btn-secondary">🔄 Integration Tests</button>
+                <button id="run-visual-tests" class="btn btn-secondary">🎨 Visual Tests</button>
+                <button id="run-export-tests" class="btn btn-secondary">📤 Export Tests</button>
+            </div>
+            
+            <div class="control-group">
+                <button id="clear-output" class="btn btn-warning">🗑️ Clear Output</button>
+                <button id="download-report" class="btn btn-success">📄 Download Report</button>
+                <button id="stop-tests" class="btn btn-secondary" disabled>⏹️ Stop Tests</button>
+            </div>
+            
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+        </div>
+        
+        <div class="test-status">
+            <div class="status-item">
+                <span class="status-label">Test Status:</span>
+                <span id="test-status" class="status-value">Ready</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Current Suite:</span>
+                <span id="current-suite" class="status-value">None</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Progress:</span>
+                <span id="test-progress" class="status-value">0/0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Duration:</span>
+                <span id="test-duration" class="status-value">0.00s</span>
+            </div>
+        </div>
+        
+        <div class="test-output">
+            <div class="test-suite-grid" id="suite-grid">
+                <!-- Test suite cards will be populated here -->
+            </div>
+            
+            <div id="console-container" class="hidden">
+                <h3>Console Output</h3>
+                <div id="console-output" class="console-output"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden elements for testing (required by the main application) -->
+    <div style="display: none;">
+        <!-- Color input elements -->
+        <input type="number" id="target-c" value="0">
+        <input type="number" id="target-m" value="0">
+        <input type="number" id="target-y" value="0">
+        <input type="number" id="target-k" value="0">
+        <input type="number" id="target-l" value="50">
+        <input type="number" id="target-a" value="0">
+        <input type="number" id="target-b" value="0">
+        
+        <input type="number" id="sample-c" value="0">
+        <input type="number" id="sample-m" value="0">
+        <input type="number" id="sample-y" value="0">
+        <input type="number" id="sample-k" value="0">
+        <input type="number" id="sample-l" value="50">
+        <input type="number" id="sample-a" value="0">
+        <input type="number" id="sample-b" value="0">
+        
+        <!-- Color swatches -->
+        <div id="target-swatch" style="width: 150px; height: 150px; background: white;"></div>
+        <div id="sample-swatch" style="width: 150px; height: 150px; background: white;"></div>
+        
+        <!-- Control elements -->
+        <button id="calculate-btn">Calculate</button>
+        
+        <!-- Results elements -->
+        <div id="results-section">
+            <div class="delta-e-value">
+                <span class="delta-e-number">0.00</span>
+            </div>
+            <div id="tolerance-zone">Good</div>
+            <div id="delta-l">0.00</div>
+            <div id="delta-a">0.00</div>
+            <div id="delta-b">0.00</div>
+            <div id="delta-c">0.00</div>
+            <div id="delta-h">0.00</div>
+            <div id="suggestions-list"></div>
+        </div>
+        
+        <!-- Export buttons -->
+        <button id="export-csv-btn">Export CSV</button>
+        <button id="export-pdf-btn">Export PDF</button>
+        
+        <!-- History elements -->
+        <div id="history-list"></div>
+        <button id="clear-history-btn">Clear History</button>
+    </div>
+
+    <!-- Load main application modules -->
+    <script src="color-science.js"></script>
+    <script src="calculator.js"></script>
+    <script src="storage.js"></script>
+    <script src="export.js"></script>
+    
+    <!-- Load test modules -->
+    <script src="test-unit-color-science.js"></script>
+    <script src="test-integration-workflow.js"></script>
+    <script src="test-visual-regression.js"></script>
+    <script src="test-export-functionality.js"></script>
+    <script src="test-master-runner.js"></script>
+    
+    <script>
+        // Test UI Controller
+        class TestUIController {
+            constructor() {
+                this.isRunning = false;
+                this.currentTests = null;
+                this.startTime = null;
+                this.originalConsoleLog = console.log;
+                this.originalConsoleError = console.error;
+                this.originalConsoleWarn = console.warn;
+                
+                this.initializeUI();
+                this.setupEventListeners();
+                this.interceptConsole();
+            }
+            
+            initializeUI() {
+                this.populateSuiteGrid();
+                this.updateStatus('Ready', 'success');
+            }
+            
+            populateSuiteGrid() {
+                const suiteGrid = document.getElementById('suite-grid');
+                const suites = window.testRunner.TEST_SUITES;
+                
+                suiteGrid.innerHTML = suites.map(suite => `
+                    <div class="test-suite-card" data-suite="${suite.name}">
+                        <div class="suite-header">
+                            <span class="suite-name">${suite.name}</span>
+                            <div class="suite-status" id="status-${suite.name.replace(/\s+/g, '-')}"></div>
+                        </div>
+                        <div class="suite-description">${suite.description}</div>
+                        <div class="suite-stats">
+                            <span>Category: ${suite.category}</span>
+                            <span>~${(suite.estimatedTime / 1000).toFixed(1)}s</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            setupEventListeners() {
+                document.getElementById('run-all-tests').addEventListener('click', () => this.runAllTests());
+                document.getElementById('run-unit-tests').addEventListener('click', () => this.runTestCategory('unit'));
+                document.getElementById('run-integration-tests').addEventListener('click', () => this.runTestCategory('integration'));
+                document.getElementById('run-visual-tests').addEventListener('click', () => this.runTestCategory('visual'));
+                document.getElementById('run-export-tests').addEventListener('click', () => this.runTestCategory('functional'));
+                document.getElementById('clear-output').addEventListener('click', () => this.clearOutput());
+                document.getElementById('download-report').addEventListener('click', () => this.downloadReport());
+                document.getElementById('stop-tests').addEventListener('click', () => this.stopTests());
+            }
+            
+            interceptConsole() {
+                const outputElement = document.getElementById('console-output');
+                
+                console.log = (...args) => {
+                    this.originalConsoleLog.apply(console, args);
+                    this.appendToConsole(args.join(' '), 'log');
+                };
+                
+                console.error = (...args) => {
+                    this.originalConsoleError.apply(console, args);
+                    this.appendToConsole(args.join(' '), 'error');
+                };
+                
+                console.warn = (...args) => {
+                    this.originalConsoleWarn.apply(console, args);
+                    this.appendToConsole(args.join(' '), 'warn');
+                };
+            }
+            
+            appendToConsole(message, type = 'log') {
+                const outputElement = document.getElementById('console-output');
+                const consoleContainer = document.getElementById('console-container');
+                
+                // Show console container if hidden
+                if (consoleContainer.classList.contains('hidden')) {
+                    consoleContainer.classList.remove('hidden');
+                }
+                
+                // Style the message based on content
+                let styledMessage = message;
+                if (message.includes('✅')) {
+                    styledMessage = `<span class="test-pass">${message}</span>`;
+                } else if (message.includes('❌')) {
+                    styledMessage = `<span class="test-fail">${message}</span>`;
+                } else if (message.includes('💥')) {
+                    styledMessage = `<span class="test-error">${message}</span>`;
+                } else if (message.includes('🧪') || message.includes('='.repeat(10))) {
+                    styledMessage = `<span class="test-header">${message}</span>`;
+                } else if (message.includes('ℹ️') || message.includes('🔍')) {
+                    styledMessage = `<span class="test-info">${message}</span>`;
+                }
+                
+                outputElement.innerHTML += styledMessage + '\n';
+                outputElement.scrollTop = outputElement.scrollHeight;
+            }
+            
+            async runAllTests() {
+                if (this.isRunning) return;
+                
+                this.startTestRun();
+                this.updateStatus('Running All Tests', 'warning');
+                
+                try {
+                    const success = await window.testRunner.runAllTests();
+                    this.updateStatus(success ? 'All Tests Completed' : 'Tests Completed with Failures', 
+                                    success ? 'success' : 'error');
+                } catch (error) {
+                    this.updateStatus('Test Error', 'error');
+                    console.error('Test execution error:', error);
+                } finally {
+                    this.endTestRun();
+                }
+            }
+            
+            async runTestCategory(category) {
+                if (this.isRunning) return;
+                
+                this.startTestRun();
+                this.updateStatus(`Running ${category} Tests`, 'warning');
+                
+                try {
+                    const success = await window.testRunner.runTestCategory(category);
+                    this.updateStatus(`${category} Tests Completed`, success ? 'success' : 'error');
+                } catch (error) {
+                    this.updateStatus('Test Error', 'error');
+                    console.error('Test execution error:', error);
+                } finally {
+                    this.endTestRun();
+                }
+            }
+            
+            startTestRun() {
+                this.isRunning = true;
+                this.startTime = performance.now();
+                
+                // Update UI state
+                document.querySelectorAll('.btn').forEach(btn => {
+                    if (btn.id !== 'stop-tests' && btn.id !== 'clear-output') {
+                        btn.disabled = true;
+                    }
+                });
+                document.getElementById('stop-tests').disabled = false;
+                
+                // Clear previous results
+                this.clearSuiteStatuses();
+                
+                // Start duration timer
+                this.startDurationTimer();
+            }
+            
+            endTestRun() {
+                this.isRunning = false;
+                
+                // Update UI state
+                document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+                document.getElementById('stop-tests').disabled = true;
+                
+                // Stop duration timer
+                this.stopDurationTimer();
+                
+                // Update final progress
+                this.updateProgress(100);
+            }
+            
+            startDurationTimer() {
+                this.durationTimer = setInterval(() => {
+                    if (this.startTime) {
+                        const duration = (performance.now() - this.startTime) / 1000;
+                        document.getElementById('test-duration').textContent = `${duration.toFixed(2)}s`;
+                    }
+                }, 100);
+            }
+            
+            stopDurationTimer() {
+                if (this.durationTimer) {
+                    clearInterval(this.durationTimer);
+                    this.durationTimer = null;
+                }
+            }
+            
+            updateStatus(status, type = '') {
+                const statusElement = document.getElementById('test-status');
+                statusElement.textContent = status;
+                statusElement.className = `status-value ${type}`;
+            }
+            
+            updateProgress(percentage) {
+                const progressFill = document.getElementById('progress-fill');
+                progressFill.style.width = `${percentage}%`;
+            }
+            
+            clearSuiteStatuses() {
+                document.querySelectorAll('.suite-status').forEach(status => {
+                    status.className = 'suite-status';
+                });
+            }
+            
+            clearOutput() {
+                document.getElementById('console-output').innerHTML = '';
+                document.getElementById('console-container').classList.add('hidden');
+                this.clearSuiteStatuses();
+                this.updateStatus('Ready', 'success');
+                this.updateProgress(0);
+                document.getElementById('test-duration').textContent = '0.00s';
+                document.getElementById('current-suite').textContent = 'None';
+                document.getElementById('test-progress').textContent = '0/0';
+            }
+            
+            stopTests() {
+                // Note: This is a simple implementation
+                // In a real scenario, you'd need to implement proper test cancellation
+                this.updateStatus('Stopping Tests...', 'warning');
+                setTimeout(() => {
+                    this.endTestRun();
+                    this.updateStatus('Tests Stopped', 'error');
+                }, 1000);
+            }
+            
+            downloadReport() {
+                try {
+                    const reportData = localStorage.getItem('testReport');
+                    if (!reportData) {
+                        alert('No test report available. Please run tests first.');
+                        return;
+                    }
+                    
+                    const blob = new Blob([reportData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `test-report-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                } catch (error) {
+                    console.error('Error downloading report:', error);
+                    alert('Error downloading report. Check console for details.');
+                }
+            }
+        }
+        
+        // Initialize the test UI when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Small delay to ensure all modules are loaded
+            setTimeout(() => {
+                window.testUI = new TestUIController();
+                console.log('🎯 Test UI initialized successfully');
+                console.log('Ready to run comprehensive tests!');
+            }, 1000);
+        });
+        
+        // Global app state for testing
+        window.appState = {
+            target: { 
+                cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
+                lab: { l: 50, a: 0, b: 0 } 
+            },
+            sample: { 
+                cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
+                lab: { l: 50, a: 0, b: 0 } 
+            },
+            results: null,
+            history: []
+        };
+        
+        // Mock getCurrentColorValues function for testing
+        window.getCurrentColorValues = function() {
+            return {
+                target: {
+                    cmyk: {
+                        c: parseFloat(document.getElementById('target-c').value) || 0,
+                        m: parseFloat(document.getElementById('target-m').value) || 0,
+                        y: parseFloat(document.getElementById('target-y').value) || 0,
+                        k: parseFloat(document.getElementById('target-k').value) || 0
+                    },
+                    lab: {
+                        l: parseFloat(document.getElementById('target-l').value) || 50,
+                        a: parseFloat(document.getElementById('target-a').value) || 0,
+                        b: parseFloat(document.getElementById('target-b').value) || 0
+                    }
+                },
+                sample: {
+                    cmyk: {
+                        c: parseFloat(document.getElementById('sample-c').value) || 0,
+                        m: parseFloat(document.getElementById('sample-m').value) || 0,
+                        y: parseFloat(document.getElementById('sample-y').value) || 0,
+                        k: parseFloat(document.getElementById('sample-k').value) || 0
+                    },
+                    lab: {
+                        l: parseFloat(document.getElementById('sample-l').value) || 50,
+                        a: parseFloat(document.getElementById('sample-a').value) || 0,
+                        b: parseFloat(document.getElementById('sample-b').value) || 0
+                    }
+                }
+            };
+        };
+    </script>
+</body>
+</html>

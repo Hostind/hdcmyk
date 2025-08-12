@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Export Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Setup</h2>
+        <p>This page tests the export functionality with sample data.</p>
+        <button onclick="setupTestData()">Setup Test Data</button>
+        <button onclick="clearTestData()">Clear Test Data</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Current Test Data</h2>
+        <div id="current-data" class="results">No test data loaded</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Export Functions</h2>
+        <button onclick="testCSVExport()">Test CSV Export</button>
+        <button onclick="testPDFExport()">Test PDF Export</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results" class="results">No tests run yet</div>
+    </div>
+
+    <!-- Include required scripts -->
+    <script src="color-science.js"></script>
+    <script src="export.js"></script>
+    
+    <script>
+        // Mock appState for testing
+        let appState = {
+            target: { 
+                cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
+                lab: { l: 50, a: 0, b: 0 } 
+            },
+            sample: { 
+                cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
+                lab: { l: 50, a: 0, b: 0 } 
+            },
+            results: null,
+            history: []
+        };
+        
+        // Mock getCurrentColorValues function
+        function getCurrentColorValues() {
+            return {
+                target: appState.target,
+                sample: appState.sample
+            };
+        }
+        
+        function setupTestData() {
+            // Set up realistic test data
+            appState.target = {
+                cmyk: { c: 15.2, m: 78.4, y: 65.1, k: 8.3 },
+                lab: { l: 60.87, a: 44.36, b: 35.27 }
+            };
+            
+            appState.sample = {
+                cmyk: { c: 17.8, m: 80.1, y: 63.5, k: 10.2 },
+                lab: { l: 58.72, a: 42.18, b: 36.93 }
+            };
+            
+            // Mock calculation results
+            appState.results = {
+                deltaE: 3.48,
+                tolerance: {
+                    zone: 'acceptable',
+                    description: 'Acceptable Match',
+                    range: '2.1 - 5.0',
+                    message: 'Color difference is acceptable for most printing applications'
+                },
+                componentDeltas: {
+                    deltaL: -2.15,
+                    deltaA: -2.18,
+                    deltaB: 1.66,
+                    deltaC: -1.23,
+                    deltaH: 0.87
+                },
+                suggestions: [
+                    {
+                        cmyk: { c: 16.2, m: 79.1, y: 64.1, k: 9.1 },
+                        description: 'Reduce cyan by 1.6% and increase magenta by 1.0%'
+                    },
+                    {
+                        cmyk: { c: 15.8, m: 78.8, y: 65.8, k: 8.8 },
+                        description: 'Increase cyan by 0.6% and increase yellow by 0.7%'
+                    },
+                    {
+                        cmyk: { c: 17.2, m: 79.4, y: 63.8, k: 9.8 },
+                        description: 'Reduce yellow by 1.7% and increase black by 1.5%'
+                    }
+                ]
+            };
+            
+            updateDataDisplay();
+            logResult('Test data setup completed');
+        }
+        
+        function clearTestData() {
+            appState.results = null;
+            appState.target = { 
+                cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
+                lab: { l: 50, a: 0, b: 0 } 
+            };
+            appState.sample = { 
+                cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
+                lab: { l: 50, a: 0, b: 0 } 
+            };
+            
+            updateDataDisplay();
+            logResult('Test data cleared');
+        }
+        
+        function updateDataDisplay() {
+            const dataDiv = document.getElementById('current-data');
+            if (appState.results) {
+                dataDiv.innerHTML = `
+                    <strong>Target CMYK:</strong> C:${appState.target.cmyk.c}% M:${appState.target.cmyk.m}% Y:${appState.target.cmyk.y}% K:${appState.target.cmyk.k}%<br>
+                    <strong>Sample CMYK:</strong> C:${appState.sample.cmyk.c}% M:${appState.sample.cmyk.m}% Y:${appState.sample.cmyk.y}% K:${appState.sample.cmyk.k}%<br>
+                    <strong>Delta E:</strong> ${appState.results.deltaE}<br>
+                    <strong>Tolerance:</strong> ${appState.results.tolerance.description}<br>
+                    <strong>Suggestions:</strong> ${appState.results.suggestions.length} available
+                `;
+            } else {
+                dataDiv.innerHTML = 'No test data loaded';
+            }
+        }
+        
+        function testCSVExport() {
+            try {
+                if (typeof window.colorExport !== 'undefined' && window.colorExport.exportToCSV) {
+                    window.colorExport.exportToCSV();
+                    logResult('CSV export function called successfully');
+                } else {
+                    logResult('ERROR: CSV export function not found');
+                }
+            } catch (error) {
+                logResult(`ERROR: CSV export failed - ${error.message}`);
+            }
+        }
+        
+        function testPDFExport() {
+            try {
+                if (typeof window.colorExport !== 'undefined' && window.colorExport.exportToPDF) {
+                    window.colorExport.exportToPDF();
+                    logResult('PDF export function called successfully');
+                } else {
+                    logResult('ERROR: PDF export function not found');
+                }
+            } catch (error) {
+                logResult(`ERROR: PDF export failed - ${error.message}`);
+            }
+        }
+        
+        function logResult(message) {
+            const resultsDiv = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            logResult('Export test page loaded');
+        });
+    </script>
+</body>
+</html>

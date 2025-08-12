@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMYK Suggestion Engine Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .suggestion-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .cmyk-values {
+            font-family: monospace;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>CMYK Suggestion Engine Test</h1>
+    
+    <div class="test-container">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Sample Suggestions</h2>
+        <div id="sample-suggestions"></div>
+    </div>
+
+    <script src="color-science.js"></script>
+    <script>
+        // Wait for color science module to load
+        setTimeout(() => {
+            runSuggestionTests();
+        }, 100);
+
+        function runSuggestionTests() {
+            const resultsDiv = document.getElementById('test-results');
+            const suggestionsDiv = document.getElementById('sample-suggestions');
+            
+            // Test case: Red color that needs more magenta
+            const testCase = {
+                targetLab: { l: 50, a: 20, b: 15 },
+                sampleCmyk: { c: 10, m: 70, y: 80, k: 5 },
+                sampleLab: { l: 50, a: 15, b: 15 }
+            };
+            
+            try {
+                // Test if the function exists
+                if (typeof window.colorScience.generateCMYKSuggestions !== 'function') {
+                    resultsDiv.innerHTML += '<div class="test-result test-fail">❌ generateCMYKSuggestions function not found</div>';
+                    return;
+                }
+                
+                // Generate suggestions
+                const suggestions = window.colorScience.generateCMYKSuggestions(
+                    testCase.targetLab,
+                    testCase.sampleCmyk,
+                    testCase.sampleLab
+                );
+                
+                // Test 1: Function returns suggestions
+                if (suggestions && suggestions.length > 0) {
+                    resultsDiv.innerHTML += '<div class="test-result test-pass">✅ Function returns suggestions</div>';
+                } else {
+                    resultsDiv.innerHTML += '<div class="test-result test-fail">❌ Function returns no suggestions</div>';
+                    return;
+                }
+                
+                // Test 2: Returns 3-5 suggestions
+                if (suggestions.length >= 3 && suggestions.length <= 5) {
+                    resultsDiv.innerHTML += `<div class="test-result test-pass">✅ Returns ${suggestions.length} suggestions (within 3-5 range)</div>`;
+                } else {
+                    resultsDiv.innerHTML += `<div class="test-result test-fail">❌ Returns ${suggestions.length} suggestions (should be 3-5)</div>`;
+                }
+                
+                // Test 3: All suggestions have required properties
+                let allValid = true;
+                suggestions.forEach((suggestion, index) => {
+                    if (!suggestion.cmyk || !suggestion.description || typeof suggestion.magnitude === 'undefined') {
+                        allValid = false;
+                        resultsDiv.innerHTML += `<div class="test-result test-fail">❌ Suggestion ${index + 1} missing required properties</div>`;
+                    }
+                });
+                
+                if (allValid) {
+                    resultsDiv.innerHTML += '<div class="test-result test-pass">✅ All suggestions have required properties</div>';
+                }
+                
+                // Test 4: CMYK values are within valid ranges
+                let allInRange = true;
+                suggestions.forEach((suggestion, index) => {
+                    const { c, m, y, k } = suggestion.cmyk;
+                    if (c < 0 || c > 100 || m < 0 || m > 100 || y < 0 || y > 100 || k < 0 || k > 100) {
+                        allInRange = false;
+                        resultsDiv.innerHTML += `<div class="test-result test-fail">❌ Suggestion ${index + 1} has out-of-range CMYK values</div>`;
+                    }
+                });
+                
+                if (allInRange) {
+                    resultsDiv.innerHTML += '<div class="test-result test-pass">✅ All CMYK values within valid ranges (0-100%)</div>';
+                }
+                
+                // Test 5: Suggestions are ordered by adjustment magnitude
+                let properlyOrdered = true;
+                for (let i = 1; i < suggestions.length; i++) {
+                    if (suggestions[i].magnitude < suggestions[i-1].magnitude) {
+                        properlyOrdered = false;
+                        break;
+                    }
+                }
+                
+                if (properlyOrdered) {
+                    resultsDiv.innerHTML += '<div class="test-result test-pass">✅ Suggestions properly ordered by adjustment magnitude</div>';
+                } else {
+                    resultsDiv.innerHTML += '<div class="test-result test-fail">❌ Suggestions not properly ordered by adjustment magnitude</div>';
+                }
+                
+                // Display sample suggestions
+                suggestionsDiv.innerHTML = '<h3>Generated Suggestions:</h3>';
+                suggestions.forEach((suggestion, index) => {
+                    const { c, m, y, k } = suggestion.cmyk;
+                    suggestionsDiv.innerHTML += `
+                        <div class="suggestion-item">
+                            <strong>Suggestion ${index + 1}:</strong> ${suggestion.description}<br>
+                            <span class="cmyk-values">CMYK: C${c.toFixed(1)}% M${m.toFixed(1)}% Y${y.toFixed(1)}% K${k.toFixed(1)}%</span><br>
+                            <small>Type: ${suggestion.adjustmentType}, Magnitude: ${suggestion.magnitude.toFixed(2)}</small>
+                        </div>
+                    `;
+                });
+                
+                // Run the built-in tests
+                resultsDiv.innerHTML += '<h3>Built-in Test Results:</h3>';
+                const builtInTestResult = window.colorScience.runCMYKSuggestionTests();
+                if (builtInTestResult) {
+                    resultsDiv.innerHTML += '<div class="test-result test-pass">✅ Built-in tests passed</div>';
+                } else {
+                    resultsDiv.innerHTML += '<div class="test-result test-fail">❌ Some built-in tests failed</div>';
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="test-result test-fail">❌ Error during testing: ${error.message}</div>`;
+                console.error('Test error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Calculation Workflow</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .pass { background-color: #d4edda; color: #155724; }
+        .fail { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>LAB Color Calculator - Calculation Workflow Test</h1>
+    <div id="test-results"></div>
+    
+    <script src="color-science.js"></script>
+    <script>
+        // Test the calculation workflow components
+        function runTests() {
+            const results = [];
+            
+            // Test 1: Color Science Module Loading
+            try {
+                if (typeof window.colorScience !== 'undefined') {
+                    results.push({ name: 'Color Science Module Loading', status: 'pass', message: 'Module loaded successfully' });
+                } else {
+                    results.push({ name: 'Color Science Module Loading', status: 'fail', message: 'Module not loaded' });
+                }
+            } catch (error) {
+                results.push({ name: 'Color Science Module Loading', status: 'fail', message: error.message });
+            }
+            
+            // Test 2: Delta E Calculation
+            try {
+                const lab1 = { l: 50, a: 0, b: 0 };
+                const lab2 = { l: 51, a: 1, b: 0 };
+                const deltaE = window.colorScience.calculateDeltaE(lab1, lab2);
+                
+                if (typeof deltaE === 'number' && deltaE > 0) {
+                    results.push({ name: 'Delta E Calculation', status: 'pass', message: `Delta E: ${deltaE}` });
+                } else {
+                    results.push({ name: 'Delta E Calculation', status: 'fail', message: 'Invalid Delta E result' });
+                }
+            } catch (error) {
+                results.push({ name: 'Delta E Calculation', status: 'fail', message: error.message });
+            }
+            
+            // Test 3: Component Deltas Calculation
+            try {
+                const lab1 = { l: 60, a: 20, b: 10 };
+                const lab2 = { l: 55, a: 15, b: 12 };
+                const deltas = window.colorScience.calculateComponentDeltas(lab1, lab2);
+                
+                if (deltas && typeof deltas.deltaL === 'number') {
+                    results.push({ name: 'Component Deltas Calculation', status: 'pass', message: `ΔL: ${deltas.deltaL}, Δa: ${deltas.deltaA}, Δb: ${deltas.deltaB}` });
+                } else {
+                    results.push({ name: 'Component Deltas Calculation', status: 'fail', message: 'Invalid component deltas result' });
+                }
+            } catch (error) {
+                results.push({ name: 'Component Deltas Calculation', status: 'fail', message: error.message });
+            }
+            
+            // Test 4: Tolerance Zone Classification
+            try {
+                const zone1 = window.colorScience.getToleranceZone(1.5);
+                const zone2 = window.colorScience.getToleranceZone(3.5);
+                const zone3 = window.colorScience.getToleranceZone(6.0);
+                
+                if (zone1 === 'good' && zone2 === 'acceptable' && zone3 === 'poor') {
+                    results.push({ name: 'Tolerance Zone Classification', status: 'pass', message: 'All zones classified correctly' });
+                } else {
+                    results.push({ name: 'Tolerance Zone Classification', status: 'fail', message: `Zones: ${zone1}, ${zone2}, ${zone3}` });
+                }
+            } catch (error) {
+                results.push({ name: 'Tolerance Zone Classification', status: 'fail', message: error.message });
+            }
+            
+            // Test 5: Complete Analysis
+            try {
+                const targetLab = { l: 60.87, a: 44.36, b: 35.27 };
+                const sampleLab = { l: 58.72, a: 42.18, b: 36.93 };
+                const analysis = window.colorScience.performDeltaEAnalysis(targetLab, sampleLab);
+                
+                if (analysis && analysis.deltaE && analysis.componentDeltas && analysis.tolerance) {
+                    results.push({ name: 'Complete Delta E Analysis', status: 'pass', message: `ΔE: ${analysis.deltaE}, Zone: ${analysis.tolerance.zone}` });
+                } else {
+                    results.push({ name: 'Complete Delta E Analysis', status: 'fail', message: 'Analysis incomplete' });
+                }
+            } catch (error) {
+                results.push({ name: 'Complete Delta E Analysis', status: 'fail', message: error.message });
+            }
+            
+            // Display results
+            displayResults(results);
+        }
+        
+        function displayResults(results) {
+            const container = document.getElementById('test-results');
+            container.innerHTML = '';
+            
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = `test-result ${result.status}`;
+                div.innerHTML = `
+                    <strong>${result.name}:</strong> 
+                    <span>${result.status.toUpperCase()}</span> - 
+                    ${result.message}
+                `;
+                container.appendChild(div);
+            });
+            
+            const passCount = results.filter(r => r.status === 'pass').length;
+            const totalCount = results.length;
+            
+            const summary = document.createElement('div');
+            summary.className = `test-result ${passCount === totalCount ? 'pass' : 'fail'}`;
+            summary.innerHTML = `<strong>Summary: ${passCount}/${totalCount} tests passed</strong>`;
+            container.appendChild(summary);
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 500); // Wait for modules to load
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=3.0">
+    <title>LAB Color Matching Calculator</title>
+    <meta name="description" content="Professional CMYK to LAB color difference calculator for printing industry">
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="LAB Calculator">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="src/assets/icons/icon.svg">
+    <link rel="apple-touch-icon" href="src/assets/icons/icon.svg">
+    <link rel="stylesheet" href="src/css/styles.css">
+</head>
+<body>
+    <div class="calculator-container">
+        <header class="app-header">
+            <h1>LAB Color Matching Calculator</h1>
+            <p class="subtitle">Professional CMYK-to-LAB Visual Color Difference Calculator</p>
+        </header>
+
+        <main class="calculator-main">
+            <!-- Target Color Section -->
+            <section class="color-section" id="target-section">
+                <h2>Target Color</h2>
+                <div class="color-display">
+                    <div class="color-swatch" id="target-swatch" aria-label="Target color preview"></div>
+                    <div class="color-equation-symbol">-</div>
+                </div>
+                
+                <!-- Preset Colors and Quick Actions -->
+                <div class="preset-controls">
+                    <div class="preset-dropdown-container">
+                        <label for="target-preset-select">Preset Colors:</label>
+                        <select id="target-preset-select" class="preset-select">
+                            <option value="">Select a preset color...</option>
+                        </select>
+                    </div>
+                    <div class="quick-actions">
+                        <button type="button" class="quick-action-btn" id="target-clear-btn" title="Clear all target color inputs">Clear</button>
+                        <button type="button" class="quick-action-btn" id="target-copy-btn" title="Copy target CMYK values to clipboard">Copy CMYK</button>
+                    </div>
+                </div>
+                
+                <div class="input-groups">
+                    <div class="input-group">
+                        <label class="group-label">CMYK Values</label>
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="target-c">C%</label>
+                                <input type="number" id="target-c" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="target-m">M%</label>
+                                <input type="number" id="target-m" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="target-y">Y%</label>
+                                <input type="number" id="target-y" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="target-k">K%</label>
+                                <input type="number" id="target-k" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="group-label">LAB Values</label>
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="target-l">L*</label>
+                                <input type="number" id="target-l" placeholder="50" min="0" max="100" step="0.01">
+                            </div>
+                            <div class="input-field">
+                                <label for="target-a">a*</label>
+                                <input type="number" id="target-a" placeholder="0" min="-128" max="127" step="0.01">
+                            </div>
+                            <div class="input-field">
+                                <label for="target-b">b*</label>
+                                <input type="number" id="target-b" placeholder="0" min="-128" max="127" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sample Color Section -->
+            <section class="color-section" id="sample-section">
+                <h2>Sample Color</h2>
+                <div class="color-display">
+                    <div class="color-swatch" id="sample-swatch" aria-label="Sample color preview"></div>
+                    <div class="color-equation-symbol">=</div>
+                </div>
+                
+                <!-- Preset Colors and Quick Actions -->
+                <div class="preset-controls">
+                    <div class="preset-dropdown-container">
+                        <label for="sample-preset-select">Preset Colors:</label>
+                        <select id="sample-preset-select" class="preset-select">
+                            <option value="">Select a preset color...</option>
+                        </select>
+                    </div>
+                    <div class="quick-actions">
+                        <button type="button" class="quick-action-btn" id="sample-clear-btn" title="Clear all sample color inputs">Clear</button>
+                        <button type="button" class="quick-action-btn" id="sample-copy-btn" title="Copy sample CMYK values to clipboard">Copy CMYK</button>
+                    </div>
+                </div>
+                
+                <div class="input-groups">
+                    <div class="input-group">
+                        <label class="group-label">CMYK Values</label>
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="sample-c">C%</label>
+                                <input type="number" id="sample-c" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="sample-m">M%</label>
+                                <input type="number" id="sample-m" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="sample-y">Y%</label>
+                                <input type="number" id="sample-y" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="sample-k">K%</label>
+                                <input type="number" id="sample-k" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="group-label">LAB Values</label>
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="sample-l">L*</label>
+                                <input type="number" id="sample-l" placeholder="50" min="0" max="100" step="0.01">
+                            </div>
+                            <div class="input-field">
+                                <label for="sample-a">a*</label>
+                                <input type="number" id="sample-a" placeholder="0" min="-128" max="127" step="0.01">
+                            </div>
+                            <div class="input-field">
+                                <label for="sample-b">b*</label>
+                                <input type="number" id="sample-b" placeholder="0" min="-128" max="127" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Delta Results Section -->
+            <section class="delta-section" id="delta-section">
+                <h2>Delta</h2>
+                <div class="color-display">
+                    <div class="delta-indicator" id="delta-indicator">
+                        <span class="delta-symbol">Δ</span>
+                    </div>
+                </div>
+                
+                <div class="delta-values" id="delta-values">
+                    <div class="delta-item">
+                        <label>ΔL*</label>
+                        <span id="delta-l">--</span>
+                    </div>
+                    <div class="delta-item">
+                        <label>Δa*</label>
+                        <span id="delta-a">--</span>
+                    </div>
+                    <div class="delta-item">
+                        <label>Δb*</label>
+                        <span id="delta-b">--</span>
+                    </div>
+                    <div class="delta-item">
+                        <label>ΔC*</label>
+                        <span id="delta-c">--</span>
+                    </div>
+                    <div class="delta-item">
+                        <label>Δh</label>
+                        <span id="delta-h">--</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Calculate Button -->
+        <div class="calculate-section">
+            <div class="calculate-controls">
+                <button id="calculate-btn" class="calculate-button">
+                    Calculate Color Difference
+                </button>
+                <button id="reset-all-btn" class="reset-button" title="Clear all inputs and reset the calculator">
+                    Reset All
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <section class="results-section" id="results-section">
+            <div class="total-delta-e">
+                <h3>Total Color Difference</h3>
+                <div class="delta-e-value" id="delta-e-value">
+                    <span class="delta-e-number">--</span>
+                    <span class="delta-e-label">ΔE*ab</span>
+                </div>
+                <div class="tolerance-zone" id="tolerance-zone"></div>
+            </div>
+
+            <div class="suggestions-container" id="suggestions-container">
+                <h3>Suggested CMYK Adjustments to Reach Target</h3>
+                <div class="suggestions-list" id="suggestions-list">
+                    <!-- Suggestions will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- History and Export Section -->
+        <section class="tools-section" id="tools-section">
+            <div class="history-panel">
+                <h3>Recent Comparisons</h3>
+                <div class="history-list" id="history-list">
+                    <!-- History items will be populated by JavaScript -->
+                </div>
+                <button class="clear-history-btn" id="clear-history-btn">Clear History</button>
+            </div>
+            
+            <div class="export-panel">
+                <h3>Export Results</h3>
+                <div class="export-buttons">
+                    <button class="export-btn" id="export-csv-btn">Export CSV</button>
+                    <button class="export-btn" id="export-pdf-btn">Export PDF</button>
+                </div>
+            </div>
+            
+            <div class="testing-panel">
+                <h3>Testing & Validation</h3>
+                <div class="testing-buttons">
+                    <button class="test-btn" id="run-integration-tests" onclick="runCompleteWorkflowTests()">
+                        Run Integration Tests
+                    </button>
+                    <button class="test-btn secondary" id="show-browser-info" onclick="showBrowserInfo()">
+                        Browser Info
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/js/color-science.js"></script>
+    <script src="src/js/storage.js"></script>
+    <script src="src/js/export.js"></script>
+    <script src="src/js/calculator.js"></script>
+    <script src="tests/unit/test-final-integration.js"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        // Register service worker for PWA functionality
+        // Requirements: 10.1, 10.2, 10.3, 10.4 - PWA capabilities
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('PWA: Service Worker registered successfully', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('PWA: New service worker found, installing...');
+                            
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('PWA: New service worker installed, ready to activate');
+                                    showUpdateAvailable();
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.log('PWA: Service Worker registration failed', error);
+                    });
+            });
+            
+            // Listen for service worker messages
+            navigator.serviceWorker.addEventListener('message', event => {
+                console.log('PWA: Message from service worker', event.data);
+            });
+            
+            // Handle service worker updates
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
+        } else {
+            console.log('PWA: Service Worker not supported');
+        }
+        
+        // Show update notification
+        function showUpdateAvailable() {
+            const updateBanner = document.createElement('div');
+            updateBanner.className = 'update-banner';
+            updateBanner.innerHTML = `
+                <div class="update-content">
+                    <span>A new version is available!</span>
+                    <button onclick="updateApp()" class="update-btn">Update</button>
+                    <button onclick="dismissUpdate()" class="dismiss-btn">×</button>
+                </div>
+            `;
+            document.body.appendChild(updateBanner);
+        }
+        
+        // Update the app
+        function updateApp() {
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+            }
+        }
+        
+        // Dismiss update notification
+        function dismissUpdate() {
+            const banner = document.querySelector('.update-banner');
+            if (banner) {
+                banner.remove();
+            }
+        }
+        
+        // Handle install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA: Install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallButton();
+        });
+        
+        // Show install button
+        function showInstallButton() {
+            const installButton = document.createElement('button');
+            installButton.className = 'install-button';
+            installButton.textContent = 'Install App';
+            installButton.onclick = installApp;
+            
+            // Add to header or create a floating button
+            const header = document.querySelector('.app-header');
+            if (header) {
+                header.appendChild(installButton);
+            }
+        }
+        
+        // Install the app
+        async function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log('PWA: Install prompt outcome:', outcome);
+                deferredPrompt = null;
+                
+                // Hide install button
+                const installButton = document.querySelector('.install-button');
+                if (installButton) {
+                    installButton.remove();
+                }
+            }
+        }
+        
+        // Handle app installed
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('PWA: App was installed');
+            // Hide install button if still visible
+            const installButton = document.querySelector('.install-button');
+            if (installButton) {
+                installButton.remove();
+            }
+        });
+        
+        // Check if running as PWA
+        function isPWA() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+        }
+        
+        // Add PWA-specific styling when running as installed app
+        if (isPWA()) {
+            document.body.classList.add('pwa-mode');
+            console.log('PWA: Running as installed app');
+        }
+        
+        // Handle offline/online status
+        function updateOnlineStatus() {
+            const statusIndicator = document.getElementById('connection-status') || createStatusIndicator();
+            
+            if (navigator.onLine) {
+                statusIndicator.textContent = '';
+                statusIndicator.className = 'connection-status online';
+            } else {
+                statusIndicator.textContent = 'Offline Mode';
+                statusIndicator.className = 'connection-status offline';
+            }
+        }
+        
+        function createStatusIndicator() {
+            const indicator = document.createElement('div');
+            indicator.id = 'connection-status';
+            indicator.className = 'connection-status';
+            document.body.appendChild(indicator);
+            return indicator;
+        }
+        
+        // Listen for online/offline events
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // Initial status check
+        updateOnlineStatus();
+    </script>
+</body>
+</html>
