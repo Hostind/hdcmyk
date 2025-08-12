@@ -46,7 +46,6 @@
       ]
     }
   ],
-  "functions": {},
   "rewrites": [
     {
       "source": "/(.*)",
