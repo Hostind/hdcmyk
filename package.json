@@ -7,7 +7,7 @@
     "start": "npx serve .",
     "dev": "npx serve . --listen 3000",
     "test": "node tests/run-tests.js",
-    "build": "echo 'No build step required for vanilla JS app'",
+    "build": "mkdir -p dist && cp -r *.html *.json src manifest.json sw.js dist/ || true",
     "deploy": "vercel --prod"
   },
   "keywords": [
