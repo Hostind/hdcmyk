@@ -1587,20 +1587,27 @@ function setupInputValidation() {
  * Requirements: 4.5, 7.4 - Main calculate button functionality
  */
 function setupCalculateButton() {
-    if (!domElements.calculateBtn) {
-        console.error('Calculate button not found');
+    console.log('Setting up calculate button...');
+    
+    // Try direct DOM query as backup
+    const calculateBtn = document.getElementById('calculate-btn');
+    console.log('Calculate button found:', !!calculateBtn);
+    
+    if (!calculateBtn) {
+        console.error('Calculate button not found in DOM');
         return;
     }
     
-    domElements.calculateBtn.addEventListener('click', function(e) {
+    // Store reference
+    domElements.calculateBtn = calculateBtn;
+    
+    // Simple, direct event listener
+    calculateBtn.addEventListener('click', function(e) {
+        console.log('Calculate button clicked!');
         e.preventDefault();
         
-        // Use enhanced calculation with G7 integration if available
-        if (typeof performEnhancedColorDifferenceCalculation === 'function') {
-            performEnhancedColorDifferenceCalculation();
-        } else {
-            performColorDifferenceCalculation();
-        }
+        // Direct call to main calculation function
+        performColorDifferenceCalculation();
     });
     
     // Also allow Enter key to trigger calculation when focused on inputs
@@ -2359,11 +2366,18 @@ function loadTestData() {
  * Enhanced with performance optimization and error handling
  */
 function performColorDifferenceCalculation() {
-    console.log('Starting color difference calculation...');
+    console.log('=== STARTING COLOR DIFFERENCE CALCULATION ===');
     
     // Prevent multiple simultaneous calculations
     if (loadingState.isCalculating) {
         console.log('Calculation already in progress, ignoring request');
+        return;
+    }
+    
+    // Basic checks
+    if (!window.colorScience) {
+        console.error('Color science module not loaded!');
+        alert('Color science module not loaded. Please refresh the page.');
         return;
     }
     
@@ -3476,6 +3490,8 @@ function initializePresetColors() {
  * Enhanced with Pantone Color Database integration
  */
 function populatePresetDropdown(selectElement) {
+    console.log('Populating preset dropdown...', selectElement);
+    
     // Clear existing options (except the first placeholder)
     while (selectElement.children.length > 1) {
         selectElement.removeChild(selectElement.lastChild);
@@ -3484,8 +3500,10 @@ function populatePresetDropdown(selectElement) {
     try {
         // Check if Pantone colors are available
         if (window.pantoneColors && window.pantoneColors.generatePantonePresetOptions) {
+            console.log('Using Pantone color database');
             // Use Pantone color database
             const pantoneOptions = window.pantoneColors.generatePantonePresetOptions();
+            console.log('Generated Pantone options:', pantoneOptions.length);
             
             pantoneOptions.forEach(option => {
                 if (option.type === 'header') {
@@ -3528,6 +3546,8 @@ function populatePresetDropdown(selectElement) {
  * Fallback color population if Pantone database is not available
  */
 function populateFallbackColors(selectElement) {
+    console.log('Using fallback color population');
+    
     const fallbackColors = {
         'Process Colors': [
             { name: 'Process Cyan', cmyk: { c: 100, m: 0, y: 0, k: 0 }, lab: { l: 55, a: -37, b: -50 } },
