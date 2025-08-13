@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlined Button System Test</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+    <style>
+        body {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .button-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Outlined Button System Test</h1>
+    
+    <div class="test-section">
+        <h2>Status Action Buttons</h2>
+        <div class="button-row">
+            <button class="status-action-btn">Calculate</button>
+            <button class="status-action-btn">Reset</button>
+            <button class="status-action-btn" disabled>Export</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Action Buttons</h2>
+        <div class="button-row">
+            <button class="quick-action-btn">Clear</button>
+            <button class="quick-action-btn">Copy CMYK</button>
+            <button class="quick-action-btn success">Success State</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Main Action Buttons</h2>
+        <div class="button-row">
+            <button class="calculate-button">Calculate Color Difference</button>
+            <button class="reset-button">Reset All</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Calculate Button States</h2>
+        <div class="button-row">
+            <button class="calculate-button calculating">Calculating...</button>
+            <button class="calculate-button error">Error State</button>
+            <button class="calculate-button" disabled>Disabled</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Export and Utility Buttons</h2>
+        <div class="button-row">
+            <button class="export-btn">Export CSV</button>
+            <button class="export-btn">Export PDF</button>
+            <button class="clear-history-btn">Clear History</button>
+            <button class="retry-button">Retry</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Buttons</h2>
+        <div class="button-row">
+            <button class="test-btn">Run Integration Tests</button>
+            <button class="test-btn secondary">Browser Info</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Generic Outlined Button Classes</h2>
+        <div class="button-grid">
+            <button class="btn-outlined primary">Primary</button>
+            <button class="btn-outlined secondary">Secondary</button>
+            <button class="btn-outlined success">Success</button>
+            <button class="btn-outlined danger">Danger</button>
+            <button class="btn-outlined warning">Warning</button>
+            <button class="btn-outlined info">Info</button>
+            <button class="btn-outlined gold">Gold Accent</button>
+            <button class="btn-outlined" disabled>Disabled</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Button Sizes</h2>
+        <div class="button-row">
+            <button class="btn-outlined small">Small</button>
+            <button class="btn-outlined">Default</button>
+            <button class="btn-outlined large">Large</button>
+            <button class="btn-outlined extra-large">Extra Large</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Focus Testing</h2>
+        <p>Use Tab key to navigate through buttons and test focus indicators:</p>
+        <div class="button-row">
+            <button class="btn-outlined primary">Focus Test 1</button>
+            <button class="calculate-button">Focus Test 2</button>
+            <button class="quick-action-btn">Focus Test 3</button>
+            <button class="export-btn">Focus Test 4</button>
+        </div>
+    </div>
+
+    <script src="test-button-functionality.js"></script>
+    <script>
+        // Add some interactivity for testing
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                if (!this.disabled) {
+                    console.log('Button clicked:', this.textContent);
+                    
+                    // Test success state for quick action buttons
+                    if (this.classList.contains('quick-action-btn')) {
+                        this.classList.add('success');
+                        setTimeout(() => {
+                            this.classList.remove('success');
+                        }, 2000);
+                    }
+                }
+            });
+        });
+
+        // Test keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                if (document.activeElement.tagName === 'BUTTON') {
+                    e.preventDefault();
+                    document.activeElement.click();
+                }
+            }
+        });
+
+        // Add manual test trigger
+        setTimeout(() => {
+            console.log('\n🔧 Manual test available: Run testOutlinedButtons() in console');
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -999,7 +999,9 @@ function getToleranceZone(deltaE) {
         return 'unknown';
     }
 
-    if (deltaE <= 2.0) {
+    if (deltaE <= 0.5) {
+        return 'excellent';  // Premium gold accent category
+    } else if (deltaE <= 2.0) {
         return 'good';
     } else if (deltaE <= 5.0) {
         return 'acceptable';
@@ -1016,10 +1018,16 @@ function getToleranceZoneInfo(deltaE) {
     const zone = getToleranceZone(deltaE);
 
     const zoneInfo = {
+        excellent: {
+            cssClass: 'excellent',
+            description: 'Exceptional Match',
+            range: '≤ 0.5',
+            message: 'Outstanding color precision - premium quality match with gold standard accuracy'
+        },
         good: {
             cssClass: 'good',
             description: 'Good Match',
-            range: '≤ 2.0',
+            range: '0.6 - 2.0',
             message: 'Excellent color match - within acceptable printing tolerance'
         },
         acceptable: {

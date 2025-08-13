@@ -15,6 +15,31 @@
     <link rel="stylesheet" href="src/css/styles.css">
 </head>
 <body>
+    <!-- Enhanced Sticky Status Bar -->
+    <div class="status-bar" id="status-bar">
+        <div class="status-bar-content">
+            <div class="status-info">
+                <span class="status-label">Status:</span>
+                <span class="status-value" id="status-value">Ready</span>
+            </div>
+            <div class="delta-info">
+                <span class="delta-label">ΔE*ab:</span>
+                <span class="delta-value" id="status-delta-value">--</span>
+            </div>
+            <div class="quick-actions-bar">
+                <button class="status-action-btn" id="status-calculate-btn" title="Calculate color difference">
+                    Calculate
+                </button>
+                <button class="status-action-btn" id="status-reset-btn" title="Reset all inputs">
+                    Reset
+                </button>
+                <button class="status-action-btn" id="status-export-btn" title="Export results" disabled>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="calculator-container">
         <header class="app-header">
             <h1>LAB Color Matching Calculator</h1>
@@ -24,7 +49,7 @@
         <main class="calculator-main">
             <!-- Target Color Section -->
             <section class="color-section" id="target-section">
-                <h2>Target Color</h2>
+                <h2 class="tooltip-enhanced" data-tooltip="Enter the desired color values for your target.&#10;Supports both CMYK ink percentages and LAB measurements.&#10;Use presets for common colors or input custom values.&#10;&#10;• CMYK: Industry-standard ink percentages (0-100%)&#10;• LAB: Device-independent color space values&#10;• Presets: Quick access to common printing colors" tabindex="0">Target Color</h2>
                 <div class="color-display">
                     <div class="color-swatch" id="target-swatch" aria-label="Target color preview"></div>
                     <div class="color-equation-symbol">-</div>
@@ -89,7 +114,7 @@
 
             <!-- Sample Color Section -->
             <section class="color-section" id="sample-section">
-                <h2>Sample Color</h2>
+                <h2 class="tooltip-enhanced" data-tooltip="Enter the measured color values from your sample.&#10;Compare against target to calculate color difference.&#10;Real-time swatch preview shows approximate color.&#10;&#10;• Measured Values: Input actual measured color data&#10;• Color Preview: Visual representation of entered values&#10;• Quick Actions: Copy, clear, and preset options available" tabindex="0">Sample Color</h2>
                 <div class="color-display">
                     <div class="color-swatch" id="sample-swatch" aria-label="Sample color preview"></div>
                     <div class="color-equation-symbol">=</div>
@@ -154,7 +179,7 @@
 
             <!-- Delta Results Section -->
             <section class="delta-section" id="delta-section">
-                <h2>Delta</h2>
+                <h2 class="tooltip-enhanced" data-tooltip="Displays calculated color difference results.&#10;ΔE*ab shows total color difference between target and sample.&#10;Component deltas show individual L*, a*, b* differences.&#10;&#10;• ΔE*ab < 1.0: Excellent match (not perceptible)&#10;• ΔE*ab 1.0-2.0: Good match (barely perceptible)&#10;• ΔE*ab 2.0-4.0: Acceptable match (noticeable)&#10;• ΔE*ab > 4.0: Poor match (clearly visible)" tabindex="0">Delta</h2>
                 <div class="color-display">
                     <div class="delta-indicator" id="delta-indicator">
                         <span class="delta-symbol">Δ</span>
@@ -189,7 +214,7 @@
         <!-- Calculate Button -->
         <div class="calculate-section">
             <div class="calculate-controls">
-                <button id="calculate-btn" class="calculate-button">
+                <button id="calculate-btn" class="calculate-button btn-outlined gold-premium">
                     Calculate Color Difference
                 </button>
                 <button id="reset-all-btn" class="reset-button" title="Clear all inputs and reset the calculator">
@@ -202,8 +227,8 @@
         <section class="results-section" id="results-section">
             <div class="total-delta-e">
                 <h3>Total Color Difference</h3>
-                <div class="delta-e-value" id="delta-e-value">
-                    <span class="delta-e-number">--</span>
+                <div class="delta-e-value important-value" id="delta-e-value">
+                    <span class="delta-e-number value">--</span>
                     <span class="delta-e-label">ΔE*ab</span>
                 </div>
                 <div class="tolerance-zone" id="tolerance-zone"></div>
@@ -217,8 +242,8 @@
             </div>
 
             <!-- G7 Analysis Section -->
-            <div class="g7-analysis-container" id="g7-analysis-container" style="display: none;">
-                <h3>G7 Gray Balance Analysis</h3>
+            <div class="g7-analysis-container premium-feature" id="g7-analysis-container" style="display: none;">
+                <h3 class="gold-accent">G7 Gray Balance Analysis <span class="premium-badge">Premium</span></h3>
                 <div class="g7-analysis-content">
                     <div class="g7-compliance-status" id="g7-compliance-status">
                         <div class="compliance-indicator" id="compliance-indicator">
@@ -262,11 +287,11 @@
                 <button class="clear-history-btn" id="clear-history-btn">Clear History</button>
             </div>
             
-            <div class="export-panel">
-                <h3>Export Results</h3>
+            <div class="export-panel premium">
+                <h3 class="gold-accent">Export Results</h3>
                 <div class="export-buttons">
-                    <button class="export-btn" id="export-csv-btn">Export CSV</button>
-                    <button class="export-btn" id="export-pdf-btn">Export PDF</button>
+                    <button class="export-btn btn-outlined gold" id="export-csv-btn">Export CSV</button>
+                    <button class="export-btn btn-outlined gold-premium" id="export-pdf-btn">Export PDF</button>
                 </div>
             </div>
             
@@ -291,6 +316,9 @@
     <script src="src/js/export.js"></script>
     <script src="src/js/calculator.js"></script>
     <script src="tests/unit/test-final-integration.js"></script>
+    
+    <!-- Enhanced Interactions Test (for development) -->
+    <script src="test-enhanced-interactions.js"></script>
     
     <!-- PWA Service Worker Registration -->
     <script>

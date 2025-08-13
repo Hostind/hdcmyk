@@ -17,6 +17,26 @@ const appState = {
     lastCalculationTime: 0
 };
 
+// Enhanced UI state for sticky status bar
+const uiEnhancementState = {
+    statusBar: {
+        visible: false,
+        content: {
+            deltaE: null,
+            status: 'ready', // 'ready', 'calculating', 'complete', 'error'
+            quickActions: ['reset', 'calculate', 'export']
+        }
+    }
+};
+
+// Scroll state management for sticky status bar
+const scrollState = {
+    lastScrollY: 0,
+    scrollDirection: 'down',
+    statusBarThreshold: 100,
+    isStatusBarVisible: false
+};
+
 // Performance optimization: Debounce configuration
 const DEBOUNCE_CONFIG = {
     INPUT_DELAY: 300,        // 300ms delay for input updates
@@ -27,6 +47,219 @@ const DEBOUNCE_CONFIG = {
 // Performance optimization: Cached calculations
 const calculationCache = new Map();
 const MAX_CACHE_SIZE = 100;
+
+// Enhanced Tooltip System
+class TooltipManager {
+    constructor() {
+        this.tooltips = [];
+        this.activeTooltip = null;
+        this.repositionTimeout = null;
+        this.init();
+    }
+
+    init() {
+        console.log('Initializing enhanced tooltip system...');
+        
+        // Find all tooltip elements
+        this.tooltips = document.querySelectorAll('.tooltip-enhanced');
+        console.log(`Found ${this.tooltips.length} tooltip elements`);
+        
+        // Add event listeners for positioning
+        this.tooltips.forEach(tooltip => {
+            tooltip.addEventListener('mouseenter', (e) => this.handleTooltipShow(e));
+            tooltip.addEventListener('focus', (e) => this.handleTooltipShow(e));
+            tooltip.addEventListener('mouseleave', (e) => this.handleTooltipHide(e));
+            tooltip.addEventListener('blur', (e) => this.handleTooltipHide(e));
+            
+            // Add keyboard support
+            tooltip.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.handleTooltipHide(e);
+                    tooltip.blur();
+                }
+            });
+        });
+
+        // Handle window resize and scroll for repositioning
+        window.addEventListener('resize', () => this.repositionAllTooltips());
+        window.addEventListener('scroll', () => this.repositionAllTooltips());
+        
+        console.log('Enhanced tooltip system initialized');
+    }
+
+    setupTooltipAccessibility(tooltip) {
+        // Set up ARIA attributes for screen readers
+        const tooltipContent = tooltip.getAttribute('data-tooltip');
+        const tooltipId = `tooltip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        tooltip.setAttribute('aria-describedby', tooltipId);
+        tooltip.setAttribute('aria-expanded', 'true');
+        
+        // Create hidden element for screen readers
+        if (!tooltip.querySelector('.sr-only-tooltip')) {
+            const srElement = document.createElement('span');
+            srElement.className = 'sr-only-tooltip sr-only';
+            srElement.id = tooltipId;
+            srElement.textContent = tooltipContent.replace(/&#10;/g, ' ');
+            tooltip.appendChild(srElement);
+        }
+    }
+
+    handleTooltipShow(event) {
+        const tooltip = event.target;
+        this.activeTooltip = tooltip;
+        
+        // Add active class for styling
+        tooltip.classList.add('tooltip-active');
+        
+        // Set up accessibility attributes
+        this.setupTooltipAccessibility(tooltip);
+        
+        // Position tooltip after a small delay to ensure proper rendering
+        setTimeout(() => {
+            this.positionTooltip(tooltip);
+        }, 10);
+        
+        // Track tooltip interaction for analytics
+        this.trackTooltipInteraction(tooltip);
+    }
+
+    handleTooltipHide(event) {
+        const tooltip = event.target;
+        
+        // Remove active class
+        tooltip.classList.remove('tooltip-active');
+        
+        // Clean up accessibility attributes
+        this.cleanupTooltipAccessibility(tooltip);
+        
+        // Reset positioning
+        this.resetTooltipPosition(tooltip);
+        
+        if (this.activeTooltip === tooltip) {
+            this.activeTooltip = null;
+        }
+    }
+
+    cleanupTooltipAccessibility(tooltip) {
+        // Clean up ARIA attributes
+        tooltip.setAttribute('aria-expanded', 'false');
+        
+        // Remove screen reader element
+        const srElement = tooltip.querySelector('.sr-only-tooltip');
+        if (srElement) {
+            srElement.remove();
+        }
+        
+        // Remove aria-describedby if no other tooltips are active
+        if (!this.activeTooltip || this.activeTooltip === tooltip) {
+            tooltip.removeAttribute('aria-describedby');
+        }
+    }
+
+    positionTooltip(tooltip) {
+        // Reset any existing positioning classes
+        this.resetTooltipPosition(tooltip);
+
+        // Get tooltip and viewport dimensions
+        const rect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scrollY = window.scrollY;
+        
+        // Estimated tooltip dimensions (based on CSS)
+        const tooltipWidth = Math.min(320, viewportWidth - 40); // Responsive width
+        const tooltipHeight = 150; // Approximate height with padding
+        const margin = 20;
+
+        // Check horizontal positioning
+        const tooltipLeft = rect.left + rect.width / 2 - tooltipWidth / 2;
+        const tooltipRight = tooltipLeft + tooltipWidth;
+
+        if (tooltipLeft < margin) {
+            // Too far left, align to left edge
+            tooltip.classList.add('tooltip-left');
+        } else if (tooltipRight > viewportWidth - margin) {
+            // Too far right, align to right edge
+            tooltip.classList.add('tooltip-right');
+        }
+
+        // Check vertical positioning
+        const tooltipTop = rect.top + scrollY - tooltipHeight - 20; // 20px margin
+        const tooltipBottom = rect.bottom + scrollY + tooltipHeight + 20;
+        
+        if (tooltipTop < scrollY + margin) {
+            // Not enough space above, show below
+            tooltip.classList.add('tooltip-bottom');
+        } else if (tooltipBottom > scrollY + viewportHeight - margin) {
+            // Not enough space below, show above (default)
+            tooltip.classList.add('tooltip-top');
+        }
+
+        // For mobile devices, ensure tooltips are properly sized
+        if (viewportWidth <= 768) {
+            tooltip.classList.add('tooltip-mobile');
+            // On mobile, center horizontally and adjust positioning
+            tooltip.classList.remove('tooltip-left', 'tooltip-right');
+        }
+
+        // Add positioning class for enhanced styling
+        tooltip.classList.add('tooltip-positioned');
+    }
+
+    resetTooltipPosition(tooltip) {
+        tooltip.classList.remove(
+            'tooltip-left', 
+            'tooltip-right', 
+            'tooltip-top', 
+            'tooltip-bottom',
+            'tooltip-mobile',
+            'tooltip-positioned'
+        );
+    }
+
+    repositionAllTooltips() {
+        // Debounce repositioning to avoid excessive calculations
+        clearTimeout(this.repositionTimeout);
+        this.repositionTimeout = setTimeout(() => {
+            if (this.activeTooltip) {
+                this.positionTooltip(this.activeTooltip);
+            }
+        }, 100);
+    }
+
+    trackTooltipInteraction(tooltip) {
+        // Track which tooltips are being used for analytics
+        const tooltipContent = tooltip.getAttribute('data-tooltip');
+        if (tooltipContent) {
+            console.log('Tooltip interaction:', tooltipContent.substring(0, 50) + '...');
+        }
+    }
+
+    // Method to update tooltip content dynamically
+    updateTooltipContent(element, newContent) {
+        if (element && element.classList.contains('tooltip-enhanced')) {
+            element.setAttribute('data-tooltip', newContent);
+        }
+    }
+
+    // Method to temporarily disable tooltips (useful during calculations)
+    disableTooltips() {
+        this.tooltips.forEach(tooltip => {
+            tooltip.classList.add('tooltip-disabled');
+        });
+    }
+
+    // Method to re-enable tooltips
+    enableTooltips() {
+        this.tooltips.forEach(tooltip => {
+            tooltip.classList.remove('tooltip-disabled');
+        });
+    }
+}
+
+// Initialize tooltip manager
+let tooltipManager;
 
 // Error handling: Error state tracking
 const errorState = {
@@ -106,6 +339,283 @@ const PRESET_COLORS = {
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
+
+// Enhanced Sticky Status Bar Functionality
+function initializeStickyStatusBar() {
+    console.log('Initializing sticky status bar...');
+    
+    // Set up accessibility attributes
+    setupStatusBarAccessibility();
+    
+    // Set up scroll detection
+    setupScrollDetection();
+    
+    // Set up status bar event listeners
+    setupStatusBarEventListeners();
+    
+    // Initialize status bar content
+    updateStatusBarContent();
+    
+    console.log('Sticky status bar initialized');
+}
+
+// Set up accessibility attributes for status bar
+function setupStatusBarAccessibility() {
+    const statusBar = document.getElementById('status-bar');
+    if (statusBar) {
+        statusBar.setAttribute('role', 'banner');
+        statusBar.setAttribute('aria-label', 'Calculator status and quick actions');
+        statusBar.setAttribute('aria-live', 'polite');
+        statusBar.setAttribute('aria-atomic', 'true');
+    }
+    
+    // Set up ARIA labels for status bar elements
+    const statusValue = document.getElementById('status-value');
+    if (statusValue) {
+        statusValue.setAttribute('aria-label', 'Current calculation status');
+        statusValue.setAttribute('role', 'status');
+    }
+    
+    const deltaValue = document.getElementById('status-delta-value');
+    if (deltaValue) {
+        deltaValue.setAttribute('aria-label', 'Current Delta E color difference value');
+        deltaValue.setAttribute('role', 'status');
+    }
+    
+    // Set up ARIA labels for action buttons
+    const statusCalculateBtn = document.getElementById('status-calculate-btn');
+    if (statusCalculateBtn) {
+        statusCalculateBtn.setAttribute('aria-label', 'Calculate color difference between target and sample');
+        statusCalculateBtn.setAttribute('role', 'button');
+    }
+    
+    const statusResetBtn = document.getElementById('status-reset-btn');
+    if (statusResetBtn) {
+        statusResetBtn.setAttribute('aria-label', 'Reset all color inputs and calculations');
+        statusResetBtn.setAttribute('role', 'button');
+    }
+    
+    const statusExportBtn = document.getElementById('status-export-btn');
+    if (statusExportBtn) {
+        statusExportBtn.setAttribute('aria-label', 'Export calculation results to file');
+        statusExportBtn.setAttribute('role', 'button');
+    }
+}
+
+// Set up scroll detection for status bar visibility
+function setupScrollDetection() {
+    let ticking = false;
+    let lastKnownScrollPosition = 0;
+    
+    function updateScrollState() {
+        const currentScrollY = window.scrollY;
+        
+        // Performance optimization: only update if scroll position changed significantly
+        if (Math.abs(currentScrollY - lastKnownScrollPosition) < 5) {
+            ticking = false;
+            return;
+        }
+        
+        const scrollDirection = currentScrollY > scrollState.lastScrollY ? 'down' : 'up';
+        const shouldShowStatusBar = currentScrollY > scrollState.statusBarThreshold;
+        
+        scrollState.lastScrollY = currentScrollY;
+        scrollState.scrollDirection = scrollDirection;
+        lastKnownScrollPosition = currentScrollY;
+        
+        // Update status bar visibility with performance optimization
+        if (shouldShowStatusBar !== scrollState.isStatusBarVisible) {
+            scrollState.isStatusBarVisible = shouldShowStatusBar;
+            // Use requestAnimationFrame for smooth transitions
+            requestAnimationFrame(() => {
+                toggleStatusBarVisibility(shouldShowStatusBar);
+            });
+        }
+        
+        ticking = false;
+    }
+    
+    function requestScrollUpdate() {
+        if (!ticking) {
+            requestAnimationFrame(updateScrollState);
+            ticking = true;
+        }
+    }
+    
+    // Add scroll event listener with throttling and passive flag for performance
+    window.addEventListener('scroll', requestScrollUpdate, { passive: true });
+    
+    // Initial check
+    updateScrollState();
+}
+
+// Toggle status bar visibility
+function toggleStatusBarVisibility(show) {
+    const statusBar = document.getElementById('status-bar');
+    if (!statusBar) return;
+    
+    if (show) {
+        statusBar.classList.add('visible');
+        uiEnhancementState.statusBar.visible = true;
+    } else {
+        statusBar.classList.remove('visible');
+        uiEnhancementState.statusBar.visible = false;
+    }
+}
+
+// Set up status bar event listeners
+function setupStatusBarEventListeners() {
+    // Calculate button in status bar
+    const statusCalculateBtn = document.getElementById('status-calculate-btn');
+    if (statusCalculateBtn) {
+        statusCalculateBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            performColorDifferenceCalculation();
+        });
+    }
+    
+    // Reset button in status bar
+    const statusResetBtn = document.getElementById('status-reset-btn');
+    if (statusResetBtn) {
+        statusResetBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Reset all inputs to default values?')) {
+                resetAllInputs();
+            }
+        });
+    }
+    
+    // Export button in status bar
+    const statusExportBtn = document.getElementById('status-export-btn');
+    if (statusExportBtn) {
+        statusExportBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (window.colorExport && appState.results) {
+                // Show export options
+                showExportOptions();
+            }
+        });
+    }
+}
+
+// Show export options when status bar export button is clicked
+function showExportOptions() {
+    const exportModal = document.createElement('div');
+    exportModal.className = 'export-options-modal';
+    exportModal.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export Options</h3>
+                <button class="modal-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <button class="export-option-btn" onclick="exportToCSV(); this.closest('.export-options-modal').remove();">
+                        <span class="export-icon">📊</span>
+                        <span class="export-label">Export to CSV</span>
+                        <span class="export-description">Spreadsheet format for data analysis</span>
+                    </button>
+                    <button class="export-option-btn" onclick="exportToPDF(); this.closest('.export-options-modal').remove();">
+                        <span class="export-icon">📄</span>
+                        <span class="export-label">Export to PDF</span>
+                        <span class="export-description">Professional report format</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(exportModal);
+}
+
+// Export functions for status bar
+function exportToCSV() {
+    if (window.colorExport && appState.results) {
+        window.colorExport.exportToCSV();
+    }
+}
+
+function exportToPDF() {
+    if (window.colorExport && appState.results) {
+        window.colorExport.exportToPDF();
+    }
+}
+
+// Update status bar content based on current application state
+function updateStatusBarContent() {
+    const statusValue = document.getElementById('status-value');
+    const deltaValue = document.getElementById('status-delta-value');
+    const exportBtn = document.getElementById('status-export-btn');
+    
+    if (!statusValue || !deltaValue || !exportBtn) return;
+    
+    // Update status
+    const status = uiEnhancementState.statusBar.content.status;
+    statusValue.textContent = getStatusDisplayText(status);
+    statusValue.className = `status-value ${status}`;
+    
+    // Update Delta E value
+    if (appState.results && appState.results.deltaE !== null) {
+        const deltaE = appState.results.deltaE;
+        deltaValue.textContent = deltaE.toFixed(2);
+        
+        // Apply tolerance zone styling
+        const toleranceZone = getToleranceZone(deltaE);
+        deltaValue.className = `delta-value ${toleranceZone}`;
+        
+        // Enable export button
+        exportBtn.disabled = false;
+    } else {
+        deltaValue.textContent = '--';
+        deltaValue.className = 'delta-value';
+        exportBtn.disabled = true;
+    }
+}
+
+// Get display text for status
+function getStatusDisplayText(status) {
+    switch (status) {
+        case 'ready': return 'Ready';
+        case 'calculating': return 'Calculating...';
+        case 'complete': return 'Complete';
+        case 'error': return 'Error';
+        default: return 'Ready';
+    }
+}
+
+// Get tolerance zone for Delta E value
+function getToleranceZone(deltaE) {
+    if (deltaE <= 0.5) return 'excellent';  // Gold accent for exceptional results
+    if (deltaE <= 1.0) return 'good';
+    if (deltaE <= 3.0) return 'acceptable';
+    return 'poor';
+}
+
+// Update status bar when calculation starts
+function setCalculatingStatus() {
+    uiEnhancementState.statusBar.content.status = 'calculating';
+    updateStatusBarContent();
+}
+
+// Update status bar when calculation completes
+function setCompleteStatus() {
+    uiEnhancementState.statusBar.content.status = 'complete';
+    updateStatusBarContent();
+}
+
+// Update status bar when calculation errors
+function setErrorStatus() {
+    uiEnhancementState.statusBar.content.status = 'error';
+    updateStatusBarContent();
+}
+
+// Update status bar when inputs are reset
+function setReadyStatus() {
+    uiEnhancementState.statusBar.content.status = 'ready';
+    uiEnhancementState.statusBar.content.deltaE = null;
+    updateStatusBarContent();
+}
 
 // Final Integration and Polish - Keyboard Shortcuts
 // Requirements: Add keyboard shortcuts for power users (Enter to calculate, etc.)
@@ -306,14 +816,23 @@ function hideKeyboardShortcutsHelp() {
 function initializeApp() {
     console.log('Initializing LAB Color Matching Calculator...');
     
+    // Initialize accessibility features first
+    initializeAccessibilityFeatures();
+    
     // Cache DOM elements
     cacheDOMElements();
+    
+    // Initialize enhanced sticky status bar
+    initializeStickyStatusBar();
     
     // Set up event listeners for input validation
     setupInputValidation();
     
     // Set up calculate button event listener
     setupCalculateButton();
+    
+    // Set up keyboard navigation
+    setupKeyboardNavigation();
     
     // Initialize default values
     initializeDefaultValues();
@@ -330,6 +849,9 @@ function initializeApp() {
     
     // Initialize G7 integration
     initializeG7Integration();
+    
+    // Initialize enhanced tooltip system
+    tooltipManager = new TooltipManager();
     
     console.log('Application initialized successfully');
 }
@@ -370,6 +892,9 @@ function resetAllInputs() {
         lab: { l: 50, a: 0, b: 0 } 
     };
     appState.results = null;
+    
+    // Update status bar to ready state
+    setReadyStatus();
     
     // Reset color swatches
     initializeColorSwatches();
@@ -1789,6 +2314,9 @@ function performColorDifferenceCalculation() {
     loadingState.isCalculating = true;
     const startTime = Date.now();
     
+    // Update status bar to calculating state
+    setCalculatingStatus();
+    
     try {
         // Show loading state
         showLoadingState('Calculating', domElements.calculateBtn);
@@ -1808,6 +2336,7 @@ function performColorDifferenceCalculation() {
         
     } catch (error) {
         console.error('Error during color difference calculation:', error);
+        setErrorStatus();
         handleCalculationError(error);
     } finally {
         loadingState.isCalculating = false;
@@ -1865,6 +2394,9 @@ function performCalculationCore() {
     
     // Update application state with results
     appState.results = analysis;
+    
+    // Update status bar to complete state
+    setCompleteStatus();
     
     // Display results
     displayCalculationResults(analysis);
@@ -2147,8 +2679,9 @@ function displayComponentDeltas(componentDeltas) {
 }
 
 /**
- * Display tolerance zone indicator with color coding
+ * Display tolerance zone indicator with color coding and gold accents
  * Requirements: 4.3 - Color-coded tolerance zones
+ * Requirements: 4.1, 4.2, 4.3 - Gold accents for premium results
  */
 function displayToleranceZone(tolerance) {
     if (!domElements.toleranceZone) {
@@ -2156,19 +2689,31 @@ function displayToleranceZone(tolerance) {
         return;
     }
     
-    // Create tolerance zone content
+    // Add gold accent classes for excellent results
+    const goldClass = tolerance.zone === 'excellent' ? 'gold-accent' : '';
+    const premiumClass = tolerance.zone === 'excellent' ? 'premium-feature' : '';
+    
+    // Create tolerance zone content with gold accents for excellent results
     const toleranceHTML = `
-        <div class="tolerance-indicator ${tolerance.zone}">
+        <div class="tolerance-indicator ${tolerance.zone} ${goldClass}">
             <span class="tolerance-label">${tolerance.description}</span>
             <span class="tolerance-range">${tolerance.range}</span>
+            ${tolerance.zone === 'excellent' ? '<span class="premium-badge">Excellent</span>' : ''}
         </div>
         <div class="tolerance-message">${tolerance.message}</div>
     `;
     
     domElements.toleranceZone.innerHTML = toleranceHTML;
-    domElements.toleranceZone.className = `tolerance-zone ${tolerance.zone}`;
+    domElements.toleranceZone.className = `tolerance-zone ${tolerance.zone} ${premiumClass}`;
     
-    console.log(`Tolerance zone displayed: ${tolerance.zone}`);
+    // Apply gold accents to the delta E value container for excellent results
+    if (tolerance.zone === 'excellent' && domElements.deltaEValue) {
+        domElements.deltaEValue.classList.add('excellent', 'gold-glow');
+    } else if (domElements.deltaEValue) {
+        domElements.deltaEValue.classList.remove('excellent', 'gold-glow');
+    }
+    
+    console.log(`Tolerance zone displayed: ${tolerance.zone} with gold accents: ${tolerance.zone === 'excellent'}`);
 }
 
 /**
@@ -3883,4 +4428,267 @@ function testG7Integration() {
 // Add G7 test to the calculator app exports
 if (window.calculatorApp) {
     window.calculatorApp.testG7Integration = testG7Integration;
+}
+// I
+nitialize comprehensive accessibility features
+function initializeAccessibilityFeatures() {
+    console.log('Initializing accessibility features...');
+    
+    // Set up ARIA labels for main sections
+    const targetSection = document.getElementById('target-section');
+    if (targetSection) {
+        targetSection.setAttribute('role', 'region');
+        targetSection.setAttribute('aria-label', 'Target color input section');
+    }
+    
+    const sampleSection = document.getElementById('sample-section');
+    if (sampleSection) {
+        sampleSection.setAttribute('role', 'region');
+        sampleSection.setAttribute('aria-label', 'Sample color input section');
+    }
+    
+    const deltaSection = document.getElementById('delta-section');
+    if (deltaSection) {
+        deltaSection.setAttribute('role', 'region');
+        deltaSection.setAttribute('aria-label', 'Color difference results section');
+    }
+    
+    // Set up ARIA labels for color swatches
+    const targetSwatch = document.getElementById('target-swatch');
+    if (targetSwatch) {
+        targetSwatch.setAttribute('role', 'img');
+        targetSwatch.setAttribute('aria-label', 'Target color preview swatch');
+    }
+    
+    const sampleSwatch = document.getElementById('sample-swatch');
+    if (sampleSwatch) {
+        sampleSwatch.setAttribute('role', 'img');
+        sampleSwatch.setAttribute('aria-label', 'Sample color preview swatch');
+    }
+    
+    // Set up ARIA live regions for dynamic content
+    const resultsSection = document.getElementById('results-section');
+    if (resultsSection) {
+        resultsSection.setAttribute('aria-live', 'polite');
+        resultsSection.setAttribute('aria-atomic', 'false');
+    }
+    
+    const deltaEValue = document.getElementById('delta-e-value');
+    if (deltaEValue) {
+        deltaEValue.setAttribute('role', 'status');
+        deltaEValue.setAttribute('aria-live', 'polite');
+        deltaEValue.setAttribute('aria-label', 'Total color difference result');
+    }
+    
+    // Set up input descriptions
+    setupInputAccessibility();
+    
+    console.log('Accessibility features initialized');
+}
+
+// Set up accessibility for input fields
+function setupInputAccessibility() {
+    const inputs = document.querySelectorAll('input[type="number"]');
+    inputs.forEach(input => {
+        const label = input.closest('.input-field')?.querySelector('label')?.textContent;
+        const section = input.closest('.color-section, .delta-section')?.querySelector('h2')?.textContent;
+        
+        if (label && section) {
+            input.setAttribute('aria-label', `${label} value for ${section} section`);
+            input.setAttribute('aria-describedby', `${input.id}-description`);
+            
+            // Create description element
+            const description = document.createElement('span');
+            description.id = `${input.id}-description`;
+            description.className = 'sr-only';
+            description.textContent = `Enter ${label} value. Use arrow keys or type to adjust.`;
+            input.parentNode.appendChild(description);
+        }
+    });
+}
+
+// Set up comprehensive keyboard navigation
+function setupKeyboardNavigation() {
+    console.log('Setting up keyboard navigation...');
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', handleGlobalKeyboardShortcuts);
+    
+    // Enhance focus management for tooltips
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    
+    // Set up skip links for screen readers
+    setupSkipLinks();
+    
+    console.log('Keyboard navigation setup complete');
+}
+
+// Handle global keyboard shortcuts
+function handleGlobalKeyboardShortcuts(event) {
+    // Ctrl/Cmd + Enter: Calculate
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        event.preventDefault();
+        const calculateBtn = document.getElementById('calculate-btn');
+        if (calculateBtn && !calculateBtn.disabled) {
+            calculateBtn.click();
+            announceToScreenReader('Calculating color difference');
+        }
+        return;
+    }
+    
+    // Ctrl/Cmd + R: Reset (prevent browser refresh)
+    if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+        event.preventDefault();
+        const resetBtn = document.getElementById('reset-all-btn');
+        if (resetBtn) {
+            resetBtn.click();
+            announceToScreenReader('All inputs reset');
+        }
+        return;
+    }
+    
+    // Escape: Close any open tooltips or modals
+    if (event.key === 'Escape') {
+        if (window.tooltipManager && window.tooltipManager.activeTooltip) {
+            window.tooltipManager.activeTooltip.blur();
+        }
+        // Close any open modals or dropdowns
+        const openModals = document.querySelectorAll('.modal.show, .dropdown.show, .keyboard-help-modal');
+        openModals.forEach(modal => modal.remove());
+        return;
+    }
+    
+    // F1: Show help (prevent browser help)
+    if (event.key === 'F1') {
+        event.preventDefault();
+        showKeyboardShortcutsHelp();
+        return;
+    }
+}
+
+// Handle focus events for enhanced accessibility
+function handleFocusIn(event) {
+    const element = event.target;
+    
+    // Announce section changes to screen readers
+    const section = element.closest('.color-section, .delta-section');
+    if (section && !element.hasAttribute('data-section-announced')) {
+        const sectionName = section.querySelector('h2')?.textContent || 'Section';
+        announceToScreenReader(`Entered ${sectionName} section`);
+        element.setAttribute('data-section-announced', 'true');
+    }
+}
+
+// Handle focus out events
+function handleFocusOut(event) {
+    const element = event.target;
+    
+    // Clean up temporary attributes
+    element.removeAttribute('data-section-announced');
+}
+
+// Announce messages to screen readers
+function announceToScreenReader(message) {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.textContent = message;
+    
+    document.body.appendChild(announcement);
+    
+    // Remove after announcement
+    setTimeout(() => {
+        if (document.body.contains(announcement)) {
+            document.body.removeChild(announcement);
+        }
+    }, 1000);
+}
+
+// Set up skip links for screen readers
+function setupSkipLinks() {
+    const skipLink = document.createElement('a');
+    skipLink.href = '#calculator-main';
+    skipLink.textContent = 'Skip to main calculator';
+    skipLink.className = 'skip-link sr-only';
+    skipLink.addEventListener('focus', () => skipLink.classList.remove('sr-only'));
+    skipLink.addEventListener('blur', () => skipLink.classList.add('sr-only'));
+    
+    document.body.insertBefore(skipLink, document.body.firstChild);
+    
+    // Add ID to main calculator for skip link target
+    const calculatorMain = document.querySelector('.calculator-main');
+    if (calculatorMain) {
+        calculatorMain.id = 'calculator-main';
+        calculatorMain.setAttribute('tabindex', '-1');
+    }
+}
+
+// Show keyboard shortcuts help
+function showKeyboardShortcutsHelp() {
+    const helpModal = document.createElement('div');
+    helpModal.className = 'keyboard-help-modal modal-overlay';
+    helpModal.setAttribute('role', 'dialog');
+    helpModal.setAttribute('aria-labelledby', 'keyboard-help-title');
+    helpModal.setAttribute('aria-modal', 'true');
+    
+    helpModal.innerHTML = `
+        <div class="modal-content">
+            <h2 id="keyboard-help-title">Keyboard Shortcuts</h2>
+            <ul class="shortcuts-list">
+                <li><kbd>Ctrl/Cmd + Enter</kbd> - Calculate color difference</li>
+                <li><kbd>Ctrl/Cmd + R</kbd> - Reset all inputs</li>
+                <li><kbd>Escape</kbd> - Close tooltips and modals</li>
+                <li><kbd>Tab</kbd> - Navigate between elements</li>
+                <li><kbd>Space/Enter</kbd> - Activate buttons and links</li>
+                <li><kbd>Arrow Keys</kbd> - Adjust number inputs</li>
+                <li><kbd>F1</kbd> - Show this help</li>
+            </ul>
+            <button class="close-help-btn btn-outlined" onclick="this.closest('.keyboard-help-modal').remove()">
+                Close (Escape)
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(helpModal);
+    
+    // Focus the close button
+    const closeBtn = helpModal.querySelector('.close-help-btn');
+    closeBtn.focus();
+    
+    // Handle escape key to close
+    helpModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            helpModal.remove();
+        }
+    });
+    
+    // Trap focus within modal
+    trapFocusInModal(helpModal);
+}
+
+// Trap focus within modal for accessibility
+function trapFocusInModal(modal) {
+    const focusableElements = modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstFocusable = focusableElements[0];
+    const lastFocusable = focusableElements[focusableElements.length - 1];
+    
+    modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            if (e.shiftKey) {
+                if (document.activeElement === firstFocusable) {
+                    e.preventDefault();
+                    lastFocusable.focus();
+                }
+            } else {
+                if (document.activeElement === lastFocusable) {
+                    e.preventDefault();
+                    firstFocusable.focus();
+                }
+            }
+        }
+    });
 }
