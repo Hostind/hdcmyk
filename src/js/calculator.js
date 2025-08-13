@@ -1637,6 +1637,10 @@ function setupCMYKValidation(colorType, component, inputElement) {
             const value = parseFloat(e.target.value);
             const isValid = validateCMYKValue(value);
             
+            // Update color swatch in real-time
+            const colorType = inputElement.id.includes('target') ? 'target' : 'sample';
+            updateColorSwatch(colorType);
+            
             // Immediate visual feedback (no debounce for validation state)
             updateInputValidationState(inputElement, isValid);
             
@@ -1693,6 +1697,10 @@ function setupLABValidation(colorType, component, inputElement) {
         try {
             const value = parseFloat(e.target.value);
             const isValid = validateLABValue(value, component);
+            
+            // Update color swatch in real-time
+            const colorType = inputElement.id.includes('target') ? 'target' : 'sample';
+            updateColorSwatch(colorType);
             
             // Immediate visual feedback (no debounce for validation state)
             updateInputValidationState(inputElement, isValid);

@@ -46,13 +46,13 @@
             <p class="subtitle">Professional CMYK-to-LAB Visual Color Difference Calculator</p>
         </header>
 
-        <main class="calculator-main">
+        <!-- Horizontal Equation Layout -->
+        <div class="equation-container">
             <!-- Target Color Section -->
             <section class="color-section" id="target-section">
-                <h2 class="tooltip-enhanced" data-tooltip="Enter the desired color values for your target.&#10;Supports both CMYK ink percentages and LAB measurements.&#10;Use presets for common colors or input custom values.&#10;&#10;• CMYK: Industry-standard ink percentages (0-100%)&#10;• LAB: Device-independent color space values&#10;• Presets: Quick access to common printing colors" tabindex="0">Target Color</h2>
+                <h2>Target Color</h2>
                 <div class="color-display">
                     <div class="color-swatch" id="target-swatch" aria-label="Target color preview"></div>
-                    <div class="color-equation-symbol">-</div>
                 </div>
                 
                 <!-- Preset Colors and Quick Actions -->
@@ -122,12 +122,14 @@
                 </div>
             </section>
 
+            <!-- Minus Symbol -->
+            <div class="color-equation-symbol" style="font-size: 3rem; color: var(--text-secondary); align-self: center;">-</div>
+
             <!-- Sample Color Section -->
             <section class="color-section" id="sample-section">
-                <h2 class="tooltip-enhanced" data-tooltip="Enter the measured color values from your sample.&#10;Compare against target to calculate color difference.&#10;Real-time swatch preview shows approximate color.&#10;&#10;• Measured Values: Input actual measured color data&#10;• Color Preview: Visual representation of entered values&#10;• Quick Actions: Copy, clear, and preset options available" tabindex="0">Sample Color</h2>
+                <h2>Sample Color</h2>
                 <div class="color-display">
                     <div class="color-swatch" id="sample-swatch" aria-label="Sample color preview"></div>
-                    <div class="color-equation-symbol">=</div>
                 </div>
                 
                 <!-- Preset Colors and Quick Actions -->
@@ -187,6 +189,9 @@
                 </div>
             </section>
 
+            <!-- Equals Symbol -->
+            <div class="color-equation-symbol" style="font-size: 3rem; color: var(--text-secondary); align-self: center;">=</div>
+
             <!-- Delta Results Section -->
             <section class="delta-section" id="delta-section">
                 <h2 class="tooltip-enhanced" data-tooltip="Displays calculated color difference results.&#10;ΔE*ab shows total color difference between target and sample.&#10;Component deltas show individual L*, a*, b* differences.&#10;&#10;• ΔE*ab < 1.0: Excellent match (not perceptible)&#10;• ΔE*ab 1.0-2.0: Good match (barely perceptible)&#10;• ΔE*ab 2.0-4.0: Acceptable match (noticeable)&#10;• ΔE*ab > 4.0: Poor match (clearly visible)" tabindex="0">Delta</h2>
@@ -219,7 +224,8 @@
                     </div>
                 </div>
             </section>
-        </main>
+        </div>
+        <!-- End equation container -->
 
         <!-- Calculate Button -->
         <div class="calculate-section">
