@@ -2785,6 +2785,14 @@ function hasAnyColorData(colorData) {
     // Check LAB data (L* different from default 50, or a*/b* non-zero)
     const hasLAB = colorData.lab.l !== 50 || colorData.lab.a !== 0 || colorData.lab.b !== 0;
     
+    console.log('Color data validation:', {
+        cmyk: colorData.cmyk,
+        lab: colorData.lab,
+        hasCMYK,
+        hasLAB,
+        result: hasCMYK || hasLAB
+    });
+    
     return hasCMYK || hasLAB;
 }
 
