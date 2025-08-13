@@ -2561,8 +2561,8 @@ function performCalculationCore() {
         
         // Update export button states
         if (typeof window.colorExport !== 'undefined' && window.colorExport.updateExportButtonStates) {
-        window.colorExport.updateExportButtonStates();
-    }
+            window.colorExport.updateExportButtonStates();
+        }
     
     // Save calculation to history
     saveCalculationToHistory(colorValues, analysis);
@@ -2579,6 +2579,10 @@ function performCalculationCore() {
     console.log('Color difference calculation completed successfully');
     console.log('Delta E:', analysis.deltaE);
     console.log('Tolerance Zone:', analysis.tolerance.zone);
+    }).catch(error => {
+        console.error('Promise chain error:', error);
+        handleCalculationError(error);
+    });
 }
 
 /**
@@ -3572,19 +3576,6 @@ function populateFallbackColors(selectElement) {
             option.textContent = color.name;
             option.dataset.colorData = JSON.stringify(color);
             optgroup.appendChild(option);
-        });
-        
-        selectElement.appendChild(optgroup);
-    });
-}
-        
-        categories[category].forEach(colorName => {
-            if (PRESET_COLORS[colorName]) {
-                const option = document.createElement('option');
-                option.value = colorName;
-                option.textContent = colorName;
-                optgroup.appendChild(option);
-            }
         });
         
         selectElement.appendChild(optgroup);
@@ -4658,8 +4649,9 @@ if (window.calculatorApp) {
     });
 }
 
-console.log('G7 integration functions loaded successfully');/
-**
+console.log('G7 integration functions loaded successfully');
+
+/**
  * Test G7 Integration
  * Simple test function to verify G7 functionality is working
  */
@@ -4714,8 +4706,9 @@ function testG7Integration() {
 if (window.calculatorApp) {
     window.calculatorApp.testG7Integration = testG7Integration;
 }
-// I
-nitialize comprehensive accessibility features
+/**
+ * Initialize comprehensive accessibility features
+ */
 function initializeAccessibilityFeatures() {
     console.log('Initializing accessibility features...');
     
