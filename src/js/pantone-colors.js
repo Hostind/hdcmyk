@@ -9870,16 +9870,16 @@ function findClosestPantoneColor(cmyk) {
  */
 function getPantoneColorsByFamily(family) {
     const familyPatterns = {
-        'Process': /Pro./,
-        'Yellow': /s(1[0-2]d|[1-9]d|100)s/,
-        'Orange': /(Orange|Or.)/,
-        'Red': /(Red|Warm Red|Rub. Red|Rhod. Red)/,
-        'Pink': /(Pink|Rhod.)/,
-        'Purple': /(Purple|Violet)/,
-        'Blue': /(Blue|Cyan)/,
-        'Green': /Green/,
-        'Gray': /(Gray|Grey|Gy)/,
-        'Black': /Black/
+        'Process': /Pro\./,
+        'Yellow': /(Yellow|^PANTONE (1[0-9][0-9]|[1-9][0-9]) PC$)/,
+        'Orange': /(Orange|^PANTONE (1[5-9][0-9]|2[0-4][0-9]) PC$)/,
+        'Red': /(Red|^PANTONE (1[8-9][0-9]|2[5-9][0-9]|18 |19 |032) PC)/,
+        'Pink': /(Pink|^PANTONE (2[0-2][0-9]) PC)/,
+        'Purple': /(Purple|Violet|^PANTONE (2[6-9][0-9]|3[0-1][0-9]|268|269) PC)/,
+        'Blue': /(Blue|Cyan|^PANTONE (30[0-9]|31[0-9]|32[0-9]|072) PC)/,
+        'Green': /(Green|^PANTONE (3[3-9][0-9]|35[0-9]) PC)/,
+        'Gray': /(Gray|Grey|^PANTONE (42[0-9]|43[0-9]|44[0-9]|Cool Gray|Warm Gray) PC)/,
+        'Black': /(Black|^PANTONE (Process Black|Black) PC)/
     };
     
     const pattern = familyPatterns[family];
@@ -9895,21 +9895,78 @@ function getPantoneColorsByFamily(family) {
  */
 function generatePantonePresetOptions() {
     const options = [];
-    const families = ['Process', 'Yellow', 'Orange', 'Red', 'Pink', 'Purple', 'Blue', 'Green', 'Gray', 'Black'];
     
-    families.forEach(family => {
-        const familyColors = getPantoneColorsByFamily(family);
+    // Group 1: Process Colors (most common)
+    const processColors = pantoneColors.filter(color => /Pro\./i.test(color.name));
+    if (processColors.length > 0) {
+        options.push({
+            type: 'header',
+            label: 'Process Colors',
+            value: null
+        });
+        processColors.forEach(color => {
+            options.push({
+                type: 'color',
+                label: color.name,
+                value: color.name,
+                color: color
+            });
+        });
+    }
+    
+    // Group 2: Named Colors (Red, Blue, Green, etc.)
+    const namedColors = pantoneColors.filter(color => 
+        /(Red|Blue|Green|Yellow|Orange|Purple|Pink|Black|Gray|Grey|Cyan|Magenta|Violet)/i.test(color.name) && 
+        !/Pro\./i.test(color.name)
+    );
+    if (namedColors.length > 0) {
+        options.push({
+            type: 'header',
+            label: 'Named Colors',
+            value: null
+        });
+        namedColors.forEach(color => {
+            options.push({
+                type: 'color',
+                label: color.name,
+                value: color.name,
+                color: color
+            });
+        });
+    }
+    
+    // Group 3: Numbered Colors by Range (show more colors)
+    const ranges = [
+        { label: '100-199 Series', min: 100, max: 199 },
+        { label: '200-299 Series', min: 200, max: 299 },
+        { label: '300-399 Series', min: 300, max: 399 },
+        { label: '400-499 Series', min: 400, max: 499 },
+        { label: '500+ Series', min: 500, max: 9999 }
+    ];
+    
+    ranges.forEach(range => {
+        const rangeColors = pantoneColors.filter(color => {
+            const match = color.name.match(/PANTONE (\d+)/);
+            if (match) {
+                const num = parseInt(match[1]);
+                return num >= range.min && num <= range.max;
+            }
+            return false;
+        });
         
-        if (familyColors.length > 0) {
-            // Add family header
+        if (rangeColors.length > 0) {
             options.push({
                 type: 'header',
-                label: `${family} Colors`,
+                label: range.label,
                 value: null
             });
             
-            // Add colors in this family
-            familyColors.forEach(color => {
+            // Sort by number and limit to first 50 per group for performance
+            rangeColors.sort((a, b) => {
+                const aNum = parseInt(a.name.match(/PANTONE (\d+)/)[1]);
+                const bNum = parseInt(b.name.match(/PANTONE (\d+)/)[1]);
+                return aNum - bNum;
+            }).slice(0, 50).forEach(color => {
                 options.push({
                     type: 'color',
                     label: color.name,

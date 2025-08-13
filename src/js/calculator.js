@@ -2024,7 +2024,7 @@ function areAllInputsValid() {
 
 // Function to get current color values from inputs (for use by other modules)
 function getCurrentColorValues() {
-    return {
+    const colorValues = {
         target: {
             cmyk: {
                 c: parseFloat(domElements.targetC.value) || 0,
@@ -2052,6 +2052,32 @@ function getCurrentColorValues() {
             }
         }
     };
+
+    // Convert CMYK to LAB if LAB values are at defaults but CMYK has data
+    ['target', 'sample'].forEach(colorType => {
+        const color = colorValues[colorType];
+        const hasCMYK = color.cmyk.c > 0 || color.cmyk.m > 0 || color.cmyk.y > 0 || color.cmyk.k > 0;
+        const hasDefaultLAB = color.lab.l === 50 && color.lab.a === 0 && color.lab.b === 0;
+        
+        if (hasCMYK && hasDefaultLAB && window.colorScience) {
+            try {
+                // Convert CMYK to RGB first, then RGB to LAB
+                const rgb = window.colorScience.cmykToRgb(color.cmyk.c, color.cmyk.m, color.cmyk.y, color.cmyk.k);
+                const xyz = window.colorScience.rgbToXyz(rgb.r, rgb.g, rgb.b);
+                const lab = window.colorScience.xyzToLab(xyz.x, xyz.y, xyz.z);
+                
+                color.lab.l = Math.round(lab.l * 100) / 100;
+                color.lab.a = Math.round(lab.a * 100) / 100;
+                color.lab.b = Math.round(lab.b * 100) / 100;
+                
+                console.log(`Converted ${colorType} CMYK(${color.cmyk.c},${color.cmyk.m},${color.cmyk.y},${color.cmyk.k}) to LAB(${color.lab.l},${color.lab.a},${color.lab.b})`);
+            } catch (error) {
+                console.warn(`Failed to convert ${colorType} CMYK to LAB:`, error);
+            }
+        }
+    });
+
+    return colorValues;
 }
 
 /**
