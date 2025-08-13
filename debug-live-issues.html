@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Live Issues</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        .warning { color: orange; }
+        button { padding: 10px 20px; margin: 5px; }
+        textarea { width: 100%; height: 200px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Live Website Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h2>1. JavaScript Console Errors</h2>
+        <button onclick="checkConsoleErrors()">Check for JS Errors</button>
+        <div id="console-errors"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>2. Module Loading Test</h2>
+        <button onclick="testModuleLoading()">Test Module Loading</button>
+        <div id="module-status"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>3. Calculate Button Debug</h2>
+        <p>Enter test values:</p>
+        Target CMYK: <input id="tc" value="60"> <input id="tm" value="100"> <input id="ty" value="0"> <input id="tk" value="0"><br>
+        Sample CMYK: <input id="sc" value="58"> <input id="sm" value="95"> <input id="sy" value="2"> <input id="sk" value="1"><br>
+        <button onclick="debugCalculation()">Debug Calculate Button</button>
+        <div id="calc-debug"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>4. Pantone Debug</h2>
+        <button onclick="debugPantone()">Debug Pantone Loading</button>
+        <div id="pantone-debug"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>5. Network Issues Check</h2>
+        <button onclick="checkNetworkIssues()">Check Network/Service Worker</button>
+        <div id="network-debug"></div>
+    </div>
+
+    <script>
+        // Capture console errors
+        const consoleErrors = [];
+        const originalError = console.error;
+        console.error = function(...args) {
+            consoleErrors.push(args.join(' '));
+            originalError.apply(console, args);
+        };
+        
+        function checkConsoleErrors() {
+            const errorDiv = document.getElementById('console-errors');
+            if (consoleErrors.length > 0) {
+                errorDiv.innerHTML = `<div class="error">❌ JavaScript Errors Found:</div>
+                    <textarea readonly>${consoleErrors.join('\\n')}</textarea>`;
+            } else {
+                errorDiv.innerHTML = `<div class="success">✅ No JavaScript errors detected</div>`;
+            }
+        }
+        
+        function testModuleLoading() {
+            const statusDiv = document.getElementById('module-status');
+            let html = '<h3>Module Status:</h3>';
+            
+            // Check critical objects
+            const checks = [
+                { name: 'window.colorScience', obj: window.colorScience },
+                { name: 'window.pantoneColors', obj: window.pantoneColors },
+                { name: 'calculate button DOM element', obj: document.getElementById('calculate-btn') },
+                { name: 'target preset select', obj: document.getElementById('target-preset-select') },
+                { name: 'sample preset select', obj: document.getElementById('sample-preset-select') }
+            ];
+            
+            checks.forEach(check => {
+                const status = check.obj ? 'success">✅ Loaded' : 'error">❌ Missing';
+                html += `<div class="${status}</div><p>${check.name}: ${typeof check.obj}</p>`;
+            });
+            
+            statusDiv.innerHTML = html;
+        }
+        
+        function debugCalculation() {
+            const debugDiv = document.getElementById('calc-debug');
+            let html = '<h3>Calculate Button Debug:</h3>';
+            
+            try {
+                // Check if calculate button exists
+                const calcBtn = document.getElementById('calculate-btn');
+                if (!calcBtn) {
+                    html += '<div class="error">❌ Calculate button not found in DOM</div>';
+                    debugDiv.innerHTML = html;
+                    return;
+                }
+                
+                html += '<div class="success">✅ Calculate button found</div>';
+                
+                // Check event listeners
+                html += `<p>Button text: "${calcBtn.textContent}"</p>`;
+                html += `<p>Button disabled: ${calcBtn.disabled}</p>`;
+                
+                // Try to simulate calculation
+                if (window.performColorDifferenceCalculation) {
+                    html += '<div class="success">✅ performColorDifferenceCalculation function exists</div>';
+                    
+                    // Fill inputs with test values
+                    const inputs = [
+                        ['target-c', document.getElementById('tc').value],
+                        ['target-m', document.getElementById('tm').value],
+                        ['target-y', document.getElementById('ty').value],
+                        ['target-k', document.getElementById('tk').value],
+                        ['sample-c', document.getElementById('sc').value],
+                        ['sample-m', document.getElementById('sm').value],
+                        ['sample-y', document.getElementById('sy').value],
+                        ['sample-k', document.getElementById('sk').value]
+                    ];
+                    
+                    inputs.forEach(([id, value]) => {
+                        const input = document.getElementById(id);
+                        if (input) {
+                            input.value = value;
+                            html += `<p>Set ${id} = ${value}</p>`;
+                        } else {
+                            html += `<div class="error">❌ Input ${id} not found</div>`;
+                        }
+                    });
+                    
+                    // Try calculation
+                    try {
+                        window.performColorDifferenceCalculation();
+                        html += '<div class="success">✅ Calculation function executed without error</div>';
+                    } catch (error) {
+                        html += `<div class="error">❌ Calculation failed: ${error.message}</div>`;
+                    }
+                    
+                } else {
+                    html += '<div class="error">❌ performColorDifferenceCalculation function not found</div>';
+                }
+                
+            } catch (error) {
+                html += `<div class="error">❌ Debug error: ${error.message}</div>`;
+            }
+            
+            debugDiv.innerHTML = html;
+        }
+        
+        function debugPantone() {
+            const debugDiv = document.getElementById('pantone-debug');
+            let html = '<h3>Pantone Debug:</h3>';
+            
+            try {
+                if (!window.pantoneColors) {
+                    html += '<div class="error">❌ window.pantoneColors not loaded</div>';
+                    debugDiv.innerHTML = html;
+                    return;
+                }
+                
+                html += `<div class="success">✅ Pantone module loaded with ${window.pantoneColors.colors?.length || 0} colors</div>`;
+                
+                if (window.pantoneColors.generatePantonePresetOptions) {
+                    const options = window.pantoneColors.generatePantonePresetOptions();
+                    html += `<div class="success">✅ Generated ${options.length} preset options</div>`;
+                    
+                    // Count by type
+                    const headers = options.filter(o => o.type === 'header').length;
+                    const colors = options.filter(o => o.type === 'color').length;
+                    html += `<p>Headers: ${headers}, Colors: ${colors}</p>`;
+                    
+                    // Show first few options
+                    html += '<p>First 10 options:</p><ul>';
+                    options.slice(0, 10).forEach(option => {
+                        html += `<li>${option.type}: ${option.label || option.value}</li>`;
+                    });
+                    html += '</ul>';
+                    
+                } else {
+                    html += '<div class="error">❌ generatePantonePresetOptions function not found</div>';
+                }
+                
+                // Test dropdown population
+                const targetSelect = document.getElementById('target-preset-select');
+                if (targetSelect) {
+                    html += `<div class="success">✅ Target preset dropdown found (${targetSelect.options.length} current options)</div>`;
+                } else {
+                    html += '<div class="error">❌ Target preset dropdown not found</div>';
+                }
+                
+            } catch (error) {
+                html += `<div class="error">❌ Pantone debug error: ${error.message}</div>`;
+            }
+            
+            debugDiv.innerHTML = html;
+        }
+        
+        function checkNetworkIssues() {
+            const debugDiv = document.getElementById('network-debug');
+            let html = '<h3>Network & Service Worker Debug:</h3>';
+            
+            // Check service worker
+            if ('serviceWorker' in navigator) {
+                html += '<div class="success">✅ Service Worker supported</div>';
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    html += `<p>Active service workers: ${registrations.length}</p>`;
+                    registrations.forEach((reg, i) => {
+                        html += `<p>SW ${i+1}: ${reg.scope} (${reg.active?.state})</p>`;
+                    });
+                });
+            } else {
+                html += '<div class="warning">⚠️ Service Worker not supported</div>';
+            }
+            
+            // Check if we're getting cached vs fresh content
+            const scripts = document.querySelectorAll('script[src]');
+            html += `<p>Script files loaded: ${scripts.length}</p>`;
+            scripts.forEach(script => {
+                html += `<p>Script: ${script.src}</p>`;
+            });
+            
+            debugDiv.innerHTML = html;
+        }
+        
+        // Auto-run basic checks
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                checkConsoleErrors();
+                testModuleLoading();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
