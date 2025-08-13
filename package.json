@@ -1,6 +1,6 @@
 {
   "name": "lab-color-matching-calculator",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Professional CMYK to LAB color difference calculator for printing industry",
   "main": "index.html",
   "scripts": {
