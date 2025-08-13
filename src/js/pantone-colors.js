@@ -8,7 +8,7 @@
  * Extracted from official PANTONE® color bridge™ CMYK PC chart
  * Contains CMYK values for 1089 official Pantone colors
  */
-export const pantoneColors = [
+const pantoneColors = [
   {
     "name": "PANTONE Pro. Yel. PC",
     "cmyk": {
@@ -9817,7 +9817,7 @@ export const pantoneColors = [
  * @param {string} colorName - The exact Pantone color name
  * @returns {Object|null} The color object or null if not found
  */
-export function getPantoneColor(colorName) {
+function getPantoneColor(colorName) {
     return pantoneColors.find(color => color.name === colorName) || null;
 }
 
@@ -9826,7 +9826,7 @@ export function getPantoneColor(colorName) {
  * @param {string} searchTerm - The search term to match against color names
  * @returns {Array} Array of matching color objects
  */
-export function searchPantoneColors(searchTerm) {
+function searchPantoneColors(searchTerm) {
     const term = searchTerm.toLowerCase();
     return pantoneColors.filter(color => 
         color.name.toLowerCase().includes(term)
@@ -9838,7 +9838,7 @@ export function searchPantoneColors(searchTerm) {
  * @param {Object} cmyk - CMYK values {c, m, y, k}
  * @returns {Object} Object with closest color, distance, and similarity percentage
  */
-export function findClosestPantoneColor(cmyk) {
+function findClosestPantoneColor(cmyk) {
     let closestColor = null;
     let minDistance = Infinity;
     
@@ -9868,7 +9868,7 @@ export function findClosestPantoneColor(cmyk) {
  * @param {string} family - Color family ('Yellow', 'Red', 'Blue', etc.)
  * @returns {Array} Array of colors in the specified family
  */
-export function getPantoneColorsByFamily(family) {
+function getPantoneColorsByFamily(family) {
     const familyPatterns = {
         'Process': /Pro./,
         'Yellow': /s(1[0-2]d|[1-9]d|100)s/,
@@ -9893,7 +9893,7 @@ export function getPantoneColorsByFamily(family) {
  * Compatible with existing calculator.js expectations
  * @returns {Array} Array of option objects for dropdown population
  */
-export function generatePantonePresetOptions() {
+function generatePantonePresetOptions() {
     const options = [];
     const families = ['Process', 'Yellow', 'Orange', 'Red', 'Pink', 'Purple', 'Blue', 'Green', 'Gray', 'Black'];
     
