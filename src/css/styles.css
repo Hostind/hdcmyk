@@ -4022,4 +4022,304 @@ Performance Optimization and Error Handling Styles */
     .input-field input.error {
         animation: none;
     }
+}/*
+ G7 Analysis Section Styles */
+.g7-analysis-container {
+    background-color: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.g7-analysis-container.active {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.g7-analysis-container h3 {
+    font-size: 1.2rem;
+    color: #495057;
+    margin-bottom: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.g7-analysis-container h3::before {
+    content: "⚖️";
+    font-size: 1.1rem;
+}
+
+/* G7 Compliance Status */
+.g7-compliance-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.compliance-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.compliance-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.compliance-icon.excellent {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.compliance-icon.good {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.compliance-icon.acceptable {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.compliance-icon.poor {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.compliance-text {
+    font-weight: 600;
+    color: #495057;
+}
+
+.compliance-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* G7 Recommendations */
+.g7-recommendations {
+    margin-bottom: 20px;
+}
+
+.g7-recommendations h4 {
+    font-size: 1rem;
+    color: #495057;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.g7-recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.g7-recommendation-item {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.g7-recommendation-item:hover {
+    border-color: #28a745;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+}
+
+.g7-recommendation-item.high-priority {
+    border-left: 4px solid #dc3545;
+}
+
+.g7-recommendation-item.medium-priority {
+    border-left: 4px solid #ffc107;
+}
+
+.g7-recommendation-item.low-priority {
+    border-left: 4px solid #28a745;
+}
+
+.g7-recommendation-content {
+    flex: 1;
+}
+
+.g7-recommendation-channel {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 4px;
+}
+
+.g7-recommendation-adjustment {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.g7-recommendation-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.g7-current-value {
+    color: #dc3545;
+}
+
+.g7-target-value {
+    color: #28a745;
+}
+
+/* G7 Controls */
+.g7-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.g7-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #495057;
+    user-select: none;
+}
+
+.g7-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #28a745;
+}
+
+.g7-toggle:hover {
+    color: #28a745;
+}
+
+/* G7 Integration with Suggestions */
+.suggestion-item.g7-suggestion {
+    border-left: 4px solid #28a745;
+    background-color: #f8fff9;
+}
+
+.suggestion-item.g7-suggestion .suggestion-type {
+    background-color: #28a745;
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 8px;
+}
+
+.suggestion-item.g7-suggestion .suggestion-type::before {
+    content: "G7";
+}
+
+/* Responsive Design for G7 Section */
+@media (max-width: 768px) {
+    .g7-compliance-status {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .compliance-details {
+        align-items: center;
+    }
+    
+    .g7-controls {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .g7-recommendation-item {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .g7-recommendation-values {
+        align-items: flex-start;
+    }
+}
+
+/* G7 Animation Effects */
+.g7-analysis-container.updating {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.g7-recommendation-item.new-recommendation {
+    animation: slideInFromRight 0.5s ease-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* G7 Status Indicators */
+.g7-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.g7-status-badge.excellent {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.g7-status-badge.good {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.g7-status-badge.acceptable {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.g7-status-badge.poor {
+    background-color: #f8d7da;
+    color: #721c24;
 }

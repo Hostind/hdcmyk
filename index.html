@@ -215,6 +215,41 @@
                     <!-- Suggestions will be populated by JavaScript -->
                 </div>
             </div>
+
+            <!-- G7 Analysis Section -->
+            <div class="g7-analysis-container" id="g7-analysis-container" style="display: none;">
+                <h3>G7 Gray Balance Analysis</h3>
+                <div class="g7-analysis-content">
+                    <div class="g7-compliance-status" id="g7-compliance-status">
+                        <div class="compliance-indicator" id="compliance-indicator">
+                            <span class="compliance-icon">⚪</span>
+                            <span class="compliance-text">Analyzing...</span>
+                        </div>
+                        <div class="compliance-details" id="compliance-details">
+                            <span class="gray-level">Gray Level: --</span>
+                            <span class="deviation">Total Deviation: --</span>
+                        </div>
+                    </div>
+                    
+                    <div class="g7-recommendations" id="g7-recommendations">
+                        <h4>G7 Recommendations</h4>
+                        <div class="g7-recommendations-list" id="g7-recommendations-list">
+                            <!-- G7 recommendations will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="g7-controls">
+                        <label class="g7-toggle">
+                            <input type="checkbox" id="enable-g7-analysis" checked>
+                            <span class="toggle-text">Enable G7 Analysis</span>
+                        </label>
+                        <label class="g7-toggle">
+                            <input type="checkbox" id="prioritize-g7-suggestions">
+                            <span class="toggle-text">Prioritize G7 Suggestions</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- History and Export Section -->
@@ -251,6 +286,7 @@
 
     <!-- Scripts -->
     <script src="src/js/color-science.js"></script>
+    <script src="src/js/pantone-colors.js"></script>
     <script src="src/js/storage.js"></script>
     <script src="src/js/export.js"></script>
     <script src="src/js/calculator.js"></script>

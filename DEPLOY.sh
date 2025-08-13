@@ -24,14 +24,16 @@ if git diff --staged --quiet; then
     echo "ℹ️  No changes to commit"
 else
     echo "💾 Committing changes..."
-    git commit -m "feat: complete LAB Color Calculator implementation
+    git commit -m "feat: complete LAB Color Calculator with G7 integration
 
 - Implement all 15 core features and requirements
-- Add comprehensive testing suite with 10 test categories
-- Create professional PWA with offline functionality
+- Add comprehensive G7 gray balance analysis and recommendations
+- Integrate G7 compliance checking with CMYK suggestions
+- Add professional PWA with offline functionality
+- Create comprehensive testing suite with G7 validation
 - Organize codebase with proper directory structure
 - Add complete documentation and deployment guides
-- Ready for production deployment"
+- Ready for production deployment with G7 capabilities"
     echo "✅ Changes committed"
 fi
 
@@ -47,7 +49,7 @@ echo "   - Make it public"
 echo "   - Don't initialize with README (we already have one)"
 echo ""
 echo "2. Connect and Push to GitHub:"
-echo "   git remote add origin https://github.com/YOUR-USERNAME/lab-color-calculator.git"
+echo "   git remote add origin https://github.com/Hostind/hdcmyk.git"
 echo "   git branch -M main"
 echo "   git push -u origin main"
 echo ""

@@ -328,6 +328,9 @@ function initializeApp() {
     // Initialize final integration features
     initializeFinalIntegration();
     
+    // Initialize G7 integration
+    initializeG7Integration();
+    
     console.log('Application initialized successfully');
 }
 
@@ -1058,7 +1061,13 @@ function setupCalculateButton() {
     
     domElements.calculateBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        performColorDifferenceCalculation();
+        
+        // Use enhanced calculation with G7 integration if available
+        if (typeof performEnhancedColorDifferenceCalculation === 'function') {
+            performEnhancedColorDifferenceCalculation();
+        } else {
+            performColorDifferenceCalculation();
+        }
     });
     
     // Also allow Enter key to trigger calculation when focused on inputs
@@ -1345,6 +1354,11 @@ function updateColorSwatch(colorType) {
         }, 300);
         
         console.log(`Updated ${colorType} swatch: ${colorInfo}`);
+        
+        // Trigger G7 analysis for sample color changes
+        if (colorType === 'sample' && typeof updateG7Analysis === 'function') {
+            updateG7Analysis();
+        }
         
     } catch (error) {
         console.error(`Error updating ${colorType} swatch:`, error);
@@ -2682,6 +2696,7 @@ function initializePresetColors() {
 
 /**
  * Populate a preset dropdown with available colors
+ * Enhanced with Pantone Color Database integration
  */
 function populatePresetDropdown(selectElement) {
     // Clear existing options (except the first placeholder)
@@ -2689,20 +2704,82 @@ function populatePresetDropdown(selectElement) {
         selectElement.removeChild(selectElement.lastChild);
     }
     
-    // Group colors by category for better organization
-    const categories = {
-        'Process Colors': ['Process Cyan', 'Process Magenta', 'Process Yellow', 'Process Black'],
-        'Spot Colors': ['Pantone Red 032', 'Pantone Blue 072', 'Pantone Green 354', 'Pantone Orange 021', 'Pantone Purple 2685', 'Pantone Warm Gray 8'],
-        'Brand Colors': ['Corporate Blue', 'Corporate Red', 'Corporate Green', 'Corporate Gray'],
-        'Black Variations': ['Rich Black', 'Warm Black', 'Cool Black', 'Paper White'],
-        'Skin Tones': ['Light Skin', 'Medium Skin', 'Dark Skin'],
-        'Challenging Colors': ['Difficult Red', 'Difficult Blue', 'Difficult Green']
+    try {
+        // Check if Pantone colors are available
+        if (window.pantoneColors && window.pantoneColors.generatePantonePresetOptions) {
+            // Use Pantone color database
+            const pantoneOptions = window.pantoneColors.generatePantonePresetOptions();
+            
+            pantoneOptions.forEach(option => {
+                if (option.type === 'header') {
+                    // Create optgroup for color family
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = option.label;
+                    selectElement.appendChild(optgroup);
+                } else if (option.type === 'color') {
+                    // Create option for individual color
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.label;
+                    optionElement.dataset.colorData = JSON.stringify(option.color);
+                    
+                    // Add to the last optgroup
+                    const lastOptgroup = selectElement.querySelector('optgroup:last-child');
+                    if (lastOptgroup) {
+                        lastOptgroup.appendChild(optionElement);
+                    } else {
+                        selectElement.appendChild(optionElement);
+                    }
+                }
+            });
+            
+            console.log('Populated dropdown with Pantone colors');
+            
+        } else {
+            // Fallback to basic colors if Pantone database not available
+            console.warn('Pantone database not available, using fallback colors');
+            populateFallbackColors(selectElement);
+        }
+        
+    } catch (error) {
+        console.error('Error populating preset dropdown:', error);
+        populateFallbackColors(selectElement);
+    }
+}
+
+/**
+ * Fallback color population if Pantone database is not available
+ */
+function populateFallbackColors(selectElement) {
+    const fallbackColors = {
+        'Process Colors': [
+            { name: 'Process Cyan', cmyk: { c: 100, m: 0, y: 0, k: 0 }, lab: { l: 55, a: -37, b: -50 } },
+            { name: 'Process Magenta', cmyk: { c: 0, m: 100, y: 0, k: 0 }, lab: { l: 60, a: 94, b: -60 } },
+            { name: 'Process Yellow', cmyk: { c: 0, m: 0, y: 100, k: 0 }, lab: { l: 89, a: -5, b: 93 } },
+            { name: 'Process Black', cmyk: { c: 0, m: 0, y: 0, k: 100 }, lab: { l: 16, a: 0, b: 0 } }
+        ],
+        'Common Spot Colors': [
+            { name: 'Reflex Blue', cmyk: { c: 100, m: 72, y: 0, k: 18 }, lab: { l: 25, a: 68, b: -112 } },
+            { name: 'Warm Red', cmyk: { c: 0, m: 100, y: 100, k: 0 }, lab: { l: 48, a: 74, b: 64 } },
+            { name: 'Green', cmyk: { c: 100, m: 0, y: 100, k: 0 }, lab: { l: 51, a: -68, b: 67 } }
+        ]
     };
     
-    // Add options grouped by category
-    Object.keys(categories).forEach(category => {
+    Object.keys(fallbackColors).forEach(category => {
         const optgroup = document.createElement('optgroup');
         optgroup.label = category;
+        
+        fallbackColors[category].forEach(color => {
+            const option = document.createElement('option');
+            option.value = color.name;
+            option.textContent = color.name;
+            option.dataset.colorData = JSON.stringify(color);
+            optgroup.appendChild(option);
+        });
+        
+        selectElement.appendChild(optgroup);
+    });
+}
         
         categories[category].forEach(colorName => {
             if (PRESET_COLORS[colorName]) {
@@ -3185,4 +3262,625 @@ function testWorkflowEnhancements() {
     }, 3000);
     
     console.log('Workflow enhancement tests completed');
+}/**
+
+ * G7 Integration Functions
+ * Integrates G7 gray balance analysis with existing LAB Color Matching Calculator
+ * Following established methodologies and maintaining backward compatibility
+ */
+
+// G7 Analysis State
+const g7State = {
+    enabled: true,
+    prioritizeG7: false,
+    lastAnalysis: null,
+    analysisCache: new Map()
+};
+
+/**
+ * Initialize G7 Analysis Integration
+ * Sets up G7 controls and event listeners
+ */
+function initializeG7Integration() {
+    console.log('Initializing G7 integration...');
+    
+    try {
+        // Cache G7 DOM elements
+        domElements.g7Container = document.getElementById('g7-analysis-container');
+        domElements.g7ComplianceStatus = document.getElementById('g7-compliance-status');
+        domElements.g7ComplianceIndicator = document.getElementById('compliance-indicator');
+        domElements.g7ComplianceDetails = document.getElementById('compliance-details');
+        domElements.g7RecommendationsList = document.getElementById('g7-recommendations-list');
+        domElements.enableG7Checkbox = document.getElementById('enable-g7-analysis');
+        domElements.prioritizeG7Checkbox = document.getElementById('prioritize-g7-suggestions');
+        
+        // Set up G7 control event listeners
+        if (domElements.enableG7Checkbox) {
+            domElements.enableG7Checkbox.addEventListener('change', function(e) {
+                g7State.enabled = e.target.checked;
+                toggleG7Analysis(g7State.enabled);
+                console.log(`G7 analysis ${g7State.enabled ? 'enabled' : 'disabled'}`);
+            });
+        }
+        
+        if (domElements.prioritizeG7Checkbox) {
+            domElements.prioritizeG7Checkbox.addEventListener('change', function(e) {
+                g7State.prioritizeG7 = e.target.checked;
+                console.log(`G7 prioritization ${g7State.prioritizeG7 ? 'enabled' : 'disabled'}`);
+                
+                // Refresh suggestions if we have current results
+                if (appState.results && g7State.enabled) {
+                    updateG7Analysis();
+                }
+            });
+        }
+        
+        console.log('G7 integration initialized successfully');
+        
+    } catch (error) {
+        console.error('Error initializing G7 integration:', error);
+    }
+}
+
+/**
+ * Toggle G7 Analysis Display
+ * Shows/hides G7 analysis section based on enabled state
+ */
+function toggleG7Analysis(enabled) {
+    if (!domElements.g7Container) return;
+    
+    if (enabled) {
+        domElements.g7Container.style.display = 'block';
+        domElements.g7Container.classList.add('active');
+        
+        // Trigger analysis if we have current color data
+        const currentColors = getCurrentColorValues();
+        if (hasValidColorData(currentColors.sample)) {
+            performG7Analysis(currentColors.sample.cmyk);
+        }
+    } else {
+        domElements.g7Container.style.display = 'none';
+        domElements.g7Container.classList.remove('active');
+    }
+}
+
+/**
+ * Perform G7 Analysis on CMYK Values
+ * Analyzes sample color for G7 compliance and updates display
+ */
+function performG7Analysis(cmykValues) {
+    if (!g7State.enabled || !window.colorScience?.calculateG7GrayBalance) {
+        return null;
+    }
+    
+    try {
+        // Generate cache key for performance
+        const cacheKey = `g7_${cmykValues.c}_${cmykValues.m}_${cmykValues.y}_${cmykValues.k}`;
+        
+        // Check cache first
+        if (g7State.analysisCache.has(cacheKey)) {
+            const cachedResult = g7State.analysisCache.get(cacheKey);
+            updateG7Display(cachedResult);
+            return cachedResult;
+        }
+        
+        // Perform G7 analysis
+        const g7Analysis = window.colorScience.calculateG7GrayBalance(
+            cmykValues.c, 
+            cmykValues.m, 
+            cmykValues.y, 
+            cmykValues.k
+        );
+        
+        // Cache the result
+        g7State.analysisCache.set(cacheKey, g7Analysis);
+        g7State.lastAnalysis = g7Analysis;
+        
+        // Update display
+        updateG7Display(g7Analysis);
+        
+        console.log('G7 Analysis completed:', {
+            compliant: g7Analysis.isG7Compliant,
+            grayLevel: g7Analysis.grayLevel,
+            deviation: g7Analysis.totalDeviation,
+            recommendations: g7Analysis.recommendations?.length || 0
+        });
+        
+        return g7Analysis;
+        
+    } catch (error) {
+        console.error('Error performing G7 analysis:', error);
+        displayG7Error(error.message);
+        return null;
+    }
+}
+
+/**
+ * Update G7 Analysis Display
+ * Updates the G7 analysis section with current analysis results
+ */
+function updateG7Display(g7Analysis) {
+    if (!g7Analysis || !domElements.g7ComplianceIndicator) return;
+    
+    try {
+        // Update compliance status
+        const complianceIcon = domElements.g7ComplianceIndicator.querySelector('.compliance-icon');
+        const complianceText = domElements.g7ComplianceIndicator.querySelector('.compliance-text');
+        
+        if (complianceIcon && complianceText) {
+            // Set compliance level styling
+            const complianceLevel = g7Analysis.complianceLevel || 'unknown';
+            complianceIcon.className = `compliance-icon ${complianceLevel}`;
+            
+            // Set compliance icon and text
+            const complianceInfo = getG7ComplianceDisplayInfo(g7Analysis);
+            complianceIcon.textContent = complianceInfo.icon;
+            complianceText.textContent = complianceInfo.text;
+        }
+        
+        // Update compliance details
+        if (domElements.g7ComplianceDetails) {
+            const grayLevelSpan = domElements.g7ComplianceDetails.querySelector('.gray-level');
+            const deviationSpan = domElements.g7ComplianceDetails.querySelector('.deviation');
+            
+            if (grayLevelSpan) {
+                grayLevelSpan.textContent = `Gray Level: ${g7Analysis.grayLevel}%`;
+            }
+            
+            if (deviationSpan) {
+                deviationSpan.textContent = `Total Deviation: ${g7Analysis.totalDeviation.toFixed(2)}`;
+            }
+        }
+        
+        // Update recommendations
+        updateG7Recommendations(g7Analysis.recommendations || []);
+        
+        // Show the G7 container if it's hidden
+        if (domElements.g7Container && domElements.g7Container.style.display === 'none') {
+            domElements.g7Container.style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('Error updating G7 display:', error);
+    }
+}
+
+/**
+ * Get G7 Compliance Display Information
+ * Returns appropriate icon and text for compliance level
+ */
+function getG7ComplianceDisplayInfo(g7Analysis) {
+    const complianceLevel = g7Analysis.complianceLevel || 'unknown';
+    
+    const displayInfo = {
+        excellent: { icon: '✅', text: 'Excellent G7 Compliance' },
+        good: { icon: '✅', text: 'Good G7 Compliance' },
+        acceptable: { icon: '⚠️', text: 'Acceptable G7 Compliance' },
+        poor: { icon: '❌', text: 'Poor G7 Compliance' },
+        unknown: { icon: '❓', text: 'G7 Analysis Error' }
+    };
+    
+    return displayInfo[complianceLevel] || displayInfo.unknown;
+}
+
+/**
+ * Update G7 Recommendations Display
+ * Populates the G7 recommendations list with current recommendations
+ */
+function updateG7Recommendations(recommendations) {
+    if (!domElements.g7RecommendationsList) return;
+    
+    // Clear existing recommendations
+    domElements.g7RecommendationsList.innerHTML = '';
+    
+    if (!recommendations || recommendations.length === 0) {
+        domElements.g7RecommendationsList.innerHTML = '<div class="no-recommendations">No G7 adjustments needed</div>';
+        return;
+    }
+    
+    // Create recommendation items
+    recommendations.forEach((rec, index) => {
+        const recItem = document.createElement('div');
+        recItem.className = `g7-recommendation-item ${rec.priority || 'medium'}-priority`;
+        
+        // Add animation delay for staggered appearance
+        recItem.style.animationDelay = `${index * 0.1}s`;
+        recItem.classList.add('new-recommendation');
+        
+        if (rec.channel === 'All') {
+            // Info message
+            recItem.innerHTML = `
+                <div class="g7-recommendation-content">
+                    <div class="g7-recommendation-channel">✅ G7 Compliance</div>
+                    <div class="g7-recommendation-adjustment">${rec.message}</div>
+                </div>
+            `;
+        } else {
+            // Specific channel adjustment
+            recItem.innerHTML = `
+                <div class="g7-recommendation-content">
+                    <div class="g7-recommendation-channel">${rec.channel} Channel</div>
+                    <div class="g7-recommendation-adjustment">${rec.adjustment}</div>
+                </div>
+                <div class="g7-recommendation-values">
+                    <div class="g7-current-value">Current: ${rec.current}%</div>
+                    <div class="g7-target-value">Target: ${rec.target}%</div>
+                </div>
+            `;
+        }
+        
+        domElements.g7RecommendationsList.appendChild(recItem);
+    });
+}
+
+/**
+ * Display G7 Error Message
+ * Shows error state in G7 analysis section
+ */
+function displayG7Error(errorMessage) {
+    if (!domElements.g7ComplianceIndicator) return;
+    
+    const complianceIcon = domElements.g7ComplianceIndicator.querySelector('.compliance-icon');
+    const complianceText = domElements.g7ComplianceIndicator.querySelector('.compliance-text');
+    
+    if (complianceIcon && complianceText) {
+        complianceIcon.className = 'compliance-icon error';
+        complianceIcon.textContent = '❌';
+        complianceText.textContent = `G7 Analysis Error: ${errorMessage}`;
+    }
+    
+    if (domElements.g7RecommendationsList) {
+        domElements.g7RecommendationsList.innerHTML = '<div class="error-message">Unable to generate G7 recommendations</div>';
+    }
+}
+
+/**
+ * Enhanced Color Difference Calculation with G7 Integration
+ * Extends existing calculation workflow to include G7 analysis
+ */
+function performEnhancedColorDifferenceCalculation() {
+    try {
+        // Start loading state
+        setLoadingState('isCalculating', true);
+        
+        // Get current color values
+        const colorValues = getCurrentColorValues();
+        
+        // Validate inputs
+        if (!hasValidColorData(colorValues.target) || !hasValidColorData(colorValues.sample)) {
+            throw new Error('Please enter valid color values for both target and sample colors');
+        }
+        
+        // Perform standard Delta E analysis
+        const deltaEAnalysis = window.colorScience.performDeltaEAnalysis(
+            colorValues.target.lab,
+            colorValues.sample.lab
+        );
+        
+        // Generate enhanced CMYK suggestions with G7 integration
+        let suggestions;
+        if (g7State.enabled && window.colorScience.generateCMYKSuggestionsWithG7) {
+            const enhancedResult = window.colorScience.generateCMYKSuggestionsWithG7(
+                colorValues.target.lab,
+                colorValues.sample.cmyk,
+                colorValues.sample.lab,
+                {
+                    includeG7: true,
+                    prioritizeG7: g7State.prioritizeG7
+                }
+            );
+            
+            suggestions = enhancedResult.suggestions || [];
+            
+            // Update G7 analysis if available
+            if (enhancedResult.g7Analysis) {
+                g7State.lastAnalysis = enhancedResult.g7Analysis;
+                updateG7Display(enhancedResult.g7Analysis);
+            }
+        } else {
+            // Fallback to standard suggestions
+            suggestions = window.colorScience.generateCMYKSuggestions(
+                colorValues.target.lab,
+                colorValues.sample.cmyk,
+                colorValues.sample.lab
+            );
+            
+            // Perform separate G7 analysis
+            if (g7State.enabled) {
+                performG7Analysis(colorValues.sample.cmyk);
+            }
+        }
+        
+        // Store results in app state
+        appState.results = {
+            ...deltaEAnalysis,
+            suggestions: suggestions,
+            g7Analysis: g7State.lastAnalysis,
+            timestamp: new Date().toISOString(),
+            colorValues: colorValues
+        };
+        
+        // Update displays
+        updateDeltaEDisplay(deltaEAnalysis);
+        updateSuggestionsDisplay(suggestions);
+        
+        // Save to history
+        if (window.colorStorage?.saveToHistory) {
+            window.colorStorage.saveToHistory(appState.results);
+        }
+        
+        console.log('Enhanced color difference calculation completed with G7 integration');
+        
+    } catch (error) {
+        console.error('Error in enhanced color difference calculation:', error);
+        displayCalculationError(error.message);
+    } finally {
+        setLoadingState('isCalculating', false);
+    }
+}
+
+/**
+ * Update G7 Analysis on Input Changes
+ * Triggers G7 analysis when sample CMYK values change
+ */
+function updateG7Analysis() {
+    if (!g7State.enabled) return;
+    
+    const currentColors = getCurrentColorValues();
+    if (hasValidColorData(currentColors.sample)) {
+        // Debounce G7 analysis to avoid excessive calculations
+        clearTimeout(g7State.analysisTimeout);
+        g7State.analysisTimeout = setTimeout(() => {
+            performG7Analysis(currentColors.sample.cmyk);
+        }, DEBOUNCE_CONFIG.CALCULATION_DELAY);
+    }
+}
+
+/**
+ * Check if color data is valid for G7 analysis
+ */
+function hasValidColorData(colorData) {
+    if (!colorData || !colorData.cmyk) return false;
+    
+    const { c, m, y, k } = colorData.cmyk;
+    return !isNaN(c) && !isNaN(m) && !isNaN(y) && !isNaN(k) &&
+           c >= 0 && c <= 100 &&
+           m >= 0 && m <= 100 &&
+           y >= 0 && y <= 100 &&
+           k >= 0 && k <= 100;
+}
+
+/**
+ * Enhanced Suggestions Display with G7 Integration
+ * Updates suggestion display to show G7-specific suggestions
+ */
+function updateEnhancedSuggestionsDisplay(suggestions) {
+    if (!domElements.suggestionsList) return;
+    
+    // Clear existing suggestions
+    domElements.suggestionsList.innerHTML = '';
+    
+    if (!suggestions || suggestions.length === 0) {
+        domElements.suggestionsList.innerHTML = '<div class="no-suggestions">No suggestions available</div>';
+        return;
+    }
+    
+    // Create suggestion items with G7 integration
+    suggestions.forEach((suggestion, index) => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.className = 'suggestion-item';
+        
+        // Add G7-specific styling
+        if (suggestion.type === 'g7') {
+            suggestionItem.classList.add('g7-suggestion');
+        }
+        
+        // Add animation delay
+        suggestionItem.style.animationDelay = `${index * 0.1}s`;
+        
+        // Create suggestion content
+        const cmykText = `C${suggestion.cmyk.c.toFixed(1)} M${suggestion.cmyk.m.toFixed(1)} Y${suggestion.cmyk.y.toFixed(1)} K${suggestion.cmyk.k.toFixed(1)}`;
+        
+        suggestionItem.innerHTML = `
+            <div class="suggestion-cmyk">${cmykText}</div>
+            <div class="suggestion-description">
+                ${suggestion.description}
+                ${suggestion.type === 'g7' ? '<span class="suggestion-type"></span>' : ''}
+            </div>
+            ${suggestion.g7Analysis ? `
+                <div class="suggestion-g7-info">
+                    <small>G7 Level: ${suggestion.g7Analysis.grayLevel}% | Compliance: ${suggestion.g7Analysis.complianceLevel}</small>
+                </div>
+            ` : ''}
+        `;
+        
+        // Add click handler to apply suggestion
+        suggestionItem.addEventListener('click', () => {
+            applySuggestion(suggestion);
+        });
+        
+        domElements.suggestionsList.appendChild(suggestionItem);
+    });
+}
+
+/**
+ * Apply CMYK Suggestion
+ * Applies a suggestion to the sample color inputs
+ */
+function applySuggestion(suggestion) {
+    if (!suggestion || !suggestion.cmyk) return;
+    
+    try {
+        // Update sample CMYK inputs
+        if (domElements.sampleC) domElements.sampleC.value = suggestion.cmyk.c.toFixed(1);
+        if (domElements.sampleM) domElements.sampleM.value = suggestion.cmyk.m.toFixed(1);
+        if (domElements.sampleY) domElements.sampleY.value = suggestion.cmyk.y.toFixed(1);
+        if (domElements.sampleK) domElements.sampleK.value = suggestion.cmyk.k.toFixed(1);
+        
+        // Trigger input events to update validation and swatches
+        [domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK].forEach(input => {
+            if (input) {
+                input.dispatchEvent(new Event('input'));
+                input.dispatchEvent(new Event('blur'));
+            }
+        });
+        
+        // Update G7 analysis with new values
+        if (g7State.enabled) {
+            setTimeout(() => {
+                performG7Analysis(suggestion.cmyk);
+            }, 100);
+        }
+        
+        console.log('Applied suggestion:', suggestion.description);
+        
+        // Show feedback
+        showNotification(`Applied suggestion: ${suggestion.description}`, 'success');
+        
+    } catch (error) {
+        console.error('Error applying suggestion:', error);
+        showNotification('Error applying suggestion', 'error');
+    }
+}
+
+/**
+ * Show Notification
+ * Simple notification system for user feedback
+ */
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    // Style the notification
+    Object.assign(notification.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        padding: '12px 20px',
+        borderRadius: '6px',
+        color: 'white',
+        fontWeight: '600',
+        zIndex: '10000',
+        opacity: '0',
+        transform: 'translateY(-20px)',
+        transition: 'all 0.3s ease'
+    });
+    
+    // Set background color based on type
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        warning: '#ffc107',
+        info: '#17a2b8'
+    };
+    notification.style.backgroundColor = colors[type] || colors.info;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Remove after delay
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Extend the existing calculator app exports with G7 functions
+if (window.calculatorApp) {
+    Object.assign(window.calculatorApp, {
+        // G7 Integration Functions
+        initializeG7Integration,
+        performG7Analysis,
+        updateG7Analysis,
+        toggleG7Analysis,
+        performEnhancedColorDifferenceCalculation,
+        applySuggestion,
+        showNotification,
+        
+        // G7 State Access
+        getG7State: () => g7State,
+        setG7Enabled: (enabled) => {
+            g7State.enabled = enabled;
+            if (domElements.enableG7Checkbox) {
+                domElements.enableG7Checkbox.checked = enabled;
+            }
+            toggleG7Analysis(enabled);
+        },
+        setG7Prioritized: (prioritized) => {
+            g7State.prioritizeG7 = prioritized;
+            if (domElements.prioritizeG7Checkbox) {
+                domElements.prioritizeG7Checkbox.checked = prioritized;
+            }
+        }
+    });
+}
+
+console.log('G7 integration functions loaded successfully');/
+**
+ * Test G7 Integration
+ * Simple test function to verify G7 functionality is working
+ */
+function testG7Integration() {
+    console.log('Testing G7 integration...');
+    
+    try {
+        // Test G7 calculation with known values
+        const testCmyk = { c: 19, m: 16, y: 16, k: 25 }; // Should be G7 compliant
+        
+        if (window.colorScience?.calculateG7GrayBalance) {
+            const g7Result = window.colorScience.calculateG7GrayBalance(
+                testCmyk.c, testCmyk.m, testCmyk.y, testCmyk.k
+            );
+            
+            console.log('G7 Test Result:', {
+                compliant: g7Result.isG7Compliant,
+                grayLevel: g7Result.grayLevel,
+                deviation: g7Result.totalDeviation,
+                complianceLevel: g7Result.complianceLevel
+            });
+            
+            // Test enhanced suggestions
+            if (window.colorScience.generateCMYKSuggestionsWithG7) {
+                const testTargetLab = { l: 60, a: 0, b: 0 };
+                const testSampleLab = { l: 55, a: 2, b: -1 };
+                
+                const enhancedSuggestions = window.colorScience.generateCMYKSuggestionsWithG7(
+                    testTargetLab, testCmyk, testSampleLab, { includeG7: true }
+                );
+                
+                console.log('Enhanced Suggestions Test:', {
+                    totalSuggestions: enhancedSuggestions.suggestions?.length || 0,
+                    g7Suggestions: enhancedSuggestions.suggestions?.filter(s => s.type === 'g7').length || 0,
+                    hasG7Analysis: !!enhancedSuggestions.g7Analysis
+                });
+            }
+            
+            return true;
+        } else {
+            console.warn('G7 functions not available in colorScience module');
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('G7 integration test failed:', error);
+        return false;
+    }
+}
+
+// Add G7 test to the calculator app exports
+if (window.calculatorApp) {
+    window.calculatorApp.testG7Integration = testG7Integration;
 }

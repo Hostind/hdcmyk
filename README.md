@@ -11,6 +11,13 @@ A professional CMYK to LAB color difference calculator designed for the printing
 - **CMYK Adjustment Suggestions**: AI-powered recommendations for achieving target colors
 - **Tolerance Zone Classification**: Good/Acceptable/Poor color matching indicators
 
+### G7 Integration 🎨
+- **G7 Gray Balance Analysis**: Automatic compliance checking for neutral gray reproduction
+- **NPDC Calculations**: Neutral Print Density Curve analysis for press calibration
+- **G7 Recommendations**: Specific CMYK adjustments to achieve G7 compliance
+- **Multi-Paper Support**: Coated, uncoated, and newsprint G7 targets
+- **Compliance Levels**: Excellent/Good/Acceptable/Poor G7 classification
+
 ### Professional Tools
 - **Preset Color Library**: Common spot colors, brand colors, and printing standards
 - **History Management**: Automatic saving and recall of previous calculations
@@ -99,12 +106,55 @@ lab-color-calculator/
 - **Preset Colors**: Select from common printing colors
 - **History**: Reload previous calculations
 
+## 🎨 G7 Gray Balance Analysis
+
+### What is G7?
+G7 is a method for calibrating printing presses to achieve consistent and predictable color reproduction, especially in grayscale and neutral tones. It focuses on creating a neutral print density curve (NPDC) that ensures gray balance across different printing systems.
+
+### G7 Features
+- **Automatic Analysis**: Real-time G7 compliance checking for sample colors
+- **Gray Level Detection**: Automatic detection of 25%, 50%, or 75% gray levels
+- **Compliance Scoring**: Excellent/Good/Acceptable/Poor classification
+- **Specific Recommendations**: Channel-by-channel CMYK adjustment guidance
+- **Multi-Paper Support**: Coated, uncoated, and newsprint targets
+
+### G7 Workflow
+1. **Enter Sample CMYK**: Input your printed sample's CMYK values
+2. **Automatic Analysis**: G7 analysis runs automatically in the background
+3. **View Compliance**: Check the G7 compliance status and deviation
+4. **Apply Recommendations**: Use G7-specific CMYK adjustment suggestions
+5. **Prioritize G7**: Toggle to prioritize G7 suggestions over Delta E suggestions
+
+### G7 Tolerance Levels
+- **Excellent**: Total deviation ≤ 3% (within 50% of tolerance)
+- **Good**: Total deviation ≤ 6% (within tolerance)
+- **Acceptable**: Total deviation ≤ 9% (within 150% of tolerance)
+- **Poor**: Total deviation > 9% (exceeds acceptable limits)
+
+### G7 Controls
+- **Enable G7 Analysis**: Toggle G7 functionality on/off
+- **Prioritize G7 Suggestions**: Show G7 recommendations first
+- **Paper Type**: Currently supports coated paper (ISO Coated v2 profile)
+
 ## 🧪 Testing
 
 ### Run Integration Tests
 Click "Run Integration Tests" in the application or use the browser console:
 ```javascript
 runCompleteWorkflowTests()
+```
+
+### G7 Testing
+Test G7 functionality specifically:
+```javascript
+// Test G7 integration
+window.calculatorApp.testG7Integration()
+
+// Test G7 calculations
+window.colorScience.runG7Tests()
+
+// Test NPDC calculations
+window.colorScience.runNPDCTests()
 ```
 
 ### Test Suites
@@ -124,8 +174,11 @@ runCompleteWorkflowTests()
 ### Color Science
 - **CMYK to RGB**: Simplified conversion for display purposes
 - **LAB to RGB**: CIE LAB color space conversion with D65 illuminant
-- **Delta E Calculation**: CIE Delta E*ab formula for color difference
-- **Tolerance Zones**: Industry-standard thresholds (0-1: Good, 1-3: Acceptable, >3: Poor)
+- **Delta E Calculation**: CIE Delta E*ab formula for color difference measurement
+- **Tolerance Zones**: Industry-standard thresholds (≤2.0: Good, 2.1-5.0: Acceptable, >5.0: Poor)
+- **G7 Gray Balance**: Neutral print density curve analysis for press calibration
+- **G7 Compliance**: Multi-level tolerance checking (Excellent/Good/Acceptable/Poor)
+- **NPDC Analysis**: Neutral Print Density Curve calculation and validation
 
 ### Browser Support
 - **Modern Browsers**: Chrome 60+, Firefox 55+, Safari 11+, Edge 79+
