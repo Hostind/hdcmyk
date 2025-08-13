@@ -71,7 +71,17 @@
                 
                 <div class="input-groups">
                     <div class="input-group">
-                        <label class="group-label">CMYK Values</label>
+                        <label class="group-label">CMYK Values
+                            <div class="inline-help">
+                                <div class="help-icon tooltip-trigger">
+                                    <div class="tooltip-content printing-tooltip">
+                                        <div class="tooltip-title">CMYK Input Guidelines</div>
+                                        <div class="tooltip-description">Enter ink percentages (0-100%) for Cyan, Magenta, Yellow, and Black (Key) process colors.</div>
+                                        <div class="tooltip-tip">Professional tip: Total ink coverage should typically not exceed 280-320% depending on your press and substrate.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
                         <div class="input-row">
                             <div class="input-field">
                                 <label for="target-c">C%</label>
@@ -220,7 +230,41 @@
                 <button id="reset-all-btn" class="reset-button" title="Clear all inputs and reset the calculator">
                     Reset All
                 </button>
+                <button id="workflow-toggle-btn" class="workflow-toggle-btn" title="Show step-by-step calculation process">
+                    Show Process
+                </button>
+                <button id="help-toggle-btn" class="help-toggle" title="Show professional guidance and tips">
+                    Help Guide
+                </button>
             </div>
+        </div>
+
+        <!-- Professional Help Panel -->
+        <div class="help-panel" id="professional-help-panel">
+            <h4>Professional Color Matching Guide</h4>
+            <p><strong>Target Color:</strong> Enter the color you want to achieve. Use either CMYK ink percentages or LAB device-independent values.</p>
+            <p><strong>Sample Color:</strong> Enter the color you actually measured or produced. Compare this against your target to see the difference.</p>
+            
+            <div class="help-example">
+                Example: Target C:50 M:30 Y:0 K:10 vs Sample C:52 M:28 Y:2 K:12
+                Result: ΔE = 2.4 (Acceptable for commercial printing)
+            </div>
+            
+            <p><strong>Delta E Interpretation:</strong></p>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+                <li>ΔE ≤ 1.0: Perfect match (not detectable by human eye)</li>
+                <li>ΔE 1.0-2.0: Very good match (slight difference)</li>
+                <li>ΔE 2.0-3.5: Good match (acceptable for most commercial work)</li>
+                <li>ΔE > 3.5: Poor match (requires adjustment)</li>
+            </ul>
+            
+            <p><strong>Professional Tips:</strong></p>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+                <li>Use spectrophotometer measurements for LAB values when possible</li>
+                <li>Consider substrate and lighting conditions</li>
+                <li>Total ink coverage (TAC) should typically stay below 300%</li>
+                <li>Use the step-by-step process view for complex calculations</li>
+            </ul>
         </div>
 
         <!-- Results Section -->

@@ -40,8 +40,16 @@ const scrollState = {
 // Performance optimization: Debounce configuration
 const DEBOUNCE_CONFIG = {
     INPUT_DELAY: 300,        // 300ms delay for input updates
-    SWATCH_DELAY: 150,       // 150ms delay for swatch updates
+    SWATCH_DELAY: 100,       // 100ms delay for swatch updates (faster for real-time feel)
     CALCULATION_DELAY: 500   // 500ms delay for auto-calculations
+};
+
+// Enhanced real-time preview state
+const previewState = {
+    updateTimeouts: new Map(),
+    isUpdating: false,
+    lastUpdateTime: 0,
+    animationFrameId: null
 };
 
 // Performance optimization: Cached calculations
@@ -1822,74 +1830,114 @@ function initializeColorSwatches() {
  * Update color swatch based on current input values
  * Requirements: 1.5, 2.5, 3.1, 3.2, 3.4 - Real-time color swatch updates
  */
-function updateColorSwatch(colorType) {
-    // Check if color science module is available
-    if (typeof window.colorScience === 'undefined') {
-        console.warn('Color science module not loaded yet');
-        return;
+function updateColorSwatch(colorType, immediate = false) {
+    // Cancel previous update for this color type
+    const timeoutKey = `${colorType}-swatch`;
+    if (previewState.updateTimeouts.has(timeoutKey)) {
+        clearTimeout(previewState.updateTimeouts.get(timeoutKey));
     }
     
-    const swatchElement = colorType === 'target' ? domElements.targetSwatch : domElements.sampleSwatch;
-    if (!swatchElement) {
-        console.error(`Swatch element not found for ${colorType}`);
-        return;
-    }
-    
-    try {
-        // Get current color values from inputs
-        const currentValues = getCurrentColorValues();
-        const colorData = currentValues[colorType];
+    const performUpdate = () => {
+        // Check if color science module is available
+        if (typeof window.colorScience === 'undefined') {
+            console.warn('Color science module not loaded yet');
+            return;
+        }
         
-        // Determine which color space has more complete data
-        const cmykComplete = hasCompleteColorData(colorData.cmyk, 'cmyk');
-        const labComplete = hasCompleteColorData(colorData.lab, 'lab');
+        const swatchElement = colorType === 'target' ? domElements.targetSwatch : domElements.sampleSwatch;
+        if (!swatchElement) {
+            console.error(`Swatch element not found for ${colorType}`);
+            return;
+        }
         
-        let cssColor;
-        let colorInfo;
-        
-        if (cmykComplete && labComplete) {
-            // Both complete - prioritize LAB for accuracy
-            cssColor = window.colorScience.labToCssString(colorData.lab.l, colorData.lab.a, colorData.lab.b);
-            colorInfo = `LAB(${colorData.lab.l.toFixed(1)}, ${colorData.lab.a.toFixed(1)}, ${colorData.lab.b.toFixed(1)})`;
-        } else if (labComplete) {
-            // LAB data available
-            cssColor = window.colorScience.labToCssString(colorData.lab.l, colorData.lab.a, colorData.lab.b);
-            colorInfo = `LAB(${colorData.lab.l.toFixed(1)}, ${colorData.lab.a.toFixed(1)}, ${colorData.lab.b.toFixed(1)})`;
-        } else if (cmykComplete) {
-            // CMYK data available
-            cssColor = window.colorScience.cmykToCssString(colorData.cmyk.c, colorData.cmyk.m, colorData.cmyk.y, colorData.cmyk.k);
-            colorInfo = `CMYK(${colorData.cmyk.c.toFixed(1)}, ${colorData.cmyk.m.toFixed(1)}, ${colorData.cmyk.y.toFixed(1)}, ${colorData.cmyk.k.toFixed(1)})`;
+        try {
+            // Add loading state for visual feedback
+            swatchElement.classList.add('loading');
+            previewState.isUpdating = true;
+            
+            // Use requestAnimationFrame for smooth updates
+            if (previewState.animationFrameId) {
+                cancelAnimationFrame(previewState.animationFrameId);
+            }
+            
+            previewState.animationFrameId = requestAnimationFrame(() => {
+                try {
+                    // Get current color values from inputs
+                    const currentValues = getCurrentColorValues();
+                    const colorData = currentValues[colorType];
+                    
+                    // Determine which color space has more complete data
+                    const cmykComplete = hasCompleteColorData(colorData.cmyk, 'cmyk');
+                    const labComplete = hasCompleteColorData(colorData.lab, 'lab');
+                    
+                    let cssColor;
+                    let colorInfo;
+                    
+                    if (cmykComplete && labComplete) {
+                        // Both complete - prioritize LAB for accuracy
+                        cssColor = window.colorScience.labToCssString(colorData.lab.l, colorData.lab.a, colorData.lab.b);
+                        colorInfo = `LAB(${colorData.lab.l.toFixed(1)}, ${colorData.lab.a.toFixed(1)}, ${colorData.lab.b.toFixed(1)})`;
+                    } else if (labComplete) {
+                        // LAB data available
+                        cssColor = window.colorScience.labToCssString(colorData.lab.l, colorData.lab.a, colorData.lab.b);
+                        colorInfo = `LAB(${colorData.lab.l.toFixed(1)}, ${colorData.lab.a.toFixed(1)}, ${colorData.lab.b.toFixed(1)})`;
+                    } else if (cmykComplete) {
+                        // CMYK data available
+                        cssColor = window.colorScience.cmykToCssString(colorData.cmyk.c, colorData.cmyk.m, colorData.cmyk.y, colorData.cmyk.k);
+                        colorInfo = `CMYK(${colorData.cmyk.c.toFixed(1)}, ${colorData.cmyk.m.toFixed(1)}, ${colorData.cmyk.y.toFixed(1)}, ${colorData.cmyk.k.toFixed(1)})`;
         } else {
             // Default to white if no complete data
             cssColor = 'rgb(255, 255, 255)';
             colorInfo = 'White (Default)';
+                    }
+                    
+                    // Update swatch background color with smooth transition
+                    swatchElement.style.backgroundColor = cssColor;
+                    
+                    // Update tooltip with color information
+                    const capitalizedType = colorType.charAt(0).toUpperCase() + colorType.slice(1);
+                    swatchElement.setAttribute('title', `${capitalizedType} Color: ${colorInfo}`);
+                    
+                    // Remove loading state and add update animation
+                    swatchElement.classList.remove('loading');
+                    swatchElement.classList.add('color-updated');
+                    
+                    setTimeout(() => {
+                        swatchElement.classList.remove('color-updated');
+                    }, 500);
+                    
+                    previewState.lastUpdateTime = performance.now();
+                    console.log(`Enhanced ${colorType} swatch update: ${colorInfo}`);
+                    
+                    // Trigger G7 analysis for sample color changes
+                    if (colorType === 'sample' && typeof updateG7Analysis === 'function') {
+                        updateG7Analysis();
+                    }
+                    
+                } catch (error) {
+                    console.error(`Error updating ${colorType} swatch:`, error);
+                    // Fallback to white on error
+                    swatchElement.style.backgroundColor = 'rgb(255, 255, 255)';
+                    swatchElement.setAttribute('title', `${colorType} Color: Error - Using White`);
+                    swatchElement.classList.remove('loading');
+                } finally {
+                    previewState.isUpdating = false;
+                }
+            });
+            
+        } catch (error) {
+            console.error(`Error in swatch update process:`, error);
+            previewState.isUpdating = false;
+            swatchElement.classList.remove('loading');
         }
-        
-        // Update swatch background color
-        swatchElement.style.backgroundColor = cssColor;
-        
-        // Update tooltip with color information
-        const capitalizedType = colorType.charAt(0).toUpperCase() + colorType.slice(1);
-        swatchElement.setAttribute('title', `${capitalizedType} Color: ${colorInfo}`);
-        
-        // Add visual feedback for color update
-        swatchElement.classList.add('color-updated');
-        setTimeout(() => {
-            swatchElement.classList.remove('color-updated');
-        }, 300);
-        
-        console.log(`Updated ${colorType} swatch: ${colorInfo}`);
-        
-        // Trigger G7 analysis for sample color changes
-        if (colorType === 'sample' && typeof updateG7Analysis === 'function') {
-            updateG7Analysis();
-        }
-        
-    } catch (error) {
-        console.error(`Error updating ${colorType} swatch:`, error);
-        // Fallback to white on error
-        swatchElement.style.backgroundColor = 'rgb(255, 255, 255)';
-        swatchElement.setAttribute('title', `${colorType} Color: Error - Using White`);
+    };
+    
+    if (immediate) {
+        performUpdate();
+    } else {
+        // Debounce the update for better performance
+        const timeout = setTimeout(performUpdate, DEBOUNCE_CONFIG.SWATCH_DELAY);
+        previewState.updateTimeouts.set(timeoutKey, timeout);
     }
 }
 
@@ -2357,8 +2405,20 @@ function performColorDifferenceCalculation() {
  * Core calculation logic separated for retry functionality
  */
 function performCalculationCore() {
-    // Validate all inputs before calculation
+    // Reset and show workflow if enabled
+    if (calculationWorkflow.isVisible) {
+        calculationWorkflow.reset();
+    }
+    
+    // Step 1: Validate inputs
+    if (calculationWorkflow.isVisible) {
+        calculationWorkflow.updateStep('validate', 'processing', 'Checking input values...');
+    }
+    
     if (!areAllInputsValid()) {
+        if (calculationWorkflow.isVisible) {
+            calculationWorkflow.updateStep('validate', 'error', 'Invalid input values detected');
+        }
         throw new Error('Invalid input values detected');
     }
     
@@ -2367,7 +2427,14 @@ function performCalculationCore() {
     
     // Validate that we have sufficient data for calculation
     if (!hasValidColorData(colorValues)) {
+        if (calculationWorkflow.isVisible) {
+            calculationWorkflow.updateStep('validate', 'error', 'Insufficient color data');
+        }
         throw new Error('Insufficient color data for calculation');
+    }
+    
+    if (calculationWorkflow.isVisible) {
+        calculationWorkflow.updateStep('validate', 'completed', 'Input validation passed');
     }
     
     // Check calculation cache first for performance
@@ -2379,30 +2446,99 @@ function performCalculationCore() {
         return;
     }
     
-    // Perform Delta E analysis using color science module
-    const analysis = window.colorScience.performDeltaEAnalysis(
-        colorValues.target.lab,
-        colorValues.sample.lab
-    );
-    
-    if (analysis.error) {
-        throw new Error(`Calculation error: ${analysis.error}`);
+    // Step 2: Convert Target CMYK to LAB
+    if (calculationWorkflow.isVisible) {
+        calculationWorkflow.updateStep('convert-target', 'processing', 
+            `Target: C${colorValues.target.cmyk.c}% M${colorValues.target.cmyk.m}% Y${colorValues.target.cmyk.y}% K${colorValues.target.cmyk.k}%`);
+        
+        setTimeout(() => {
+            calculationWorkflow.updateStep('convert-target', 'completed', 
+                `LAB: L*${colorValues.target.lab.l.toFixed(1)} a*${colorValues.target.lab.a.toFixed(1)} b*${colorValues.target.lab.b.toFixed(1)}`);
+        }, 300);
     }
     
-    // Cache the result for future use
-    cacheCalculationResult(cacheKey, analysis);
+    // Step 3: Convert Sample CMYK to LAB
+    if (calculationWorkflow.isVisible) {
+        setTimeout(() => {
+            calculationWorkflow.updateStep('convert-sample', 'processing', 
+                `Sample: C${colorValues.sample.cmyk.c}% M${colorValues.sample.cmyk.m}% Y${colorValues.sample.cmyk.y}% K${colorValues.sample.cmyk.k}%`);
+            
+            setTimeout(() => {
+                calculationWorkflow.updateStep('convert-sample', 'completed', 
+                    `LAB: L*${colorValues.sample.lab.l.toFixed(1)} a*${colorValues.sample.lab.a.toFixed(1)} b*${colorValues.sample.lab.b.toFixed(1)}`);
+            }, 300);
+        }, 600);
+    }
     
-    // Update application state with results
-    appState.results = analysis;
+    // Step 4: Calculate component deltas
+    if (calculationWorkflow.isVisible) {
+        setTimeout(() => {
+            calculationWorkflow.updateStep('calculate-deltas', 'processing', 'Computing ΔL*, Δa*, Δb* values...');
+        }, 1200);
+    }
     
-    // Update status bar to complete state
-    setCompleteStatus();
+    // Step 5: Calculate Delta E
+    if (calculationWorkflow.isVisible) {
+        setTimeout(() => {
+            calculationWorkflow.updateStep('calculate-deltae', 'processing', 'Computing CIE76 Delta E...');
+        }, 1500);
+    }
     
-    // Display results
-    displayCalculationResults(analysis);
+    // Perform Delta E analysis using color science module
+    const analysisPromise = new Promise((resolve) => {
+        setTimeout(() => {
+            const analysis = window.colorScience.performDeltaEAnalysis(
+                colorValues.target.lab,
+                colorValues.sample.lab
+            );
+            resolve(analysis);
+        }, calculationWorkflow.isVisible ? 1800 : 0);
+    });
     
-    // Update export button states
-    if (typeof window.colorExport !== 'undefined' && window.colorExport.updateExportButtonStates) {
+    analysisPromise.then(analysis => {
+        if (analysis.error) {
+            if (calculationWorkflow.isVisible) {
+                calculationWorkflow.updateStep('calculate-deltae', 'error', `Error: ${analysis.error}`);
+            }
+            throw new Error(`Calculation error: ${analysis.error}`);
+        }
+        
+        // Complete calculation steps
+        if (calculationWorkflow.isVisible) {
+            calculationWorkflow.updateStep('calculate-deltas', 'completed', 
+                `ΔL*=${analysis.componentDeltas?.deltaL?.toFixed(2)} Δa*=${analysis.componentDeltas?.deltaA?.toFixed(2)} Δb*=${analysis.componentDeltas?.deltaB?.toFixed(2)}`);
+            calculationWorkflow.updateStep('calculate-deltae', 'completed', 
+                `ΔE = ${analysis.deltaE?.toFixed(2)}`);
+            
+            // Step 6: Analyze tolerance
+            calculationWorkflow.updateStep('analyze-tolerance', 'processing', 'Evaluating industry tolerance...');
+            setTimeout(() => {
+                calculationWorkflow.updateStep('analyze-tolerance', 'completed', 
+                    `Zone: ${analysis.tolerance?.description}`);
+                
+                // Step 7: Generate report
+                calculationWorkflow.updateStep('generate-results', 'processing', 'Generating professional report...');
+                setTimeout(() => {
+                    calculationWorkflow.updateStep('generate-results', 'completed', 
+                        'Report ready for printing professionals');
+                }, 300);
+            }, 300);
+        }
+        
+        // Cache the result for future use
+        cacheCalculationResult(cacheKey, analysis);
+        
+        // Update application state with results
+        appState.results = analysis;
+        
+        // Update status bar to complete state
+        setCompleteStatus();
+        
+        // Display results
+        displayCalculationResults(analysis);
+        
+        // Update export button states
+        if (typeof window.colorExport !== 'undefined' && window.colorExport.updateExportButtonStates) {
         window.colorExport.updateExportButtonStates();
     }
     
@@ -2829,6 +2965,94 @@ function displaySuggestionsError(errorMessage) {
         </div>
     `;
 }
+
+// Step-by-step calculation workflow for professional printing users
+class CalculationWorkflow {
+    constructor() {
+        this.steps = [
+            { id: 'validate', name: 'Validate Inputs', status: 'pending' },
+            { id: 'convert-target', name: 'Convert Target CMYK→LAB', status: 'pending' },
+            { id: 'convert-sample', name: 'Convert Sample CMYK→LAB', status: 'pending' },
+            { id: 'calculate-deltas', name: 'Calculate Component Deltas', status: 'pending' },
+            { id: 'calculate-deltae', name: 'Calculate Total ΔE', status: 'pending' },
+            { id: 'analyze-tolerance', name: 'Analyze Tolerance Zone', status: 'pending' },
+            { id: 'generate-results', name: 'Generate Professional Report', status: 'pending' }
+        ];
+        this.currentStep = 0;
+        this.isVisible = false;
+    }
+
+    showWorkflow() {
+        this.isVisible = true;
+        this.renderWorkflow();
+    }
+
+    hideWorkflow() {
+        this.isVisible = false;
+        const container = document.getElementById('calculation-workflow');
+        if (container) container.style.display = 'none';
+    }
+
+    updateStep(stepId, status, details = null) {
+        const step = this.steps.find(s => s.id === stepId);
+        if (step) {
+            step.status = status;
+            step.details = details;
+            this.renderWorkflow();
+        }
+    }
+
+    renderWorkflow() {
+        if (!this.isVisible) return;
+        
+        let container = document.getElementById('calculation-workflow');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'calculation-workflow';
+            container.className = 'workflow-container';
+            
+            const calculatorMain = document.querySelector('.calculator-main');
+            if (calculatorMain) {
+                calculatorMain.parentNode.insertBefore(container, calculatorMain.nextSibling);
+            }
+        }
+        
+        container.style.display = 'block';
+        container.innerHTML = `
+            <div class="workflow-header">
+                <h3>Calculation Process</h3>
+                <button class="workflow-close" onclick="calculationWorkflow.hideWorkflow()">×</button>
+            </div>
+            <div class="workflow-steps">
+                ${this.steps.map((step, index) => `
+                    <div class="workflow-step ${step.status}" data-step="${step.id}">
+                        <div class="step-indicator">
+                            <span class="step-number">${index + 1}</span>
+                            ${step.status === 'completed' ? '<span class="step-checkmark">✓</span>' : ''}
+                            ${step.status === 'processing' ? '<span class="step-spinner">⟳</span>' : ''}
+                        </div>
+                        <div class="step-content">
+                            <div class="step-name">${step.name}</div>
+                            ${step.details ? `<div class="step-details">${step.details}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    reset() {
+        this.steps.forEach(step => {
+            step.status = 'pending';
+            step.details = null;
+        });
+        this.currentStep = 0;
+        if (this.isVisible) this.renderWorkflow();
+    }
+}
+
+// Global workflow instance
+const calculationWorkflow = new CalculationWorkflow();
 
 /**
  * Calculate total adjustment magnitude between two CMYK values
@@ -3458,6 +3682,39 @@ function setupWorkflowEnhancements() {
     if (domElements.resetAllBtn) {
         domElements.resetAllBtn.addEventListener('click', function() {
             resetAllInputs();
+        });
+    }
+    
+    // Workflow toggle button
+    const workflowToggleBtn = document.getElementById('workflow-toggle-btn');
+    if (workflowToggleBtn) {
+        workflowToggleBtn.addEventListener('click', function() {
+            if (calculationWorkflow.isVisible) {
+                calculationWorkflow.hideWorkflow();
+                workflowToggleBtn.textContent = 'Show Process';
+                workflowToggleBtn.classList.remove('active');
+            } else {
+                calculationWorkflow.showWorkflow();
+                workflowToggleBtn.textContent = 'Hide Process';
+                workflowToggleBtn.classList.add('active');
+            }
+        });
+    }
+    
+    // Professional help toggle button
+    const helpToggleBtn = document.getElementById('help-toggle-btn');
+    const helpPanel = document.getElementById('professional-help-panel');
+    if (helpToggleBtn && helpPanel) {
+        helpToggleBtn.addEventListener('click', function() {
+            if (helpPanel.classList.contains('visible')) {
+                helpPanel.classList.remove('visible');
+                helpToggleBtn.textContent = 'Help Guide';
+                helpToggleBtn.classList.remove('active');
+            } else {
+                helpPanel.classList.add('visible');
+                helpToggleBtn.textContent = 'Hide Guide';
+                helpToggleBtn.classList.add('active');
+            }
         });
     }
     
