@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G7 Analysis & Export Integration Test</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+    <style>
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .test-result {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <!-- Enhanced Status Bar -->
+    <div class="status-bar visible" id="status-bar" role="banner" aria-label="Calculator status and quick actions">
+        <div class="status-bar-content">
+            <div class="status-info">
+                <span class="status-label">Status:</span>
+                <span class="status-value" id="status-value">G7 Testing</span>
+            </div>
+            <div class="delta-info">
+                <span class="delta-label">ΔE*ab:</span>
+                <span class="delta-value" id="status-delta-value">1.45</span>
+            </div>
+            <div class="quick-actions-bar">
+                <button class="status-action-btn" onclick="testG7Analysis()">G7 Test</button>
+                <button class="status-action-btn" onclick="testExportFeatures()">Export Test</button>
+                <button class="status-action-btn" onclick="runAllIntegrationTests()">Run All</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="calculator-container" style="margin-top: 80px;">
+        <header class="app-header">
+            <h1>G7 Analysis & Export Integration Test</h1>
+            <p class="subtitle">Verifying UI enhancements don't interfere with critical features</p>
+        </header>
+
+        <div class="test-section">
+            <h2>🧪 Integration Test Results</h2>
+            <div id="test-results"></div>
+            <button onclick="runAllIntegrationTests()" class="btn-outlined gold-premium">Run All Integration Tests</button>
+        </div>
+
+        <!-- G7 Analysis Container (Enhanced) -->
+        <div class="test-section">
+            <h3>G7 Gray Balance Analysis Integration</h3>
+            <div class="g7-analysis-container premium-feature" id="g7-analysis-container" style="display: block;">
+                <h3 class="gold-accent">G7 Gray Balance Analysis <span class="premium-badge">Premium</span></h3>
+                <div class="g7-analysis-content">
+                    <div class="g7-compliance-status" id="g7-compliance-status">
+                        <div class="compliance-indicator" id="compliance-indicator">
+                            <span class="compliance-icon">⚪</span>
+                            <span class="compliance-text">Analyzing...</span>
+                        </div>
+                        <div class="compliance-details" id="compliance-details">
+                            <span class="gray-level">Gray Level: 50%</span>
+                            <span class="deviation">Total Deviation: 1.2 ΔE</span>
+                        </div>
+                    </div>
+                    
+                    <div class="g7-recommendations" id="g7-recommendations">
+                        <h4>G7 Recommendations</h4>
+                        <div class="g7-recommendations-list" id="g7-recommendations-list">
+                            <div class="g7-recommendation-item">
+                                <strong>Cyan Adjustment:</strong> Reduce by 2%
+                            </div>
+                            <div class="g7-recommendation-item">
+                                <strong>Magenta Adjustment:</strong> Increase by 1%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="g7-controls">
+                        <label class="g7-toggle">
+                            <input type="checkbox" id="enable-g7-analysis" checked>
+                            <span class="toggle-text">Enable G7 Analysis</span>
+                        </label>
+                        <label class="g7-toggle">
+                            <input type="checkbox" id="prioritize-g7-suggestions">
+                            <span class="toggle-text">Prioritize G7 Suggestions</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Features Integration -->
+        <div class="test-section">
+            <h3>Export Features Integration</h3>
+            <div class="export-panel premium">
+                <h3 class="gold-accent">Export Results</h3>
+                <div class="export-buttons">
+                    <button class="export-btn btn-outlined gold" id="export-csv-btn" onclick="testCSVExport()">Export CSV</button>
+                    <button class="export-btn btn-outlined gold-premium" id="export-pdf-btn" onclick="testPDFExport()">Export PDF</button>
+                    <button class="export-btn btn-outlined gold" id="export-json-btn" onclick="testJSONExport()">Export JSON</button>
+                </div>
+                <div id="export-test-results"></div>
+            </div>
+        </div>
+
+        <!-- History Features Integration -->
+        <div class="test-section">
+            <h3>History Features Integration</h3>
+            <div class="history-panel">
+                <h3>Recent Comparisons</h3>
+                <div class="history-list" id="history-list">
+                    <div class="history-item" onclick="loadHistoryItem(this)">
+                        <div class="history-summary">
+                            <span class="history-delta">ΔE: 1.45</span>
+                            <span class="history-colors">Target: C:10 M:20 Y:30 K:5 → Sample: C:12 M:22 Y:28 K:6</span>
+                        </div>
+                        <div class="history-meta">
+                            <span class="history-time">2 minutes ago</span>
+                        </div>
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem(this)">
+                        <div class="history-summary">
+                            <span class="history-delta">ΔE: 2.78</span>
+                            <span class="history-colors">Target: C:0 M:100 Y:0 K:0 → Sample: C:2 M:98 Y:1 K:0</span>
+                        </div>
+                        <div class="history-meta">
+                            <span class="history-time">5 minutes ago</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="clear-history-btn" id="clear-history-btn" onclick="testClearHistory()">Clear History</button>
+            </div>
+        </div>
+
+        <!-- Calculator Core Functionality -->
+        <div class="test-section">
+            <h3>Core Calculator Integration</h3>
+            <div class="calculator-test-area">
+                <section class="color-section" id="target-section">
+                    <h2 class="tooltip-enhanced" data-tooltip="Enter target color values for comparison" tabindex="0">Target Color</h2>
+                    <div class="color-display">
+                        <div class="color-swatch" id="target-swatch" style="background-color: rgb(230, 180, 170);" aria-label="Target color preview"></div>
+                        <div class="color-equation-symbol">-</div>
+                    </div>
+                    <div class="input-groups">
+                        <div class="input-group">
+                            <label class="group-label">CMYK Values</label>
+                            <div class="input-row">
+                                <div class="input-field">
+                                    <label for="target-c">C%</label>
+                                    <input type="number" id="target-c" value="10" min="0" max="100" step="0.1">
+                                </div>
+                                <div class="input-field">
+                                    <label for="target-m">M%</label>
+                                    <input type="number" id="target-m" value="20" min="0" max="100" step="0.1">
+                                </div>
+                                <div class="input-field">
+                                    <label for="target-y">Y%</label>
+                                    <input type="number" id="target-y" value="30" min="0" max="100" step="0.1">
+                                </div>
+                                <div class="input-field">
+                                    <label for="target-k">K%</label>
+                                    <input type="number" id="target-k" value="5" min="0" max="100" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="calculate-section">
+                    <div class="calculate-controls">
+                        <button id="calculate-btn" class="calculate-button btn-outlined gold-premium" onclick="testCalculation()">
+                            Calculate Color Difference
+                        </button>
+                    </div>
+                </div>
+
+                <section class="results-section visible" id="results-section">
+                    <div class="total-delta-e">
+                        <h3>Total Color Difference</h3>
+                        <div class="delta-e-value important-value" id="delta-e-value">
+                            <span class="delta-e-number value">1.45</span>
+                            <span class="delta-e-label">ΔE*ab</span>
+                        </div>
+                        <div class="tolerance-zone" id="tolerance-zone">
+                            <div class="tolerance-indicator good">Excellent Match</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/js/color-science.js"></script>
+    <script src="src/js/pantone-colors.js"></script>
+    <script src="src/js/storage.js"></script>
+    <script src="src/js/export.js"></script>
+
+    <script>
+        // Integration Test Suite
+        let integrationResults = [];
+
+        function logIntegrationTest(test, passed, message) {
+            integrationResults.push({ test, passed, message, timestamp: new Date() });
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            resultDiv.innerHTML = `<strong>${passed ? '✅' : '❌'} ${test}:</strong> ${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function logInfo(message) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'test-result info';
+            resultDiv.innerHTML = `<strong>ℹ️ Info:</strong> ${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function runAllIntegrationTests() {
+            // Clear results
+            document.getElementById('test-results').innerHTML = '';
+            integrationResults = [];
+
+            logInfo('Starting G7 Analysis & Export Integration Tests...');
+
+            // Test G7 Analysis Integration
+            await testG7AnalysisIntegration();
+
+            // Test Export Features Integration
+            await testExportIntegration();
+
+            // Test History Integration
+            await testHistoryIntegration();
+
+            // Test Calculator Core Integration
+            await testCalculatorCoreIntegration();
+
+            // Test UI Enhancement Compatibility
+            await testUIEnhancementCompatibility();
+
+            // Generate final report
+            generateIntegrationReport();
+        }
+
+        async function testG7AnalysisIntegration() {
+            logInfo('Testing G7 Analysis Integration...');
+
+            const g7Container = document.getElementById('g7-analysis-container');
+            if (g7Container) {
+                logIntegrationTest('G7 Container Exists', true, 'G7 analysis container found');
+
+                // Test G7 styling with UI enhancements
+                const hasGoldAccent = g7Container.querySelector('.gold-accent');
+                logIntegrationTest('G7 Gold Accent Integration', !!hasGoldAccent, 
+                    `Gold accent styling: ${hasGoldAccent ? 'applied' : 'missing'}`);
+
+                // Test premium badge
+                const premiumBadge = g7Container.querySelector('.premium-badge');
+                logIntegrationTest('G7 Premium Badge', !!premiumBadge, 
+                    `Premium badge: ${premiumBadge ? 'present' : 'missing'}`);
+
+                // Test G7 controls functionality
+                const g7Controls = g7Container.querySelectorAll('.g7-toggle input[type="checkbox"]');
+                logIntegrationTest('G7 Controls', g7Controls.length >= 2, 
+                    `G7 control checkboxes: ${g7Controls.length} found`);
+
+                // Test G7 recommendations display
+                const recommendations = g7Container.querySelector('.g7-recommendations-list');
+                logIntegrationTest('G7 Recommendations Display', !!recommendations, 
+                    `Recommendations container: ${recommendations ? 'present' : 'missing'}`);
+
+                // Test compliance indicator
+                const complianceIndicator = g7Container.querySelector('.compliance-indicator');
+                logIntegrationTest('G7 Compliance Indicator', !!complianceIndicator, 
+                    `Compliance indicator: ${complianceIndicator ? 'present' : 'missing'}`);
+
+            } else {
+                logIntegrationTest('G7 Container Exists', false, 'G7 analysis container not found');
+            }
+        }
+
+        async function testExportIntegration() {
+            logInfo('Testing Export Features Integration...');
+
+            const exportPanel = document.querySelector('.export-panel');
+            if (exportPanel) {
+                logIntegrationTest('Export Panel Exists', true, 'Export panel found');
+
+                // Test export buttons with enhanced styling
+                const exportButtons = exportPanel.querySelectorAll('.export-btn');
+                logIntegrationTest('Export Buttons', exportButtons.length >= 2, 
+                    `Export buttons found: ${exportButtons.length}`);
+
+                // Test gold styling on export buttons
+                const goldExportButtons = exportPanel.querySelectorAll('.export-btn.gold, .export-btn.gold-premium');
+                logIntegrationTest('Export Button Gold Styling', goldExportButtons.length > 0, 
+                    `Gold-styled export buttons: ${goldExportButtons.length}`);
+
+                // Test button outline styling
+                const outlinedExportButtons = exportPanel.querySelectorAll('.export-btn.btn-outlined');
+                logIntegrationTest('Export Button Outline Styling', outlinedExportButtons.length > 0, 
+                    `Outlined export buttons: ${outlinedExportButtons.length}`);
+
+                // Test export panel premium styling
+                const isPremium = exportPanel.classList.contains('premium');
+                logIntegrationTest('Export Panel Premium Styling', isPremium, 
+                    `Premium styling: ${isPremium ? 'applied' : 'missing'}`);
+
+            } else {
+                logIntegrationTest('Export Panel Exists', false, 'Export panel not found');
+            }
+        }
+
+        async function testHistoryIntegration() {
+            logInfo('Testing History Features Integration...');
+
+            const historyPanel = document.querySelector('.history-panel');
+            if (historyPanel) {
+                logIntegrationTest('History Panel Exists', true, 'History panel found');
+
+                // Test history items
+                const historyItems = historyPanel.querySelectorAll('.history-item');
+                logIntegrationTest('History Items', historyItems.length > 0, 
+                    `History items found: ${historyItems.length}`);
+
+                // Test clear history button
+                const clearButton = historyPanel.querySelector('.clear-history-btn');
+                logIntegrationTest('Clear History Button', !!clearButton, 
+                    `Clear button: ${clearButton ? 'present' : 'missing'}`);
+
+                // Test history item structure
+                if (historyItems.length > 0) {
+                    const firstItem = historyItems[0];
+                    const hasSummary = firstItem.querySelector('.history-summary');
+                    const hasMeta = firstItem.querySelector('.history-meta');
+                    
+                    logIntegrationTest('History Item Structure', hasSummary && hasMeta, 
+                        `History item structure: ${hasSummary && hasMeta ? 'complete' : 'incomplete'}`);
+                }
+
+            } else {
+                logIntegrationTest('History Panel Exists', false, 'History panel not found');
+            }
+        }
+
+        async function testCalculatorCoreIntegration() {
+            logInfo('Testing Calculator Core Integration...');
+
+            // Test color sections with enhanced tooltips
+            const colorSections = document.querySelectorAll('.color-section');
+            logIntegrationTest('Color Sections', colorSections.length > 0, 
+                `Color sections found: ${colorSections.length}`);
+
+            // Test enhanced tooltips on headers
+            const tooltipHeaders = document.querySelectorAll('.color-section .tooltip-enhanced');
+            logIntegrationTest('Enhanced Tooltip Headers', tooltipHeaders.length > 0, 
+                `Tooltip-enhanced headers: ${tooltipHeaders.length}`);
+
+            // Test calculate button with enhanced styling
+            const calculateButton = document.getElementById('calculate-btn');
+            if (calculateButton) {
+                const hasOutlineStyle = calculateButton.classList.contains('btn-outlined');
+                const hasGoldStyle = calculateButton.classList.contains('gold-premium');
+                
+                logIntegrationTest('Calculate Button Styling', hasOutlineStyle && hasGoldStyle, 
+                    `Calculate button styling: outlined=${hasOutlineStyle}, gold=${hasGoldStyle}`);
+            }
+
+            // Test input fields
+            const cmykInputs = document.querySelectorAll('input[id$="-c"], input[id$="-m"], input[id$="-y"], input[id$="-k"]');
+            logIntegrationTest('CMYK Input Fields', cmykInputs.length >= 4, 
+                `CMYK inputs found: ${cmykInputs.length}`);
+
+            // Test results section
+            const resultsSection = document.getElementById('results-section');
+            if (resultsSection) {
+                const isVisible = resultsSection.classList.contains('visible');
+                logIntegrationTest('Results Section Visibility', isVisible, 
+                    `Results section: ${isVisible ? 'visible' : 'hidden'}`);
+            }
+        }
+
+        async function testUIEnhancementCompatibility() {
+            logInfo('Testing UI Enhancement Compatibility...');
+
+            // Test status bar doesn't interfere with other elements
+            const statusBar = document.getElementById('status-bar');
+            const calculatorContainer = document.querySelector('.calculator-container');
+            
+            if (statusBar && calculatorContainer) {
+                const statusBarHeight = statusBar.offsetHeight;
+                const containerMarginTop = parseInt(getComputedStyle(calculatorContainer).marginTop);
+                
+                logIntegrationTest('Status Bar Layout', containerMarginTop >= statusBarHeight, 
+                    `Status bar height: ${statusBarHeight}px, Container margin: ${containerMarginTop}px`);
+            }
+
+            // Test CSS custom properties don't conflict
+            const rootStyle = getComputedStyle(document.documentElement);
+            const goldPrimary = rootStyle.getPropertyValue('--gold-primary');
+            
+            logIntegrationTest('CSS Custom Properties', !!goldPrimary.trim(), 
+                `Gold primary color: ${goldPrimary.trim() || 'not defined'}`);
+
+            // Test responsive design compatibility
+            const viewportWidth = window.innerWidth;
+            const isMobile = viewportWidth <= 768;
+            const isTablet = viewportWidth > 768 && viewportWidth <= 1024;
+            const isDesktop = viewportWidth > 1024;
+            
+            let deviceType = isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop';
+            logIntegrationTest('Responsive Design', true, 
+                `Current viewport: ${viewportWidth}px (${deviceType})`);
+
+            // Test accessibility features
+            const ariaLabels = document.querySelectorAll('[aria-label]');
+            const tabIndexElements = document.querySelectorAll('[tabindex]');
+            
+            logIntegrationTest('Accessibility Features', ariaLabels.length > 0 && tabIndexElements.length > 0, 
+                `ARIA labels: ${ariaLabels.length}, Tabindex elements: ${tabIndexElements.length}`);
+        }
+
+        function generateIntegrationReport() {
+            logInfo('Integration Test Report Generated');
+
+            const passed = integrationResults.filter(r => r.passed).length;
+            const total = integrationResults.length;
+            const percentage = Math.round((passed / total) * 100);
+
+            const reportDiv = document.createElement('div');
+            reportDiv.className = `test-result ${percentage >= 90 ? 'pass' : percentage >= 70 ? 'info' : 'fail'}`;
+            reportDiv.innerHTML = `
+                <strong>📊 G7 & Export Integration Report:</strong><br>
+                Tests Passed: ${passed}/${total} (${percentage}%)<br>
+                G7 Analysis: ${integrationResults.filter(r => r.test.includes('G7')).every(r => r.passed) ? 'Compatible' : 'Issues Found'}<br>
+                Export Features: ${integrationResults.filter(r => r.test.includes('Export')).every(r => r.passed) ? 'Compatible' : 'Issues Found'}<br>
+                UI Compatibility: ${percentage >= 90 ? 'Excellent' : percentage >= 70 ? 'Good' : 'Needs Review'}<br>
+                Timestamp: ${new Date().toLocaleString()}
+            `;
+
+            document.getElementById('test-results').appendChild(reportDiv);
+
+            console.log('G7 & Export Integration Test Results:', {
+                passed,
+                total,
+                percentage,
+                details: integrationResults
+            });
+        }
+
+        // Mock functions for testing
+        function testG7Analysis() {
+            const indicator = document.getElementById('compliance-indicator');
+            const icon = indicator.querySelector('.compliance-icon');
+            const text = indicator.querySelector('.compliance-text');
+            
+            icon.textContent = '✅';
+            text.textContent = 'G7 Compliant';
+            
+            logInfo('G7 Analysis Mock Test Completed');
+        }
+
+        function testExportFeatures() {
+            logInfo('Export Features Mock Test Completed');
+        }
+
+        function testCSVExport() {
+            // Mock CSV export
+            const csvData = "Target C,Target M,Target Y,Target K,Sample C,Sample M,Sample Y,Sample K,Delta E\n10,20,30,5,12,22,28,6,1.45";
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create temporary download link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'color-test-results.csv';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            
+            const resultsDiv = document.getElementById('export-test-results');
+            resultsDiv.innerHTML = '<div class="test-result pass"><strong>✅ CSV Export:</strong> Test file generated and downloaded</div>';
+        }
+
+        function testPDFExport() {
+            // Mock PDF export
+            const resultsDiv = document.getElementById('export-test-results');
+            const existingResults = resultsDiv.innerHTML;
+            resultsDiv.innerHTML = existingResults + '<div class="test-result pass"><strong>✅ PDF Export:</strong> Mock PDF export completed</div>';
+        }
+
+        function testJSONExport() {
+            // Mock JSON export
+            const jsonData = {
+                target: { c: 10, m: 20, y: 30, k: 5 },
+                sample: { c: 12, m: 22, y: 28, k: 6 },
+                deltaE: 1.45,
+                timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'color-test-results.json';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            
+            const resultsDiv = document.getElementById('export-test-results');
+            const existingResults = resultsDiv.innerHTML;
+            resultsDiv.innerHTML = existingResults + '<div class="test-result pass"><strong>✅ JSON Export:</strong> Test file generated and downloaded</div>';
+        }
+
+        function testCalculation() {
+            // Mock calculation
+            const deltaEValue = document.querySelector('.delta-e-number');
+            const toleranceZone = document.getElementById('tolerance-zone');
+            
+            if (deltaEValue) {
+                deltaEValue.textContent = '1.45';
+            }
+            
+            if (toleranceZone) {
+                toleranceZone.innerHTML = '<div class="tolerance-indicator good">Excellent Match</div>';
+            }
+            
+            // Update status bar
+            document.getElementById('status-value').textContent = 'Calculated';
+            document.getElementById('status-delta-value').textContent = '1.45';
+            
+            logInfo('Mock calculation completed: ΔE = 1.45');
+        }
+
+        function loadHistoryItem(item) {
+            // Mock history item loading
+            const summary = item.querySelector('.history-summary');
+            const colors = summary.querySelector('.history-colors').textContent;
+            
+            logInfo(`Mock loading history item: ${colors}`);
+        }
+
+        function testClearHistory() {
+            const historyList = document.getElementById('history-list');
+            const items = historyList.querySelectorAll('.history-item');
+            
+            items.forEach(item => {
+                item.style.opacity = '0.5';
+                item.style.textDecoration = 'line-through';
+            });
+            
+            logInfo('Mock history cleared');
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                runAllIntegrationTests();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

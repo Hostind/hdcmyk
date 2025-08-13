@@ -39,9 +39,7 @@
     transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    /* Accessibility enhancements */
-    role: banner;
-    aria-label: "Calculator status and quick actions";
+    /* Accessibility enhancements - role and aria-label should be in HTML */
     /* Ensure proper focus management */
     contain: layout style paint;
 }
@@ -2399,7 +2397,7 @@ button {
         border-color: #7a5f15;
         background: rgba(122, 95, 21, 0.1);
     }
-}
+
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
@@ -6980,8 +6978,7 @@ d Reduced Motion Support for Outlined Button System */
 /* ========================================
    END ENHANCED RESPONSIVE DESIGN
    ======================================== */
-/
-* ========================================
+/* ========================================
    ENHANCED TOOLTIP SYSTEM
    ======================================== */
 
@@ -7677,8 +7674,7 @@ d Reduced Motion Support for Outlined Button System */
         left: 10px;
         max-width: none;
     }
-}/
-* Accessibility Enhancements */
+}/* Accessibility Enhancements */
 
 /* Screen reader only content */
 .sr-only {
