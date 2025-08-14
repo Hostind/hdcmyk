@@ -3,13 +3,13 @@
 
 // Global application state as specified in design.md
 const appState = {
-    target: { 
-        cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
-        lab: { l: 50, a: 0, b: 0 } 
+    target: {
+        cmyk: { c: 0, m: 0, y: 0, k: 0 },
+        lab: { l: 50, a: 0, b: 0 }
     },
-    sample: { 
-        cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
-        lab: { l: 50, a: 0, b: 0 } 
+    sample: {
+        cmyk: { c: 0, m: 0, y: 0, k: 0 },
+        lab: { l: 50, a: 0, b: 0 }
     },
     results: null,
     history: [],
@@ -67,18 +67,18 @@ class TooltipManager {
 
     init() {
         console.log('Initializing enhanced tooltip system...');
-        
+
         // Find all tooltip elements
         this.tooltips = document.querySelectorAll('.tooltip-enhanced');
         console.log(`Found ${this.tooltips.length} tooltip elements`);
-        
+
         // Add event listeners for positioning
         this.tooltips.forEach(tooltip => {
             tooltip.addEventListener('mouseenter', (e) => this.handleTooltipShow(e));
             tooltip.addEventListener('focus', (e) => this.handleTooltipShow(e));
             tooltip.addEventListener('mouseleave', (e) => this.handleTooltipHide(e));
             tooltip.addEventListener('blur', (e) => this.handleTooltipHide(e));
-            
+
             // Add keyboard support
             tooltip.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
@@ -91,7 +91,7 @@ class TooltipManager {
         // Handle window resize and scroll for repositioning
         window.addEventListener('resize', () => this.repositionAllTooltips());
         window.addEventListener('scroll', () => this.repositionAllTooltips());
-        
+
         console.log('Enhanced tooltip system initialized');
     }
 
@@ -99,10 +99,10 @@ class TooltipManager {
         // Set up ARIA attributes for screen readers
         const tooltipContent = tooltip.getAttribute('data-tooltip');
         const tooltipId = `tooltip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        
+
         tooltip.setAttribute('aria-describedby', tooltipId);
         tooltip.setAttribute('aria-expanded', 'true');
-        
+
         // Create hidden element for screen readers
         if (!tooltip.querySelector('.sr-only-tooltip')) {
             const srElement = document.createElement('span');
@@ -116,34 +116,34 @@ class TooltipManager {
     handleTooltipShow(event) {
         const tooltip = event.target;
         this.activeTooltip = tooltip;
-        
+
         // Add active class for styling
         tooltip.classList.add('tooltip-active');
-        
+
         // Set up accessibility attributes
         this.setupTooltipAccessibility(tooltip);
-        
+
         // Position tooltip after a small delay to ensure proper rendering
         setTimeout(() => {
             this.positionTooltip(tooltip);
         }, 10);
-        
+
         // Track tooltip interaction for analytics
         this.trackTooltipInteraction(tooltip);
     }
 
     handleTooltipHide(event) {
         const tooltip = event.target;
-        
+
         // Remove active class
         tooltip.classList.remove('tooltip-active');
-        
+
         // Clean up accessibility attributes
         this.cleanupTooltipAccessibility(tooltip);
-        
+
         // Reset positioning
         this.resetTooltipPosition(tooltip);
-        
+
         if (this.activeTooltip === tooltip) {
             this.activeTooltip = null;
         }
@@ -152,13 +152,13 @@ class TooltipManager {
     cleanupTooltipAccessibility(tooltip) {
         // Clean up ARIA attributes
         tooltip.setAttribute('aria-expanded', 'false');
-        
+
         // Remove screen reader element
         const srElement = tooltip.querySelector('.sr-only-tooltip');
         if (srElement) {
             srElement.remove();
         }
-        
+
         // Remove aria-describedby if no other tooltips are active
         if (!this.activeTooltip || this.activeTooltip === tooltip) {
             tooltip.removeAttribute('aria-describedby');
@@ -174,7 +174,7 @@ class TooltipManager {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         const scrollY = window.scrollY;
-        
+
         // Estimated tooltip dimensions (based on CSS)
         const tooltipWidth = Math.min(320, viewportWidth - 40); // Responsive width
         const tooltipHeight = 150; // Approximate height with padding
@@ -195,7 +195,7 @@ class TooltipManager {
         // Check vertical positioning
         const tooltipTop = rect.top + scrollY - tooltipHeight - 20; // 20px margin
         const tooltipBottom = rect.bottom + scrollY + tooltipHeight + 20;
-        
+
         if (tooltipTop < scrollY + margin) {
             // Not enough space above, show below
             tooltip.classList.add('tooltip-bottom');
@@ -217,9 +217,9 @@ class TooltipManager {
 
     resetTooltipPosition(tooltip) {
         tooltip.classList.remove(
-            'tooltip-left', 
-            'tooltip-right', 
-            'tooltip-top', 
+            'tooltip-left',
+            'tooltip-right',
+            'tooltip-top',
             'tooltip-bottom',
             'tooltip-mobile',
             'tooltip-positioned'
@@ -311,7 +311,7 @@ const PRESET_COLORS = {
     'Process Magenta': { c: 0, m: 100, y: 0, k: 0 },
     'Process Yellow': { c: 0, m: 0, y: 100, k: 0 },
     'Process Black': { c: 0, m: 0, y: 0, k: 100 },
-    
+
     // Common Spot Colors (Pantone approximations)
     'Pantone Red 032': { c: 0, m: 91, y: 76, k: 0 },
     'Pantone Blue 072': { c: 100, m: 72, y: 0, k: 12 },
@@ -319,24 +319,24 @@ const PRESET_COLORS = {
     'Pantone Orange 021': { c: 0, m: 63, y: 95, k: 0 },
     'Pantone Purple 2685': { c: 76, m: 100, y: 0, k: 0 },
     'Pantone Warm Gray 8': { c: 31, m: 39, y: 42, k: 1 },
-    
+
     // Brand Colors (Generic examples)
     'Corporate Blue': { c: 85, m: 50, y: 0, k: 0 },
     'Corporate Red': { c: 15, m: 100, y: 90, k: 10 },
     'Corporate Green': { c: 75, m: 0, y: 100, k: 0 },
     'Corporate Gray': { c: 0, m: 0, y: 0, k: 50 },
-    
+
     // Common Print Colors
     'Rich Black': { c: 30, m: 30, y: 30, k: 100 },
     'Warm Black': { c: 0, m: 25, y: 25, k: 100 },
     'Cool Black': { c: 25, m: 0, y: 0, k: 100 },
     'Paper White': { c: 0, m: 0, y: 0, k: 0 },
-    
+
     // Skin Tones
     'Light Skin': { c: 15, m: 25, y: 35, k: 0 },
     'Medium Skin': { c: 25, m: 40, y: 65, k: 5 },
     'Dark Skin': { c: 45, m: 70, y: 80, k: 25 },
-    
+
     // Common Printing Challenges
     'Difficult Red': { c: 5, m: 95, y: 85, k: 0 },
     'Difficult Blue': { c: 95, m: 85, y: 5, k: 0 },
@@ -344,26 +344,26 @@ const PRESET_COLORS = {
 };
 
 // Initialize application when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
 });
 
 // Enhanced Sticky Status Bar Functionality
 function initializeStickyStatusBar() {
     console.log('Initializing sticky status bar...');
-    
+
     // Set up accessibility attributes
     setupStatusBarAccessibility();
-    
+
     // Set up scroll detection
     setupScrollDetection();
-    
+
     // Set up status bar event listeners
     setupStatusBarEventListeners();
-    
+
     // Initialize status bar content
     updateStatusBarContent();
-    
+
     console.log('Sticky status bar initialized');
 }
 
@@ -376,33 +376,33 @@ function setupStatusBarAccessibility() {
         statusBar.setAttribute('aria-live', 'polite');
         statusBar.setAttribute('aria-atomic', 'true');
     }
-    
+
     // Set up ARIA labels for status bar elements
     const statusValue = document.getElementById('status-value');
     if (statusValue) {
         statusValue.setAttribute('aria-label', 'Current calculation status');
         statusValue.setAttribute('role', 'status');
     }
-    
+
     const deltaValue = document.getElementById('status-delta-value');
     if (deltaValue) {
         deltaValue.setAttribute('aria-label', 'Current Delta E color difference value');
         deltaValue.setAttribute('role', 'status');
     }
-    
+
     // Set up ARIA labels for action buttons
     const statusCalculateBtn = document.getElementById('status-calculate-btn');
     if (statusCalculateBtn) {
         statusCalculateBtn.setAttribute('aria-label', 'Calculate color difference between target and sample');
         statusCalculateBtn.setAttribute('role', 'button');
     }
-    
+
     const statusResetBtn = document.getElementById('status-reset-btn');
     if (statusResetBtn) {
         statusResetBtn.setAttribute('aria-label', 'Reset all color inputs and calculations');
         statusResetBtn.setAttribute('role', 'button');
     }
-    
+
     const statusExportBtn = document.getElementById('status-export-btn');
     if (statusExportBtn) {
         statusExportBtn.setAttribute('aria-label', 'Export calculation results to file');
@@ -414,23 +414,23 @@ function setupStatusBarAccessibility() {
 function setupScrollDetection() {
     let ticking = false;
     let lastKnownScrollPosition = 0;
-    
+
     function updateScrollState() {
         const currentScrollY = window.scrollY;
-        
+
         // Performance optimization: only update if scroll position changed significantly
         if (Math.abs(currentScrollY - lastKnownScrollPosition) < 5) {
             ticking = false;
             return;
         }
-        
+
         const scrollDirection = currentScrollY > scrollState.lastScrollY ? 'down' : 'up';
         const shouldShowStatusBar = currentScrollY > scrollState.statusBarThreshold;
-        
+
         scrollState.lastScrollY = currentScrollY;
         scrollState.scrollDirection = scrollDirection;
         lastKnownScrollPosition = currentScrollY;
-        
+
         // Update status bar visibility with performance optimization
         if (shouldShowStatusBar !== scrollState.isStatusBarVisible) {
             scrollState.isStatusBarVisible = shouldShowStatusBar;
@@ -439,20 +439,20 @@ function setupScrollDetection() {
                 toggleStatusBarVisibility(shouldShowStatusBar);
             });
         }
-        
+
         ticking = false;
     }
-    
+
     function requestScrollUpdate() {
         if (!ticking) {
             requestAnimationFrame(updateScrollState);
             ticking = true;
         }
     }
-    
+
     // Add scroll event listener with throttling and passive flag for performance
     window.addEventListener('scroll', requestScrollUpdate, { passive: true });
-    
+
     // Initial check
     updateScrollState();
 }
@@ -461,7 +461,7 @@ function setupScrollDetection() {
 function toggleStatusBarVisibility(show) {
     const statusBar = document.getElementById('status-bar');
     if (!statusBar) return;
-    
+
     if (show) {
         statusBar.classList.add('visible');
         uiEnhancementState.statusBar.visible = true;
@@ -476,27 +476,27 @@ function setupStatusBarEventListeners() {
     // Calculate button in status bar
     const statusCalculateBtn = document.getElementById('status-calculate-btn');
     if (statusCalculateBtn) {
-        statusCalculateBtn.addEventListener('click', function(e) {
+        statusCalculateBtn.addEventListener('click', function (e) {
             e.preventDefault();
             performColorDifferenceCalculation();
         });
     }
-    
+
     // Reset button in status bar
     const statusResetBtn = document.getElementById('status-reset-btn');
     if (statusResetBtn) {
-        statusResetBtn.addEventListener('click', function(e) {
+        statusResetBtn.addEventListener('click', function (e) {
             e.preventDefault();
             if (confirm('Reset all inputs to default values?')) {
                 resetAllInputs();
             }
         });
     }
-    
+
     // Export button in status bar
     const statusExportBtn = document.getElementById('status-export-btn');
     if (statusExportBtn) {
-        statusExportBtn.addEventListener('click', function(e) {
+        statusExportBtn.addEventListener('click', function (e) {
             e.preventDefault();
             if (window.colorExport && appState.results) {
                 // Show export options
@@ -533,7 +533,7 @@ function showExportOptions() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(exportModal);
 }
 
@@ -555,23 +555,23 @@ function updateStatusBarContent() {
     const statusValue = document.getElementById('status-value');
     const deltaValue = document.getElementById('status-delta-value');
     const exportBtn = document.getElementById('status-export-btn');
-    
+
     if (!statusValue || !deltaValue || !exportBtn) return;
-    
+
     // Update status
     const status = uiEnhancementState.statusBar.content.status;
     statusValue.textContent = getStatusDisplayText(status);
     statusValue.className = `status-value ${status}`;
-    
+
     // Update Delta E value
     if (appState.results && appState.results.deltaE !== null) {
         const deltaE = appState.results.deltaE;
         deltaValue.textContent = deltaE.toFixed(2);
-        
+
         // Apply tolerance zone styling
         const toleranceZone = getToleranceZone(deltaE);
         deltaValue.className = `delta-value ${toleranceZone}`;
-        
+
         // Enable export button
         exportBtn.disabled = false;
     } else {
@@ -627,7 +627,7 @@ function setReadyStatus() {
 
 // Final Integration and Polish - Keyboard Shortcuts
 // Requirements: Add keyboard shortcuts for power users (Enter to calculate, etc.)
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     // Prevent shortcuts when user is typing in input fields
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
         // Allow Enter key in input fields to trigger calculation
@@ -638,7 +638,7 @@ document.addEventListener('keydown', function(e) {
         }
         return;
     }
-    
+
     // Global keyboard shortcuts
     switch (e.key.toLowerCase()) {
         case 'enter':
@@ -646,14 +646,14 @@ document.addEventListener('keydown', function(e) {
             e.preventDefault();
             performColorDifferenceCalculation();
             break;
-            
+
         case 'r':
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
                 resetAllInputs();
             }
             break;
-            
+
         case 'e':
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
@@ -670,33 +670,33 @@ document.addEventListener('keydown', function(e) {
                 }
             }
             break;
-            
+
         case 'h':
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
                 showKeyboardShortcutsHelp();
             }
             break;
-            
+
         case 'escape':
             e.preventDefault();
             hideKeyboardShortcutsHelp();
             break;
-            
+
         case '1':
             if (e.altKey) {
                 e.preventDefault();
                 focusColorSection('target');
             }
             break;
-            
+
         case '2':
             if (e.altKey) {
                 e.preventDefault();
                 focusColorSection('sample');
             }
             break;
-            
+
         case 'c':
             if (e.ctrlKey || e.metaKey) {
                 if (e.shiftKey) {
@@ -723,13 +723,13 @@ function copyCurrentCalculationToClipboard() {
         showStatusMessage('No calculation results to copy', 'info');
         return;
     }
-    
+
     const colorValues = getCurrentColorValues();
     const copyText = `LAB Color Analysis:
 Target: C${colorValues.target.cmyk.c}% M${colorValues.target.cmyk.m}% Y${colorValues.target.cmyk.y}% K${colorValues.target.cmyk.k}%
 Sample: C${colorValues.sample.cmyk.c}% M${colorValues.sample.cmyk.m}% Y${colorValues.sample.cmyk.y}% K${colorValues.sample.cmyk.k}%
 ΔE*ab: ${appState.results.deltaE.toFixed(2)} (${appState.results.tolerance.zone})`;
-    
+
     navigator.clipboard.writeText(copyText).then(() => {
         showStatusMessage('Calculation copied to clipboard', 'success');
     }).catch(() => {
@@ -803,9 +803,9 @@ function showKeyboardShortcutsHelp() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(helpModal);
-    
+
     // Focus the modal for accessibility
     const modalContent = helpModal.querySelector('.modal-content');
     if (modalContent) {
@@ -823,44 +823,44 @@ function hideKeyboardShortcutsHelp() {
 
 function initializeApp() {
     console.log('Initializing LAB Color Matching Calculator...');
-    
+
     // Initialize accessibility features first
     initializeAccessibilityFeatures();
-    
+
     // Cache DOM elements
     cacheDOMElements();
-    
+
     // Initialize enhanced sticky status bar
     initializeStickyStatusBar();
-    
+
     // Set up event listeners for input validation
     setupInputValidation();
-    
+
     // Set up calculate button event listener
     setupCalculateButton();
-    
+
     // Set up keyboard navigation
     setupKeyboardNavigation();
-    
+
     // Initialize default values
     initializeDefaultValues();
-    
+
     // Initialize preset colors and workflow enhancements
     initializePresetColors();
     setupWorkflowEnhancements();
-    
+
     // Wait for color science module to load, then update swatches
     waitForColorScienceAndInitialize();
-    
+
     // Initialize final integration features
     initializeFinalIntegration();
-    
+
     // Initialize G7 integration
     initializeG7Integration();
-    
+
     // Initialize enhanced tooltip system
     tooltipManager = new TooltipManager();
-    
+
     console.log('Application initialized successfully');
 }
 
@@ -875,13 +875,13 @@ function resetAllInputs() {
             input.classList.remove('valid', 'invalid');
         }
     });
-    
+
     // Reset LAB inputs to defaults
     const labDefaults = {
         'target-l': '50', 'target-a': '0', 'target-b': '0',
         'sample-l': '50', 'sample-a': '0', 'sample-b': '0'
     };
-    
+
     Object.keys(labDefaults).forEach(inputId => {
         const input = document.getElementById(inputId);
         if (input) {
@@ -889,51 +889,51 @@ function resetAllInputs() {
             input.classList.remove('valid', 'invalid');
         }
     });
-    
+
     // Reset application state
-    appState.target = { 
-        cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
-        lab: { l: 50, a: 0, b: 0 } 
+    appState.target = {
+        cmyk: { c: 0, m: 0, y: 0, k: 0 },
+        lab: { l: 50, a: 0, b: 0 }
     };
-    appState.sample = { 
-        cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
-        lab: { l: 50, a: 0, b: 0 } 
+    appState.sample = {
+        cmyk: { c: 0, m: 0, y: 0, k: 0 },
+        lab: { l: 50, a: 0, b: 0 }
     };
     appState.results = null;
-    
+
     // Update status bar to ready state
     setReadyStatus();
-    
+
     // Reset color swatches
     initializeColorSwatches();
-    
+
     // Hide results section
     const resultsSection = document.getElementById('results-section');
     if (resultsSection) {
         resultsSection.classList.remove('visible');
         resultsSection.style.display = 'none';
     }
-    
+
     // Reset delta values
     resetDeltaDisplay();
-    
+
     // Clear any validation errors
     clearAllValidationErrors();
-    
+
     // Reset preset selections
     const presetSelects = document.querySelectorAll('.preset-select');
     presetSelects.forEach(select => {
         select.value = '';
     });
-    
+
     // Update export button states
     if (window.colorExport) {
         window.colorExport.updateExportButtonStates();
     }
-    
+
     // Show confirmation message
     showStatusMessage('All inputs reset to defaults', 'success');
-    
+
     console.log('All inputs reset successfully');
 }
 
@@ -953,7 +953,7 @@ function resetDeltaDisplay() {
 function clearAllValidationErrors() {
     const errorElements = document.querySelectorAll('.validation-error');
     errorElements.forEach(error => error.remove());
-    
+
     const inputElements = document.querySelectorAll('input');
     inputElements.forEach(input => {
         input.classList.remove('error', 'valid', 'invalid');
@@ -965,7 +965,7 @@ function showStatusMessage(message, type = 'info', duration = 3000) {
     // Remove existing status messages
     const existingMessages = document.querySelectorAll('.status-message');
     existingMessages.forEach(msg => msg.remove());
-    
+
     // Create new status message
     const statusMessage = document.createElement('div');
     statusMessage.className = `status-message ${type}`;
@@ -976,17 +976,17 @@ function showStatusMessage(message, type = 'info', duration = 3000) {
             <button class="status-close" onclick="this.parentElement.parentElement.remove()">×</button>
         </div>
     `;
-    
+
     // Add to page
     document.body.appendChild(statusMessage);
-    
+
     // Auto-remove after duration
     setTimeout(() => {
         if (statusMessage.parentElement) {
             statusMessage.remove();
         }
     }, duration);
-    
+
     // Add entrance animation
     setTimeout(() => {
         statusMessage.classList.add('visible');
@@ -1007,11 +1007,11 @@ function getStatusIcon(type) {
 // Initialize final integration features
 function initializeFinalIntegration() {
     console.log('Initializing final integration features...');
-    
+
     // Set up reset all button
     const resetAllBtn = document.getElementById('reset-all-btn');
     if (resetAllBtn) {
-        resetAllBtn.addEventListener('click', function(e) {
+        resetAllBtn.addEventListener('click', function (e) {
             e.preventDefault();
             if (confirm('Reset all inputs to default values? This will clear your current work.')) {
                 resetAllInputs();
@@ -1019,19 +1019,19 @@ function initializeFinalIntegration() {
         });
         console.log('Reset all button initialized');
     }
-    
+
     // Add keyboard shortcut indicator to buttons
     addKeyboardShortcutIndicators();
-    
+
     // Initialize workflow validation
     initializeWorkflowValidation();
-    
+
     // Add professional finishing touches
     addProfessionalFinishingTouches();
-    
+
     // Initialize cross-browser compatibility checks
     initializeBrowserCompatibility();
-    
+
     console.log('Final integration features initialized');
 }
 
@@ -1041,17 +1041,17 @@ function addKeyboardShortcutIndicators() {
     if (calculateBtn) {
         calculateBtn.setAttribute('title', calculateBtn.getAttribute('title') + ' (Enter or Space)');
     }
-    
+
     const resetBtn = document.getElementById('reset-all-btn');
     if (resetBtn) {
         resetBtn.setAttribute('title', resetBtn.getAttribute('title') + ' (Ctrl+R)');
     }
-    
+
     const csvBtn = document.getElementById('export-csv-btn');
     if (csvBtn) {
         csvBtn.setAttribute('title', csvBtn.getAttribute('title') + ' (Ctrl+E)');
     }
-    
+
     const pdfBtn = document.getElementById('export-pdf-btn');
     if (pdfBtn) {
         pdfBtn.setAttribute('title', pdfBtn.getAttribute('title') + ' (Ctrl+Shift+E)');
@@ -1081,12 +1081,12 @@ function initializeWorkflowValidation() {
             <span class="step-label">Export</span>
         </div>
     `;
-    
+
     const header = document.querySelector('.app-header');
     if (header) {
         header.appendChild(workflowIndicator);
     }
-    
+
     // Update workflow progress
     updateWorkflowProgress();
 }
@@ -1095,16 +1095,16 @@ function initializeWorkflowValidation() {
 function updateWorkflowProgress() {
     const steps = document.querySelectorAll('.workflow-step');
     if (!steps.length) return;
-    
+
     // Reset all steps
     steps.forEach(step => {
         step.classList.remove('active', 'completed');
     });
-    
+
     // Check current workflow state
     const hasInputs = hasAnyColorInputs();
     const hasResults = appState.results !== null;
-    
+
     if (hasInputs) {
         steps[0].classList.add('completed');
         if (!hasResults) {
@@ -1113,7 +1113,7 @@ function updateWorkflowProgress() {
     } else {
         steps[0].classList.add('active');
     }
-    
+
     if (hasResults) {
         steps[1].classList.add('completed');
         steps[2].classList.add('active');
@@ -1129,7 +1129,7 @@ function hasAnyColorInputs() {
         'sample-c', 'sample-m', 'sample-y', 'sample-k',
         'sample-l', 'sample-a', 'sample-b'
     ];
-    
+
     return inputs.some(inputId => {
         const input = document.getElementById(inputId);
         return input && input.value && input.value !== '0' && input.value !== '50';
@@ -1140,16 +1140,16 @@ function hasAnyColorInputs() {
 function addProfessionalFinishingTouches() {
     // Add loading animations
     addLoadingAnimations();
-    
+
     // Add smooth transitions
     addSmoothTransitions();
-    
+
     // Add professional tooltips
     addProfessionalTooltips();
-    
+
     // Add accessibility enhancements
     addAccessibilityEnhancements();
-    
+
     // Add performance monitoring
     addPerformanceMonitoring();
 }
@@ -1159,14 +1159,14 @@ function addLoadingAnimations() {
     const calculateBtn = document.getElementById('calculate-btn');
     if (calculateBtn) {
         const originalText = calculateBtn.textContent;
-        
+
         // Override the existing calculation function to add loading state
         const originalCalculate = window.performColorDifferenceCalculation;
-        window.performColorDifferenceCalculation = function() {
+        window.performColorDifferenceCalculation = function () {
             calculateBtn.classList.add('calculating');
             calculateBtn.textContent = 'Calculating...';
             calculateBtn.disabled = true;
-            
+
             // Add small delay for visual feedback
             setTimeout(() => {
                 try {
@@ -1194,7 +1194,7 @@ function addSmoothTransitions() {
         '.calculate-button',
         '.export-btn'
     ];
-    
+
     transitionElements.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(element => {
@@ -1212,7 +1212,7 @@ function addProfessionalTooltips() {
         'calculate-btn': 'Calculate color difference using industry-standard Delta E formula',
         'reset-all-btn': 'Reset all inputs to default values and clear results'
     };
-    
+
     Object.keys(tooltips).forEach(elementId => {
         const element = document.getElementById(elementId);
         if (element) {
@@ -1232,21 +1232,21 @@ function addAccessibilityEnhancements() {
         'calculate-btn': 'Calculate color difference button',
         'reset-all-btn': 'Reset all inputs button'
     };
-    
+
     Object.keys(ariaLabels).forEach(elementId => {
         const element = document.getElementById(elementId);
         if (element) {
             element.setAttribute('aria-label', ariaLabels[elementId]);
         }
     });
-    
+
     // Add keyboard navigation hints
     const keyboardHint = document.createElement('div');
     keyboardHint.className = 'keyboard-hint';
     keyboardHint.innerHTML = `
         <span class="hint-text">Press Ctrl+H for keyboard shortcuts</span>
     `;
-    
+
     const container = document.querySelector('.calculator-container');
     if (container) {
         container.appendChild(keyboardHint);
@@ -1258,24 +1258,24 @@ function addPerformanceMonitoring() {
     // Monitor calculation performance
     const originalCalculate = window.performColorDifferenceCalculation;
     if (originalCalculate) {
-        window.performColorDifferenceCalculation = function() {
+        window.performColorDifferenceCalculation = function () {
             const startTime = performance.now();
-            
+
             try {
                 originalCalculate();
-                
+
                 const endTime = performance.now();
                 const duration = endTime - startTime;
-                
+
                 console.log(`Calculation completed in ${duration.toFixed(2)}ms`);
-                
+
                 // Show performance warning if calculation is slow
                 if (duration > 1000) {
                     showStatusMessage('Calculation completed (slower than expected)', 'warning');
                 } else if (duration > 500) {
                     showStatusMessage('Calculation completed', 'info', 2000);
                 }
-                
+
             } catch (error) {
                 console.error('Calculation error:', error);
                 showStatusMessage('Calculation failed: ' + error.message, 'error');
@@ -1287,7 +1287,7 @@ function addPerformanceMonitoring() {
 // Initialize cross-browser compatibility checks
 function initializeBrowserCompatibility() {
     console.log('Checking browser compatibility...');
-    
+
     const compatibility = {
         localStorage: typeof Storage !== 'undefined',
         canvas: !!document.createElement('canvas').getContext,
@@ -1296,9 +1296,9 @@ function initializeBrowserCompatibility() {
         clipboard: navigator.clipboard && navigator.clipboard.writeText,
         notifications: 'Notification' in window
     };
-    
+
     console.log('Browser compatibility:', compatibility);
-    
+
     // Show warnings for missing features
     const warnings = [];
     if (!compatibility.localStorage) {
@@ -1310,14 +1310,14 @@ function initializeBrowserCompatibility() {
     if (!compatibility.clipboard) {
         warnings.push('Clipboard API not supported - copy functions may not work');
     }
-    
+
     if (warnings.length > 0) {
         console.warn('Browser compatibility warnings:', warnings);
         showStatusMessage(`Browser limitations detected: ${warnings.length} features may not work fully`, 'warning', 5000);
     } else {
         console.log('Full browser compatibility confirmed');
     }
-    
+
     return compatibility;
 }
 
@@ -1349,11 +1349,11 @@ function showBrowserInfo() {
         cssFlexbox: CSS.supports('display', 'flex'),
         cssCustomProperties: CSS.supports('color', 'var(--test)'),
         es6Modules: 'noModule' in HTMLScriptElement.prototype,
-        asyncAwait: (async () => {}).constructor === (async function(){}).constructor,
+        asyncAwait: (async () => { }).constructor === (async function () { }).constructor,
         fetch: typeof fetch !== 'undefined',
         promises: typeof Promise !== 'undefined'
     };
-    
+
     const infoModal = document.createElement('div');
     infoModal.className = 'browser-info-modal';
     infoModal.innerHTML = `
@@ -1412,25 +1412,25 @@ function showBrowserInfo() {
                     <h4>Feature Support</h4>
                     <div class="feature-grid">
                         ${Object.entries({
-                            'Local Storage': browserInfo.localStorage,
-                            'Session Storage': browserInfo.sessionStorage,
-                            'IndexedDB': browserInfo.indexedDB,
-                            'Web Workers': browserInfo.webWorkers,
-                            'Service Worker': browserInfo.serviceWorker,
-                            'Notifications': browserInfo.notifications,
-                            'Clipboard API': browserInfo.clipboard,
-                            'WebGL': browserInfo.webGL,
-                            'WebGL 2': browserInfo.webGL2,
-                            'Touch Support': browserInfo.touchSupport,
-                            'Pointer Events': browserInfo.pointerEvents,
-                            'CSS Grid': browserInfo.cssGrid,
-                            'CSS Flexbox': browserInfo.cssFlexbox,
-                            'CSS Custom Properties': browserInfo.cssCustomProperties,
-                            'ES6 Modules': browserInfo.es6Modules,
-                            'Async/Await': browserInfo.asyncAwait,
-                            'Fetch API': browserInfo.fetch,
-                            'Promises': browserInfo.promises
-                        }).map(([feature, supported]) => `
+        'Local Storage': browserInfo.localStorage,
+        'Session Storage': browserInfo.sessionStorage,
+        'IndexedDB': browserInfo.indexedDB,
+        'Web Workers': browserInfo.webWorkers,
+        'Service Worker': browserInfo.serviceWorker,
+        'Notifications': browserInfo.notifications,
+        'Clipboard API': browserInfo.clipboard,
+        'WebGL': browserInfo.webGL,
+        'WebGL 2': browserInfo.webGL2,
+        'Touch Support': browserInfo.touchSupport,
+        'Pointer Events': browserInfo.pointerEvents,
+        'CSS Grid': browserInfo.cssGrid,
+        'CSS Flexbox': browserInfo.cssFlexbox,
+        'CSS Custom Properties': browserInfo.cssCustomProperties,
+        'ES6 Modules': browserInfo.es6Modules,
+        'Async/Await': browserInfo.asyncAwait,
+        'Fetch API': browserInfo.fetch,
+        'Promises': browserInfo.promises
+    }).map(([feature, supported]) => `
                             <div class="feature-item ${supported ? 'supported' : 'not-supported'}">
                                 <span class="feature-icon">${supported ? '✅' : '❌'}</span>
                                 <span class="feature-name">${feature}</span>
@@ -1446,9 +1446,9 @@ function showBrowserInfo() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(infoModal);
-    
+
     // Store browser info for copying
     window.currentBrowserInfo = browserInfo;
 }
@@ -1456,7 +1456,7 @@ function showBrowserInfo() {
 // Copy browser info to clipboard
 function copyBrowserInfo() {
     if (!window.currentBrowserInfo) return;
-    
+
     const info = window.currentBrowserInfo;
     const infoText = `LAB Color Calculator - Browser Information
     
@@ -1481,7 +1481,7 @@ Feature Support:
 - Clipboard API: ${info.clipboard}
 
 Generated: ${new Date().toISOString()}`;
-    
+
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(infoText).then(() => {
             showStatusMessage('Browser information copied to clipboard', 'success');
@@ -1513,7 +1513,7 @@ function cacheDOMElements() {
     domElements.targetL = document.getElementById('target-l');
     domElements.targetA = document.getElementById('target-a');
     domElements.targetB = document.getElementById('target-b');
-    
+
     // Sample color inputs
     domElements.sampleC = document.getElementById('sample-c');
     domElements.sampleM = document.getElementById('sample-m');
@@ -1522,14 +1522,14 @@ function cacheDOMElements() {
     domElements.sampleL = document.getElementById('sample-l');
     domElements.sampleA = document.getElementById('sample-a');
     domElements.sampleB = document.getElementById('sample-b');
-    
+
     // Color swatches
     domElements.targetSwatch = document.getElementById('target-swatch');
     domElements.sampleSwatch = document.getElementById('sample-swatch');
-    
+
     // Calculate button
     domElements.calculateBtn = document.getElementById('calculate-btn');
-    
+
     // Preset and workflow elements
     domElements.targetPresetSelect = document.getElementById('target-preset-select');
     domElements.samplePresetSelect = document.getElementById('sample-preset-select');
@@ -1538,21 +1538,21 @@ function cacheDOMElements() {
     domElements.targetCopyBtn = document.getElementById('target-copy-btn');
     domElements.sampleCopyBtn = document.getElementById('sample-copy-btn');
     domElements.resetAllBtn = document.getElementById('reset-all-btn');
-    
+
     // Results elements
     domElements.deltaEValue = document.getElementById('delta-e-value');
     domElements.deltaENumber = document.querySelector('.delta-e-number');
     domElements.toleranceZone = document.getElementById('tolerance-zone');
     domElements.suggestionsList = document.getElementById('suggestions-list');
     domElements.resultsSection = document.getElementById('results-section');
-    
+
     // Component delta elements
     domElements.deltaL = document.getElementById('delta-l');
     domElements.deltaA = document.getElementById('delta-a');
     domElements.deltaB = document.getElementById('delta-b');
     domElements.deltaC = document.getElementById('delta-c');
     domElements.deltaH = document.getElementById('delta-h');
-    
+
     console.log('DOM elements cached successfully');
 }
 
@@ -1562,23 +1562,23 @@ function setupInputValidation() {
     setupCMYKValidation('target', 'm', domElements.targetM);
     setupCMYKValidation('target', 'y', domElements.targetY);
     setupCMYKValidation('target', 'k', domElements.targetK);
-    
+
     // Target LAB inputs
     setupLABValidation('target', 'l', domElements.targetL);
     setupLABValidation('target', 'a', domElements.targetA);
     setupLABValidation('target', 'b', domElements.targetB);
-    
+
     // Sample CMYK inputs
     setupCMYKValidation('sample', 'c', domElements.sampleC);
     setupCMYKValidation('sample', 'm', domElements.sampleM);
     setupCMYKValidation('sample', 'y', domElements.sampleY);
     setupCMYKValidation('sample', 'k', domElements.sampleK);
-    
+
     // Sample LAB inputs
     setupLABValidation('sample', 'l', domElements.sampleL);
     setupLABValidation('sample', 'a', domElements.sampleA);
     setupLABValidation('sample', 'b', domElements.sampleB);
-    
+
     console.log('Input validation event listeners set up');
 }
 
@@ -1588,28 +1588,28 @@ function setupInputValidation() {
  */
 function setupCalculateButton() {
     console.log('Setting up calculate button...');
-    
+
     // Try direct DOM query as backup
     const calculateBtn = document.getElementById('calculate-btn');
     console.log('Calculate button found:', !!calculateBtn);
-    
+
     if (!calculateBtn) {
         console.error('Calculate button not found in DOM');
         return;
     }
-    
+
     // Store reference
     domElements.calculateBtn = calculateBtn;
-    
+
     // Simple, direct event listener
-    calculateBtn.addEventListener('click', function(e) {
+    calculateBtn.addEventListener('click', function (e) {
         console.log('Calculate button clicked!');
         e.preventDefault();
-        
+
         // Direct call to main calculation function
         performColorDifferenceCalculation();
     });
-    
+
     // Also allow Enter key to trigger calculation when focused on inputs
     const allInputs = [
         domElements.targetC, domElements.targetM, domElements.targetY, domElements.targetK,
@@ -1617,10 +1617,10 @@ function setupCalculateButton() {
         domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK,
         domElements.sampleL, domElements.sampleA, domElements.sampleB
     ];
-    
+
     allInputs.forEach(input => {
         if (input) {
-            input.addEventListener('keypress', function(e) {
+            input.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     performColorDifferenceCalculation();
@@ -1628,7 +1628,7 @@ function setupCalculateButton() {
             });
         }
     });
-    
+
     console.log('Calculate button event listeners set up');
 }
 
@@ -1637,41 +1637,41 @@ function setupCMYKValidation(colorType, component, inputElement) {
         console.error(`Input element not found for ${colorType}-${component}`);
         return;
     }
-    
+
     // Real-time validation on input with debouncing
-    inputElement.addEventListener('input', function(e) {
+    inputElement.addEventListener('input', function (e) {
         try {
             const value = parseFloat(e.target.value);
             const isValid = validateCMYKValue(value);
-            
+
             // Update color swatch in real-time
             const colorType = inputElement.id.includes('target') ? 'target' : 'sample';
             updateColorSwatch(colorType);
-            
+
             // Immediate visual feedback (no debounce for validation state)
             updateInputValidationState(inputElement, isValid);
-            
+
             // Show/clear error messages immediately
             if (!isValid && e.target.value !== '') {
                 showValidationError(inputElement, `${component.toUpperCase()}% must be between 0-100`);
             } else {
                 clearValidationError(inputElement);
             }
-            
+
             // Debounced state update and swatch rendering
             debouncedInputUpdate(colorType, component, value, isValid, e.target.value);
-            
+
         } catch (error) {
             console.error(`Error in CMYK validation for ${colorType}-${component}:`, error);
             handleValidationError(inputElement, error);
         }
     });
-    
+
     // Validation on blur (when user leaves the field)
-    inputElement.addEventListener('blur', function(e) {
+    inputElement.addEventListener('blur', function (e) {
         try {
             const value = parseFloat(e.target.value);
-            
+
             // Auto-correct out-of-range values
             if (!isNaN(value)) {
                 const correctedValue = Math.max(0, Math.min(100, value));
@@ -1695,23 +1695,23 @@ function setupLABValidation(colorType, component, inputElement) {
         console.error(`Input element not found for ${colorType}-${component}`);
         return;
     }
-    
+
     // Determine validation rules based on component
     const rules = component === 'l' ? VALIDATION_RULES.lab_l : VALIDATION_RULES.lab_ab;
-    
+
     // Real-time validation on input with debouncing
-    inputElement.addEventListener('input', function(e) {
+    inputElement.addEventListener('input', function (e) {
         try {
             const value = parseFloat(e.target.value);
             const isValid = validateLABValue(value, component);
-            
+
             // Update color swatch in real-time
             const colorType = inputElement.id.includes('target') ? 'target' : 'sample';
             updateColorSwatch(colorType);
-            
+
             // Immediate visual feedback (no debounce for validation state)
             updateInputValidationState(inputElement, isValid);
-            
+
             // Show/clear error messages immediately
             if (!isValid && e.target.value !== '') {
                 const rangeText = component === 'l' ? '0-100' : '-128 to +127';
@@ -1719,21 +1719,21 @@ function setupLABValidation(colorType, component, inputElement) {
             } else {
                 clearValidationError(inputElement);
             }
-            
+
             // Debounced state update and swatch rendering
             debouncedInputUpdate(colorType, component, value, isValid, e.target.value, 'lab');
-            
+
         } catch (error) {
             console.error(`Error in LAB validation for ${colorType}-${component}:`, error);
             handleValidationError(inputElement, error);
         }
     });
-    
+
     // Validation on blur (when user leaves the field)
-    inputElement.addEventListener('blur', function(e) {
+    inputElement.addEventListener('blur', function (e) {
         try {
             const value = parseFloat(e.target.value);
-            
+
             // Auto-correct out-of-range values
             if (!isNaN(value)) {
                 const correctedValue = Math.max(rules.min, Math.min(rules.max, value));
@@ -1761,7 +1761,7 @@ function validateCMYKValue(value) {
 function validateLABValue(value, component) {
     // Requirements 2.3: LAB values must be within specified ranges
     if (isNaN(value)) return false;
-    
+
     if (component === 'l') {
         return value >= VALIDATION_RULES.lab_l.min && value <= VALIDATION_RULES.lab_l.max;
     } else {
@@ -1772,12 +1772,12 @@ function validateLABValue(value, component) {
 function updateInputValidationState(inputElement, isValid) {
     // Requirements 1.4, 2.4: Visual feedback for valid/invalid inputs
     inputElement.classList.remove('valid', 'invalid');
-    
+
     if (inputElement.value === '') {
         // Empty input - neutral state
         return;
     }
-    
+
     if (isValid) {
         inputElement.classList.add('valid');
     } else {
@@ -1788,13 +1788,13 @@ function updateInputValidationState(inputElement, isValid) {
 function showValidationError(inputElement, message) {
     // Remove existing error message
     clearValidationError(inputElement);
-    
+
     // Create error message element
     const errorElement = document.createElement('div');
     errorElement.className = 'validation-error';
     errorElement.textContent = message;
     errorElement.setAttribute('data-error-for', inputElement.id);
-    
+
     // Insert error message after the input field
     inputElement.parentNode.insertBefore(errorElement, inputElement.nextSibling);
 }
@@ -1811,14 +1811,14 @@ function initializeDefaultValues() {
     // Set default values as specified in the HTML placeholders
     domElements.targetL.value = '50';
     domElements.sampleL.value = '50';
-    
+
     // Update application state with defaults
     appState.target.lab.l = 50;
     appState.sample.lab.l = 50;
-    
+
     // Initialize color swatches with default colors
     initializeColorSwatches();
-    
+
     console.log('Default values initialized');
 }
 
@@ -1832,12 +1832,12 @@ function initializeColorSwatches() {
         domElements.targetSwatch.style.backgroundColor = 'rgb(255, 255, 255)';
         domElements.targetSwatch.setAttribute('title', 'Target Color: White (Default)');
     }
-    
+
     if (domElements.sampleSwatch) {
         domElements.sampleSwatch.style.backgroundColor = 'rgb(255, 255, 255)';
         domElements.sampleSwatch.setAttribute('title', 'Sample Color: White (Default)');
     }
-    
+
     console.log('Color swatches initialized');
 }
 
@@ -1851,43 +1851,43 @@ function updateColorSwatch(colorType, immediate = false) {
     if (previewState.updateTimeouts.has(timeoutKey)) {
         clearTimeout(previewState.updateTimeouts.get(timeoutKey));
     }
-    
+
     const performUpdate = () => {
         // Check if color science module is available
         if (typeof window.colorScience === 'undefined') {
             console.warn('Color science module not loaded yet');
             return;
         }
-        
+
         const swatchElement = colorType === 'target' ? domElements.targetSwatch : domElements.sampleSwatch;
         if (!swatchElement) {
             console.error(`Swatch element not found for ${colorType}`);
             return;
         }
-        
+
         try {
             // Add loading state for visual feedback
             swatchElement.classList.add('loading');
             previewState.isUpdating = true;
-            
+
             // Use requestAnimationFrame for smooth updates
             if (previewState.animationFrameId) {
                 cancelAnimationFrame(previewState.animationFrameId);
             }
-            
+
             previewState.animationFrameId = requestAnimationFrame(() => {
                 try {
                     // Get current color values from inputs
                     const currentValues = getCurrentColorValues();
                     const colorData = currentValues[colorType];
-                    
+
                     // Determine which color space has more complete data
                     const cmykComplete = hasCompleteColorData(colorData.cmyk, 'cmyk');
                     const labComplete = hasCompleteColorData(colorData.lab, 'lab');
-                    
+
                     let cssColor;
                     let colorInfo;
-                    
+
                     if (cmykComplete && labComplete) {
                         // Both complete - prioritize LAB for accuracy
                         cssColor = window.colorScience.labToCssString(colorData.lab.l, colorData.lab.a, colorData.lab.b);
@@ -1900,35 +1900,35 @@ function updateColorSwatch(colorType, immediate = false) {
                         // CMYK data available
                         cssColor = window.colorScience.cmykToCssString(colorData.cmyk.c, colorData.cmyk.m, colorData.cmyk.y, colorData.cmyk.k);
                         colorInfo = `CMYK(${colorData.cmyk.c.toFixed(1)}, ${colorData.cmyk.m.toFixed(1)}, ${colorData.cmyk.y.toFixed(1)}, ${colorData.cmyk.k.toFixed(1)})`;
-        } else {
-            // Default to white if no complete data
-            cssColor = 'rgb(255, 255, 255)';
-            colorInfo = 'White (Default)';
+                    } else {
+                        // Default to white if no complete data
+                        cssColor = 'rgb(255, 255, 255)';
+                        colorInfo = 'White (Default)';
                     }
-                    
+
                     // Update swatch background color with smooth transition
                     swatchElement.style.backgroundColor = cssColor;
-                    
+
                     // Update tooltip with color information
                     const capitalizedType = colorType.charAt(0).toUpperCase() + colorType.slice(1);
                     swatchElement.setAttribute('title', `${capitalizedType} Color: ${colorInfo}`);
-                    
+
                     // Remove loading state and add update animation
                     swatchElement.classList.remove('loading');
                     swatchElement.classList.add('color-updated');
-                    
+
                     setTimeout(() => {
                         swatchElement.classList.remove('color-updated');
                     }, 500);
-                    
+
                     previewState.lastUpdateTime = performance.now();
                     console.log(`Enhanced ${colorType} swatch update: ${colorInfo}`);
-                    
+
                     // Trigger G7 analysis for sample color changes
                     if (colorType === 'sample' && typeof updateG7Analysis === 'function') {
                         updateG7Analysis();
                     }
-                    
+
                 } catch (error) {
                     console.error(`Error updating ${colorType} swatch:`, error);
                     // Fallback to white on error
@@ -1939,14 +1939,14 @@ function updateColorSwatch(colorType, immediate = false) {
                     previewState.isUpdating = false;
                 }
             });
-            
+
         } catch (error) {
             console.error(`Error in swatch update process:`, error);
             previewState.isUpdating = false;
             swatchElement.classList.remove('loading');
         }
     };
-    
+
     if (immediate) {
         performUpdate();
     } else {
@@ -1962,9 +1962,9 @@ function updateColorSwatch(colorType, immediate = false) {
 function hasCompleteColorData(colorData, colorSpace) {
     if (colorSpace === 'cmyk') {
         // CMYK is complete if we have any meaningful CMYK data (including 0 values)
-        return colorData.c !== undefined && colorData.m !== undefined && 
-               colorData.y !== undefined && colorData.k !== undefined &&
-               (colorData.c !== 0 || colorData.m !== 0 || colorData.y !== 0 || colorData.k !== 0);
+        return colorData.c !== undefined && colorData.m !== undefined &&
+            colorData.y !== undefined && colorData.k !== undefined &&
+            (colorData.c !== 0 || colorData.m !== 0 || colorData.y !== 0 || colorData.k !== 0);
     } else if (colorSpace === 'lab') {
         // LAB is complete if L* is not default (50) or a*/b* have values
         return colorData.l !== 50 || colorData.a !== 0 || colorData.b !== 0;
@@ -2004,7 +2004,7 @@ function waitForColorScienceAndInitialize() {
             setTimeout(checkColorScience, 100);
         }
     };
-    
+
     // Start checking
     checkColorScience();
 }
@@ -2017,7 +2017,7 @@ function areAllInputsValid() {
         domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK,
         domElements.sampleL, domElements.sampleA, domElements.sampleB
     ];
-    
+
     return allInputs.every(input => {
         if (!input.value) return true; // Empty inputs are considered valid (will use defaults)
         return !input.classList.contains('invalid');
@@ -2068,24 +2068,24 @@ function getCurrentColorValues() {
         const elementPrefix = colorType === 'target' ? 'target' : 'sample';
         const cmykElements = [
             domElements[elementPrefix + 'C'],
-            domElements[elementPrefix + 'M'], 
+            domElements[elementPrefix + 'M'],
             domElements[elementPrefix + 'Y'],
             domElements[elementPrefix + 'K']
         ];
         const hasCMYKInput = cmykElements.some(el => el && el.value !== '');
         const hasDefaultLAB = color.lab.l === 50 && color.lab.a === 0 && color.lab.b === 0;
-        
+
         if (hasCMYKInput && hasDefaultLAB && window.colorScience) {
             try {
                 // Convert CMYK to RGB first, then RGB to LAB
                 const rgb = window.colorScience.cmykToRgb(color.cmyk.c, color.cmyk.m, color.cmyk.y, color.cmyk.k);
                 const xyz = window.colorScience.rgbToXyz(rgb.r, rgb.g, rgb.b);
                 const lab = window.colorScience.xyzToLab(xyz.x, xyz.y, xyz.z);
-                
+
                 color.lab.l = Math.round(lab.l * 100) / 100;
                 color.lab.a = Math.round(lab.a * 100) / 100;
                 color.lab.b = Math.round(lab.b * 100) / 100;
-                
+
                 console.log(`Converted ${colorType} CMYK(${color.cmyk.c},${color.cmyk.m},${color.cmyk.y},${color.cmyk.k}) to LAB(${color.lab.l},${color.lab.a},${color.lab.b})`);
             } catch (error) {
                 console.warn(`Failed to convert ${colorType} CMYK to LAB:`, error);
@@ -2105,20 +2105,20 @@ function debouncedInputUpdate(colorType, component, value, isValid, rawValue, co
     if (debounceTimers.inputUpdate) {
         clearTimeout(debounceTimers.inputUpdate);
     }
-    
+
     // Set new timer
     debounceTimers.inputUpdate = setTimeout(() => {
         try {
             if (isValid && !isNaN(value)) {
                 // Update application state
                 appState[colorType][colorSpace][component] = value;
-                
+
                 // Update swatch with debouncing
                 debouncedSwatchUpdate(colorType);
-                
+
                 // Clear any previous errors for this input
                 errorState.hasErrors = false;
-                
+
             } else if (rawValue === '') {
                 // Handle empty input - set to default
                 const defaultValue = getDefaultValue(component, colorSpace);
@@ -2141,7 +2141,7 @@ function debouncedSwatchUpdate(colorType) {
     if (debounceTimers.swatchUpdate) {
         clearTimeout(debounceTimers.swatchUpdate);
     }
-    
+
     // Set new timer
     debounceTimers.swatchUpdate = setTimeout(() => {
         try {
@@ -2149,10 +2149,10 @@ function debouncedSwatchUpdate(colorType) {
             if (loadingState.isUpdatingSwatches) {
                 return;
             }
-            
+
             loadingState.isUpdatingSwatches = true;
             updateColorSwatch(colorType);
-            
+
         } catch (error) {
             console.error(`Error in debounced swatch update:`, error);
             handleSwatchUpdateError(error, colorType);
@@ -2182,16 +2182,16 @@ function handleValidationError(inputElement, error) {
     errorState.hasErrors = true;
     errorState.lastError = error;
     errorState.errorCount++;
-    
+
     // Show user-friendly error message
     showValidationError(inputElement, 'Invalid input - please check your value');
-    
+
     // Log detailed error for debugging
     console.error('Validation error:', error);
-    
+
     // Add error styling to input
     inputElement.classList.add('error');
-    
+
     // Remove error styling after a delay
     setTimeout(() => {
         inputElement.classList.remove('error');
@@ -2205,9 +2205,9 @@ function handleInputUpdateError(error, colorType, component) {
     errorState.hasErrors = true;
     errorState.lastError = error;
     errorState.errorCount++;
-    
+
     console.error(`Input update error for ${colorType}-${component}:`, error);
-    
+
     // Show user notification
     showErrorNotification(`Error updating ${colorType} ${component}: ${error.message}`);
 }
@@ -2219,16 +2219,16 @@ function handleSwatchUpdateError(error, colorType) {
     errorState.hasErrors = true;
     errorState.lastError = error;
     errorState.errorCount++;
-    
+
     console.error(`Swatch update error for ${colorType}:`, error);
-    
+
     // Fallback to white color on error
     const swatchElement = colorType === 'target' ? domElements.targetSwatch : domElements.sampleSwatch;
     if (swatchElement) {
         swatchElement.style.backgroundColor = 'rgb(255, 255, 255)';
         swatchElement.setAttribute('title', `${colorType} Color: Error - Using White`);
     }
-    
+
     // Show user notification
     showErrorNotification(`Error displaying ${colorType} color. Using white as fallback.`);
 }
@@ -2241,7 +2241,7 @@ function showErrorNotification(message, duration = 5000) {
     // Remove existing error notifications
     const existingNotifications = document.querySelectorAll('.error-notification');
     existingNotifications.forEach(notification => notification.remove());
-    
+
     // Create error notification
     const notification = document.createElement('div');
     notification.className = 'error-notification';
@@ -2252,10 +2252,10 @@ function showErrorNotification(message, duration = 5000) {
             <button class="error-close" onclick="this.parentElement.parentElement.remove()">×</button>
         </div>
     `;
-    
+
     // Add to page
     document.body.appendChild(notification);
-    
+
     // Auto-remove after duration
     setTimeout(() => {
         if (notification.parentElement) {
@@ -2270,23 +2270,23 @@ function showErrorNotification(message, duration = 5000) {
  */
 function showLoadingState(operation, element = null) {
     loadingState.operationStartTime = Date.now();
-    
+
     if (element) {
         element.classList.add('loading');
         element.disabled = true;
-        
+
         // Store original text
         if (!element.dataset.originalText) {
             element.dataset.originalText = element.textContent;
         }
-        
+
         // Show loading text
         element.textContent = `${operation}...`;
     }
-    
+
     // Show global loading indicator if operation takes too long
     setTimeout(() => {
-        if (loadingState.operationStartTime && 
+        if (loadingState.operationStartTime &&
             Date.now() - loadingState.operationStartTime > 1000) {
             showGlobalLoadingIndicator(operation);
         }
@@ -2298,17 +2298,17 @@ function showLoadingState(operation, element = null) {
  */
 function hideLoadingState(element = null) {
     loadingState.operationStartTime = null;
-    
+
     if (element) {
         element.classList.remove('loading');
         element.disabled = false;
-        
+
         // Restore original text
         if (element.dataset.originalText) {
             element.textContent = element.dataset.originalText;
         }
     }
-    
+
     // Hide global loading indicator
     hideGlobalLoadingIndicator();
 }
@@ -2319,7 +2319,7 @@ function hideLoadingState(element = null) {
 function showGlobalLoadingIndicator(operation) {
     // Remove existing indicator
     hideGlobalLoadingIndicator();
-    
+
     const indicator = document.createElement('div');
     indicator.id = 'global-loading-indicator';
     indicator.className = 'global-loading-indicator';
@@ -2329,7 +2329,7 @@ function showGlobalLoadingIndicator(operation) {
             <span class="loading-text">${operation}...</span>
         </div>
     `;
-    
+
     document.body.appendChild(indicator);
 }
 
@@ -2346,18 +2346,18 @@ function hideGlobalLoadingIndicator() {
 // Debug function to test validation (can be removed in production)
 function testValidation() {
     console.log('Testing validation system...');
-    
+
     // Test CMYK validation
     console.log('CMYK 50:', validateCMYKValue(50)); // Should be true
     console.log('CMYK 150:', validateCMYKValue(150)); // Should be false
     console.log('CMYK -10:', validateCMYKValue(-10)); // Should be false
-    
+
     // Test LAB validation
     console.log('LAB L* 50:', validateLABValue(50, 'l')); // Should be true
     console.log('LAB L* 150:', validateLABValue(150, 'l')); // Should be false
     console.log('LAB a* 50:', validateLABValue(50, 'a')); // Should be true
     console.log('LAB a* 150:', validateLABValue(150, 'a')); // Should be false
-    
+
     console.log('Validation tests completed');
 }
 
@@ -2371,7 +2371,7 @@ function loadTestData() {
     domElements.targetL.value = '60.87';
     domElements.targetA.value = '44.36';
     domElements.targetB.value = '35.27';
-    
+
     // Sample color: Slightly different red
     domElements.sampleC.value = '17.8';
     domElements.sampleM.value = '80.1';
@@ -2380,7 +2380,7 @@ function loadTestData() {
     domElements.sampleL.value = '58.72';
     domElements.sampleA.value = '42.18';
     domElements.sampleB.value = '36.93';
-    
+
     // Trigger validation for all fields
     const allInputs = [
         domElements.targetC, domElements.targetM, domElements.targetY, domElements.targetK,
@@ -2388,16 +2388,16 @@ function loadTestData() {
         domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK,
         domElements.sampleL, domElements.sampleA, domElements.sampleB
     ];
-    
+
     allInputs.forEach(input => {
         input.dispatchEvent(new Event('input'));
     });
-    
+
     // Force update color swatches with test data
     setTimeout(() => {
         updateAllColorSwatches();
     }, 100);
-    
+
     console.log('Test data loaded and validated');
 }
 
@@ -2409,30 +2409,30 @@ function loadTestData() {
  */
 function performColorDifferenceCalculation() {
     console.log('=== STARTING COLOR DIFFERENCE CALCULATION ===');
-    
+
     // Prevent multiple simultaneous calculations
     if (loadingState.isCalculating) {
         console.log('Calculation already in progress, ignoring request');
         return;
     }
-    
+
     // Basic checks
     if (!window.colorScience) {
         console.error('Color science module not loaded!');
         alert('Color science module not loaded. Please refresh the page.');
         return;
     }
-    
+
     loadingState.isCalculating = true;
     const startTime = Date.now();
-    
+
     // Update status bar to calculating state
     setCalculatingStatus();
-    
+
     try {
         // Show loading state
         showLoadingState('Calculating', domElements.calculateBtn);
-        
+
         // Check if color science module is available with retry logic
         if (typeof window.colorScience === 'undefined') {
             return retryOperation(() => {
@@ -2442,10 +2442,10 @@ function performColorDifferenceCalculation() {
                 return performCalculationCore();
             }, 'Color science module not loaded. Retrying...');
         }
-        
+
         // Perform core calculation
         return performCalculationCore();
-        
+
     } catch (error) {
         console.error('Error during color difference calculation:', error);
         setErrorStatus();
@@ -2453,11 +2453,11 @@ function performColorDifferenceCalculation() {
     } finally {
         loadingState.isCalculating = false;
         hideLoadingState(domElements.calculateBtn);
-        
+
         // Log performance metrics
         const duration = Date.now() - startTime;
         console.log(`Calculation completed in ${duration}ms`);
-        
+
         // Warn if calculation took too long
         if (duration > 2000) {
             console.warn(`Slow calculation detected: ${duration}ms`);
@@ -2473,22 +2473,22 @@ function performCalculationCore() {
     if (calculationWorkflow.isVisible) {
         calculationWorkflow.reset();
     }
-    
+
     // Step 1: Validate inputs
     if (calculationWorkflow.isVisible) {
         calculationWorkflow.updateStep('validate', 'processing', 'Checking input values...');
     }
-    
+
     if (!areAllInputsValid()) {
         if (calculationWorkflow.isVisible) {
             calculationWorkflow.updateStep('validate', 'error', 'Invalid input values detected');
         }
         throw new Error('Invalid input values detected');
     }
-    
+
     // Get current color values from inputs
     const colorValues = getCurrentColorValues();
-    
+
     // Validate that we have sufficient data for calculation
     if (!hasValidColorData(colorValues)) {
         if (calculationWorkflow.isVisible) {
@@ -2496,11 +2496,11 @@ function performCalculationCore() {
         }
         throw new Error('Insufficient color data for calculation');
     }
-    
+
     if (calculationWorkflow.isVisible) {
         calculationWorkflow.updateStep('validate', 'completed', 'Input validation passed');
     }
-    
+
     // Check calculation cache first for performance
     const cacheKey = generateCalculationCacheKey(colorValues);
     if (calculationCache.has(cacheKey)) {
@@ -2509,45 +2509,45 @@ function performCalculationCore() {
         displayCalculationResults(cachedResult);
         return;
     }
-    
+
     // Step 2: Convert Target CMYK to LAB
     if (calculationWorkflow.isVisible) {
-        calculationWorkflow.updateStep('convert-target', 'processing', 
+        calculationWorkflow.updateStep('convert-target', 'processing',
             `Target: C${colorValues.target.cmyk.c}% M${colorValues.target.cmyk.m}% Y${colorValues.target.cmyk.y}% K${colorValues.target.cmyk.k}%`);
-        
+
         setTimeout(() => {
-            calculationWorkflow.updateStep('convert-target', 'completed', 
+            calculationWorkflow.updateStep('convert-target', 'completed',
                 `LAB: L*${colorValues.target.lab.l.toFixed(1)} a*${colorValues.target.lab.a.toFixed(1)} b*${colorValues.target.lab.b.toFixed(1)}`);
         }, 300);
     }
-    
+
     // Step 3: Convert Sample CMYK to LAB
     if (calculationWorkflow.isVisible) {
         setTimeout(() => {
-            calculationWorkflow.updateStep('convert-sample', 'processing', 
+            calculationWorkflow.updateStep('convert-sample', 'processing',
                 `Sample: C${colorValues.sample.cmyk.c}% M${colorValues.sample.cmyk.m}% Y${colorValues.sample.cmyk.y}% K${colorValues.sample.cmyk.k}%`);
-            
+
             setTimeout(() => {
-                calculationWorkflow.updateStep('convert-sample', 'completed', 
+                calculationWorkflow.updateStep('convert-sample', 'completed',
                     `LAB: L*${colorValues.sample.lab.l.toFixed(1)} a*${colorValues.sample.lab.a.toFixed(1)} b*${colorValues.sample.lab.b.toFixed(1)}`);
             }, 300);
         }, 600);
     }
-    
+
     // Step 4: Calculate component deltas
     if (calculationWorkflow.isVisible) {
         setTimeout(() => {
             calculationWorkflow.updateStep('calculate-deltas', 'processing', 'Computing ΔL*, Δa*, Δb* values...');
         }, 1200);
     }
-    
+
     // Step 5: Calculate Delta E
     if (calculationWorkflow.isVisible) {
         setTimeout(() => {
             calculationWorkflow.updateStep('calculate-deltae', 'processing', 'Computing CIE76 Delta E...');
         }, 1500);
     }
-    
+
     // Perform Delta E analysis using color science module
     const analysisPromise = new Promise((resolve) => {
         setTimeout(() => {
@@ -2558,7 +2558,7 @@ function performCalculationCore() {
             resolve(analysis);
         }, calculationWorkflow.isVisible ? 1800 : 0);
     });
-    
+
     analysisPromise.then(analysis => {
         if (analysis.error) {
             if (calculationWorkflow.isVisible) {
@@ -2566,49 +2566,49 @@ function performCalculationCore() {
             }
             throw new Error(`Calculation error: ${analysis.error}`);
         }
-        
+
         // Complete calculation steps
         if (calculationWorkflow.isVisible) {
-            calculationWorkflow.updateStep('calculate-deltas', 'completed', 
+            calculationWorkflow.updateStep('calculate-deltas', 'completed',
                 `ΔL*=${analysis.componentDeltas?.deltaL?.toFixed(2)} Δa*=${analysis.componentDeltas?.deltaA?.toFixed(2)} Δb*=${analysis.componentDeltas?.deltaB?.toFixed(2)}`);
-            calculationWorkflow.updateStep('calculate-deltae', 'completed', 
+            calculationWorkflow.updateStep('calculate-deltae', 'completed',
                 `ΔE = ${analysis.deltaE?.toFixed(2)}`);
-            
+
             // Step 6: Analyze tolerance
             calculationWorkflow.updateStep('analyze-tolerance', 'processing', 'Evaluating industry tolerance...');
             setTimeout(() => {
-                calculationWorkflow.updateStep('analyze-tolerance', 'completed', 
+                calculationWorkflow.updateStep('analyze-tolerance', 'completed',
                     `Zone: ${analysis.tolerance?.description}`);
-                
+
                 // Step 7: Generate report
                 calculationWorkflow.updateStep('generate-results', 'processing', 'Generating professional report...');
                 setTimeout(() => {
-                    calculationWorkflow.updateStep('generate-results', 'completed', 
+                    calculationWorkflow.updateStep('generate-results', 'completed',
                         'Report ready for printing professionals');
                 }, 300);
             }, 300);
         }
-        
+
         // Cache the result for future use
         cacheCalculationResult(cacheKey, analysis);
-        
+
         // Update application state with results
         appState.results = analysis;
-        
+
         // Update status bar to complete state
         setCompleteStatus();
-        
+
         // Display results
         displayCalculationResults(analysis);
-        
+
         // Update export button states
         if (typeof window.colorExport !== 'undefined' && window.colorExport.updateExportButtonStates) {
             window.colorExport.updateExportButtonStates();
         }
-        
+
         // Save calculation to history
         saveCalculationToHistory(colorValues, analysis);
-        
+
         // Save for offline sync if offline
         if (typeof window.colorStorage !== 'undefined' && window.colorStorage.saveOfflineCalculation) {
             window.colorStorage.saveOfflineCalculation({
@@ -2617,20 +2617,19 @@ function performCalculationCore() {
                 timestamp: new Date().toISOString()
             });
         }
+        
+        // Log successful completion
+        console.log('Color difference calculation completed successfully');
+        console.log('Delta E:', analysis.deltaE);
+        console.log('Tolerance Zone:', analysis.tolerance.zone);
     }).catch(error => {
         console.error('Calculation failed:', error);
         setErrorStatus('Calculation failed: ' + error.message);
-        
+
         if (calculationWorkflow.isVisible) {
             calculationWorkflow.updateStep('calculate-deltae', 'error', error.message);
         }
-    });
-    
-    console.log('Color difference calculation completed successfully');
-    console.log('Delta E:', analysis.deltaE);
-    console.log('Tolerance Zone:', analysis.tolerance.zone);
-    }).catch(error => {
-        console.error('Promise chain error:', error);
+        
         handleCalculationError(error);
     });
 }
@@ -2651,7 +2650,7 @@ function cacheCalculationResult(key, result) {
         const firstKey = calculationCache.keys().next().value;
         calculationCache.delete(firstKey);
     }
-    
+
     calculationCache.set(key, result);
     console.log(`Cached calculation result. Cache size: ${calculationCache.size}`);
 }
@@ -2668,13 +2667,13 @@ function retryOperation(operation, message, retryCount = 0) {
         } catch (error) {
             if (retryCount < errorState.maxRetries) {
                 console.log(`${message} Retry ${retryCount + 1}/${errorState.maxRetries}`);
-                
+
                 // Show retry notification
                 showErrorNotification(`${message} Retry ${retryCount + 1}/${errorState.maxRetries}`, 2000);
-                
+
                 // Exponential backoff
                 const delay = errorState.retryDelay * Math.pow(2, retryCount);
-                
+
                 setTimeout(() => {
                     retryOperation(operation, message, retryCount + 1)
                         .then(resolve)
@@ -2695,9 +2694,9 @@ function handleCalculationError(error) {
     errorState.hasErrors = true;
     errorState.lastError = error;
     errorState.errorCount++;
-    
+
     let userMessage = 'Calculation failed. ';
-    
+
     // Provide specific error messages based on error type
     if (error.message.includes('Color science module not loaded')) {
         userMessage += 'Please refresh the page and try again.';
@@ -2708,10 +2707,10 @@ function handleCalculationError(error) {
     } else {
         userMessage += 'An unexpected error occurred. Please try again.';
     }
-    
+
     // Show user-friendly error message
     showErrorNotification(userMessage, 8000);
-    
+
     // Log detailed error for debugging
     console.error('Detailed calculation error:', {
         message: error.message,
@@ -2719,7 +2718,7 @@ function handleCalculationError(error) {
         errorCount: errorState.errorCount,
         timestamp: new Date().toISOString()
     });
-    
+
     // Reset calculation state
     resetCalculationState();
 }
@@ -2730,7 +2729,7 @@ function handleCalculationError(error) {
 function resetCalculationState() {
     loadingState.isCalculating = false;
     appState.results = null;
-    
+
     // Clear any loading indicators
     hideLoadingState(domElements.calculateBtn);
     hideGlobalLoadingIndicator();
@@ -2747,29 +2746,29 @@ function areAllInputsValid() {
         domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK,
         domElements.sampleL, domElements.sampleA, domElements.sampleB
     ];
-    
+
     let invalidInputs = [];
-    
+
     const isValid = allInputs.every(input => {
         if (!input) return true; // Skip missing elements
-        
+
         if (input.value && input.classList.contains('invalid')) {
             invalidInputs.push(input.id);
             return false;
         }
         return true;
     });
-    
+
     if (!isValid) {
         console.warn('Invalid inputs detected:', invalidInputs);
-        
+
         // Focus on first invalid input
         const firstInvalidInput = document.getElementById(invalidInputs[0]);
         if (firstInvalidInput) {
             firstInvalidInput.focus();
         }
     }
-    
+
     return isValid;
 }
 
@@ -2780,23 +2779,23 @@ function hasValidColorData(colorValues) {
     try {
         // Direct DOM check - if user filled any input fields, we have data
         const targetInputs = [domElements.targetC, domElements.targetM, domElements.targetY, domElements.targetK,
-                             domElements.targetL, domElements.targetA, domElements.targetB];
+        domElements.targetL, domElements.targetA, domElements.targetB];
         const sampleInputs = [domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK,
-                             domElements.sampleL, domElements.sampleA, domElements.sampleB];
-        
+        domElements.sampleL, domElements.sampleA, domElements.sampleB];
+
         const targetHasInput = targetInputs.some(input => input && input.value !== '');
         const sampleHasInput = sampleInputs.some(input => input && input.value !== '');
-        
+
         console.log('Direct input validation:', {
             targetHasInput,
             sampleHasInput,
             targetValues: targetInputs.map(i => i?.value || ''),
             sampleValues: sampleInputs.map(i => i?.value || '')
         });
-        
+
         // Return true if we have any input data for both target and sample
         return targetHasInput && sampleHasInput;
-        
+
     } catch (error) {
         console.error('Color data validation error:', error);
         // If there's an error, assume we have valid data and let the calculation proceed
@@ -2810,11 +2809,11 @@ function hasValidColorData(colorValues) {
 function hasAnyColorData(colorData) {
     // We need to check the actual DOM inputs to see if user has entered data
     // Since this function receives parsed values, we need a different approach
-    
+
     // For now, check if any CMYK value is non-zero OR if LAB values differ from defaults
     const hasCMYK = colorData.cmyk.c !== 0 || colorData.cmyk.m !== 0 || colorData.cmyk.y !== 0 || colorData.cmyk.k !== 0;
     const hasLAB = colorData.lab.l !== 50 || colorData.lab.a !== 0 || colorData.lab.b !== 0;
-    
+
     console.log('Color data validation:', {
         cmyk: colorData.cmyk,
         lab: colorData.lab,
@@ -2822,7 +2821,7 @@ function hasAnyColorData(colorData) {
         hasLAB,
         result: hasCMYK || hasLAB
     });
-    
+
     return hasCMYK || hasLAB;
 }
 
@@ -2835,19 +2834,19 @@ function hasAnyColorData(colorData) {
 function displayCalculationResults(analysis) {
     // Display main Delta E value prominently
     displayDeltaEValue(analysis.deltaE, analysis.deltaE2000, analysis.tolerance);
-    
+
     // Display component deltas
     displayComponentDeltas(analysis.componentDeltas);
-    
+
     // Display tolerance zone indicator
     displayToleranceZone(analysis.tolerance);
-    
+
     // Generate and display CMYK adjustment suggestions
     displayCMYKSuggestions(analysis);
-    
+
     // Show results section
     showResultsSection();
-    
+
     // Scroll to results for better user experience
     scrollToResults();
 }
@@ -2862,20 +2861,20 @@ function displayDeltaEValue(deltaE, deltaE2000, tolerance) {
         console.error('Delta E number element not found');
         return;
     }
-    
+
     // Update the main Delta E display (primary value)
     domElements.deltaENumber.textContent = deltaE.toFixed(2);
-    
+
     // Add tolerance zone class for color coding
     domElements.deltaEValue.className = `delta-e-value ${tolerance.zone}`;
-    
+
     // Create enhanced tooltip with both values
-    const tooltipText = deltaE2000 ? 
+    const tooltipText = deltaE2000 ?
         `ΔE*ab (CIE76): ${deltaE.toFixed(2)} | ΔE00 (CIEDE2000): ${deltaE2000.toFixed(2)} - ${tolerance.description} (${tolerance.range})` :
         `Delta E: ${deltaE.toFixed(2)} - ${tolerance.description} (${tolerance.range})`;
-    
+
     domElements.deltaEValue.setAttribute('title', tooltipText);
-    
+
     // If we have ΔE2000, show it as secondary information
     if (deltaE2000 && domElements.deltaEValue.parentNode) {
         let secondaryDisplay = domElements.deltaEValue.parentNode.querySelector('.delta-e-secondary');
@@ -2889,7 +2888,7 @@ function displayDeltaEValue(deltaE, deltaE2000, tolerance) {
         }
         secondaryDisplay.textContent = `ΔE2000: ${deltaE2000.toFixed(2)}`;
     }
-    
+
     console.log(`Displayed Delta E values - CIE76: ${deltaE.toFixed(2)}, CIEDE2000: ${deltaE2000?.toFixed(2) || 'N/A'}`);
 }
 
@@ -2905,19 +2904,19 @@ function displayComponentDeltas(componentDeltas) {
         { element: domElements.deltaC, value: componentDeltas.deltaC, label: 'ΔC*' },
         { element: domElements.deltaH, value: componentDeltas.deltaH, label: 'Δh' }
     ];
-    
+
     deltaElements.forEach(({ element, value, label }) => {
         if (element) {
             element.textContent = value.toFixed(2);
             element.setAttribute('title', `${label}: ${value.toFixed(2)}`);
-            
+
             // Add visual indicator for significant differences
             element.className = Math.abs(value) > 2 ? 'significant-delta' : '';
         } else {
             console.warn(`Delta element not found for ${label}`);
         }
     });
-    
+
     console.log('Component deltas displayed');
 }
 
@@ -2931,11 +2930,11 @@ function displayToleranceZone(tolerance) {
         console.error('Tolerance zone element not found');
         return;
     }
-    
+
     // Add gold accent classes for excellent results
     const goldClass = tolerance.zone === 'excellent' ? 'gold-accent' : '';
     const premiumClass = tolerance.zone === 'excellent' ? 'premium-feature' : '';
-    
+
     // Create tolerance zone content with gold accents for excellent results
     const toleranceHTML = `
         <div class="tolerance-indicator ${tolerance.zone} ${goldClass}">
@@ -2945,17 +2944,17 @@ function displayToleranceZone(tolerance) {
         </div>
         <div class="tolerance-message">${tolerance.message}</div>
     `;
-    
+
     domElements.toleranceZone.innerHTML = toleranceHTML;
     domElements.toleranceZone.className = `tolerance-zone ${tolerance.zone} ${premiumClass}`;
-    
+
     // Apply gold accents to the delta E value container for excellent results
     if (tolerance.zone === 'excellent' && domElements.deltaEValue) {
         domElements.deltaEValue.classList.add('excellent', 'gold-glow');
     } else if (domElements.deltaEValue) {
         domElements.deltaEValue.classList.remove('excellent', 'gold-glow');
     }
-    
+
     console.log(`Tolerance zone displayed: ${tolerance.zone} with gold accents: ${tolerance.zone === 'excellent'}`);
 }
 
@@ -2970,28 +2969,28 @@ function displayCMYKSuggestions(analysis) {
         console.error('Suggestions list element not found');
         return;
     }
-    
+
     try {
         // Get current color values to generate suggestions
         const colorValues = getCurrentColorValues();
-        
+
         // Generate CMYK suggestions using the color science engine
         const suggestions = window.colorScience.generateCMYKSuggestions(
             analysis.target,
             colorValues.sample.cmyk,
             analysis.sample
         );
-        
+
         if (suggestions.length === 0) {
             displayNoSuggestionsMessage();
             return;
         }
-        
+
         // Create suggestions HTML
         const suggestionsHTML = suggestions.map((suggestion, index) => {
             const cmyk = suggestion.cmyk;
             const adjustmentMagnitude = calculateTotalAdjustment(cmyk, colorValues.sample.cmyk);
-            
+
             return `
                 <div class="suggestion-item" data-suggestion-index="${index}">
                     <div class="suggestion-header">
@@ -3034,15 +3033,15 @@ function displayCMYKSuggestions(analysis) {
                 </div>
             `;
         }).join('');
-        
+
         // Update suggestions list
         domElements.suggestionsList.innerHTML = suggestionsHTML;
-        
+
         // Store suggestions for later use (apply/copy functions)
         window.currentSuggestions = suggestions;
-        
+
         console.log(`Displayed ${suggestions.length} CMYK suggestions`);
-        
+
     } catch (error) {
         console.error('Error displaying CMYK suggestions:', error);
         displaySuggestionsError(error.message);
@@ -3111,19 +3110,19 @@ class CalculationWorkflow {
 
     renderWorkflow() {
         if (!this.isVisible) return;
-        
+
         let container = document.getElementById('calculation-workflow');
         if (!container) {
             container = document.createElement('div');
             container.id = 'calculation-workflow';
             container.className = 'workflow-container';
-            
+
             const calculatorMain = document.querySelector('.calculator-main');
             if (calculatorMain) {
                 calculatorMain.parentNode.insertBefore(container, calculatorMain.nextSibling);
             }
         }
-        
+
         container.style.display = 'block';
         container.innerHTML = `
             <div class="workflow-header">
@@ -3165,10 +3164,10 @@ const calculationWorkflow = new CalculationWorkflow();
  * Calculate total adjustment magnitude between two CMYK values
  */
 function calculateTotalAdjustment(cmyk1, cmyk2) {
-    return Math.abs(cmyk1.c - cmyk2.c) + 
-           Math.abs(cmyk1.m - cmyk2.m) + 
-           Math.abs(cmyk1.y - cmyk2.y) + 
-           Math.abs(cmyk1.k - cmyk2.k);
+    return Math.abs(cmyk1.c - cmyk2.c) +
+        Math.abs(cmyk1.m - cmyk2.m) +
+        Math.abs(cmyk1.y - cmyk2.y) +
+        Math.abs(cmyk1.k - cmyk2.k);
 }
 
 /**
@@ -3187,9 +3186,9 @@ function showResultsSection() {
 function scrollToResults() {
     if (domElements.resultsSection) {
         setTimeout(() => {
-            domElements.resultsSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
+            domElements.resultsSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
             });
         }, 100);
     }
@@ -3205,7 +3204,7 @@ function scrollToResults() {
  */
 function setCalculateButtonState(state) {
     if (!domElements.calculateBtn) return;
-    
+
     const states = {
         ready: {
             text: 'Calculate Color Difference',
@@ -3223,9 +3222,9 @@ function setCalculateButtonState(state) {
             className: 'calculate-button error'
         }
     };
-    
+
     const currentState = states[state] || states.ready;
-    
+
     domElements.calculateBtn.textContent = currentState.text;
     domElements.calculateBtn.disabled = currentState.disabled;
     domElements.calculateBtn.className = currentState.className;
@@ -3236,10 +3235,10 @@ function setCalculateButtonState(state) {
  */
 function showCalculationError(message) {
     console.error('Calculation error:', message);
-    
+
     // Update button state
     setCalculateButtonState('error');
-    
+
     // Show error in results section
     if (domElements.resultsSection) {
         domElements.resultsSection.innerHTML = `
@@ -3252,7 +3251,7 @@ function showCalculationError(message) {
         domElements.resultsSection.classList.add('visible', 'error');
         domElements.resultsSection.style.display = 'block';
     }
-    
+
     // Reset button state after 3 seconds
     setTimeout(() => {
         setCalculateButtonState('ready');
@@ -3267,7 +3266,7 @@ function clearResults() {
     if (domElements.deltaENumber) {
         domElements.deltaENumber.textContent = '--';
     }
-    
+
     // Reset component deltas
     const deltaElements = [domElements.deltaL, domElements.deltaA, domElements.deltaB, domElements.deltaC, domElements.deltaH];
     deltaElements.forEach(element => {
@@ -3276,27 +3275,27 @@ function clearResults() {
             element.className = '';
         }
     });
-    
+
     // Clear tolerance zone
     if (domElements.toleranceZone) {
         domElements.toleranceZone.innerHTML = '';
         domElements.toleranceZone.className = 'tolerance-zone';
     }
-    
+
     // Hide results section
     if (domElements.resultsSection) {
         domElements.resultsSection.classList.remove('visible', 'error');
         domElements.resultsSection.style.display = 'none';
     }
-    
+
     // Clear application state
     appState.results = null;
-    
+
     // Update export button states
     if (typeof window.colorExport !== 'undefined' && window.colorExport.updateExportButtonStates) {
         window.colorExport.updateExportButtonStates();
     }
-    
+
     console.log('Results cleared');
 }
 
@@ -3311,7 +3310,7 @@ function saveCalculationToHistory(colorValues, analysis) {
             console.warn('Storage module not available, skipping history save');
             return;
         }
-        
+
         // Prepare comparison data for storage
         const comparison = {
             target: {
@@ -3327,19 +3326,19 @@ function saveCalculationToHistory(colorValues, analysis) {
             componentDeltas: analysis.componentDeltas,
             notes: '' // Could be extended to allow user notes
         };
-        
+
         // Save to history using storage module
         const historyEntry = window.colorStorage.saveToHistory(comparison);
-        
+
         if (historyEntry) {
             console.log('Calculation saved to history successfully');
-            
+
             // Refresh history display
             window.colorStorage.displayHistory();
         } else {
             console.warn('Failed to save calculation to history');
         }
-        
+
     } catch (error) {
         console.error('Error saving calculation to history:', error);
     }
@@ -3373,30 +3372,30 @@ function applySuggestion(suggestionIndex) {
         console.error('Invalid suggestion index:', suggestionIndex);
         return;
     }
-    
+
     const suggestion = window.currentSuggestions[suggestionIndex];
     const cmyk = suggestion.cmyk;
-    
+
     // Update sample CMYK input fields
     domElements.sampleC.value = cmyk.c.toFixed(1);
     domElements.sampleM.value = cmyk.m.toFixed(1);
     domElements.sampleY.value = cmyk.y.toFixed(1);
     domElements.sampleK.value = cmyk.k.toFixed(1);
-    
+
     // Trigger input events to update validation and color swatches
     [domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK].forEach(input => {
         input.dispatchEvent(new Event('input'));
     });
-    
+
     // Update application state
     appState.sample.cmyk = { ...cmyk };
-    
+
     // Update color swatch
     updateColorSwatch('sample');
-    
+
     // Provide user feedback
     showSuggestionAppliedFeedback(suggestionIndex + 1, suggestion.description);
-    
+
     console.log(`Applied suggestion ${suggestionIndex + 1}: ${suggestion.description}`);
 }
 
@@ -3409,13 +3408,13 @@ function copySuggestionToClipboard(suggestionIndex) {
         console.error('Invalid suggestion index:', suggestionIndex);
         return;
     }
-    
+
     const suggestion = window.currentSuggestions[suggestionIndex];
     const cmyk = suggestion.cmyk;
-    
+
     // Format CMYK values for clipboard
     const cmykText = `C: ${cmyk.c.toFixed(1)}%, M: ${cmyk.m.toFixed(1)}%, Y: ${cmyk.y.toFixed(1)}%, K: ${cmyk.k.toFixed(1)}%`;
-    
+
     // Copy to clipboard using modern API
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(cmykText).then(() => {
@@ -3428,7 +3427,7 @@ function copySuggestionToClipboard(suggestionIndex) {
         // Fallback for older browsers
         fallbackCopyToClipboard(cmykText, suggestionIndex + 1);
     }
-    
+
     console.log(`Copied suggestion ${suggestionIndex + 1} to clipboard: ${cmykText}`);
 }
 
@@ -3444,7 +3443,7 @@ function fallbackCopyToClipboard(text, suggestionNumber) {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
         document.execCommand('copy');
         showCopySuccessFeedback(suggestionNumber);
@@ -3466,7 +3465,7 @@ function showSuggestionAppliedFeedback(suggestionNumber, description) {
         <span class="feedback-icon">✓</span>
         <span class="feedback-text">Applied suggestion ${suggestionNumber}: ${description}</span>
     `;
-    
+
     showTemporaryFeedback(feedback);
 }
 
@@ -3480,7 +3479,7 @@ function showCopySuccessFeedback(suggestionNumber) {
         <span class="feedback-icon">📋</span>
         <span class="feedback-text">Copied suggestion ${suggestionNumber} to clipboard</span>
     `;
-    
+
     showTemporaryFeedback(feedback);
 }
 
@@ -3494,7 +3493,7 @@ function showCopyErrorFeedback(suggestionNumber) {
         <span class="feedback-icon">⚠</span>
         <span class="feedback-text">Failed to copy suggestion ${suggestionNumber}</span>
     `;
-    
+
     showTemporaryFeedback(feedback);
 }
 
@@ -3504,18 +3503,18 @@ function showCopyErrorFeedback(suggestionNumber) {
 function showTemporaryFeedback(feedbackElement) {
     // Add to page
     document.body.appendChild(feedbackElement);
-    
+
     // Position feedback
     feedbackElement.style.position = 'fixed';
     feedbackElement.style.top = '20px';
     feedbackElement.style.right = '20px';
     feedbackElement.style.zIndex = '10000';
-    
+
     // Animate in
     setTimeout(() => {
         feedbackElement.classList.add('visible');
     }, 10);
-    
+
     // Remove after delay
     setTimeout(() => {
         feedbackElement.classList.remove('visible');
@@ -3537,23 +3536,23 @@ tialize preset color dropdowns
  */
 function initializePresetColors() {
     console.log('Initializing preset colors...');
-    
+
     // Populate target preset dropdown
     if (domElements.targetPresetSelect) {
         populatePresetDropdown(domElements.targetPresetSelect);
-        domElements.targetPresetSelect.addEventListener('change', function(e) {
+        domElements.targetPresetSelect.addEventListener('change', function (e) {
             handlePresetSelection('target', e.target.value);
         });
     }
-    
+
     // Populate sample preset dropdown
     if (domElements.samplePresetSelect) {
         populatePresetDropdown(domElements.samplePresetSelect);
-        domElements.samplePresetSelect.addEventListener('change', function(e) {
+        domElements.samplePresetSelect.addEventListener('change', function (e) {
             handlePresetSelection('sample', e.target.value);
         });
     }
-    
+
     console.log('Preset colors initialized successfully');
 }
 
@@ -3563,12 +3562,12 @@ function initializePresetColors() {
  */
 function populatePresetDropdown(selectElement) {
     console.log('Populating preset dropdown...', selectElement);
-    
+
     // Clear existing options (except the first placeholder)
     while (selectElement.children.length > 1) {
         selectElement.removeChild(selectElement.lastChild);
     }
-    
+
     try {
         // Check if Pantone colors are available
         if (window.pantoneColors && window.pantoneColors.generatePantonePresetOptions) {
@@ -3576,7 +3575,7 @@ function populatePresetDropdown(selectElement) {
             // Use Pantone color database
             const pantoneOptions = window.pantoneColors.generatePantonePresetOptions();
             console.log('Generated Pantone options:', pantoneOptions.length);
-            
+
             pantoneOptions.forEach(option => {
                 if (option.type === 'header') {
                     // Create optgroup for color family
@@ -3589,7 +3588,7 @@ function populatePresetDropdown(selectElement) {
                     optionElement.value = option.value;
                     optionElement.textContent = option.label;
                     optionElement.dataset.colorData = JSON.stringify(option.color);
-                    
+
                     // Add to the last optgroup
                     const lastOptgroup = selectElement.querySelector('optgroup:last-child');
                     if (lastOptgroup) {
@@ -3599,15 +3598,15 @@ function populatePresetDropdown(selectElement) {
                     }
                 }
             });
-            
+
             console.log('Populated dropdown with Pantone colors');
-            
+
         } else {
             // Fallback to basic colors if Pantone database not available
             console.warn('Pantone database not available, using fallback colors');
             populateFallbackColors(selectElement);
         }
-        
+
     } catch (error) {
         console.error('Error populating preset dropdown:', error);
         populateFallbackColors(selectElement);
@@ -3619,7 +3618,7 @@ function populatePresetDropdown(selectElement) {
  */
 function populateFallbackColors(selectElement) {
     console.log('Using fallback color population');
-    
+
     const fallbackColors = {
         'Process Colors': [
             { name: 'Process Cyan', cmyk: { c: 100, m: 0, y: 0, k: 0 }, lab: { l: 55, a: -37, b: -50 } },
@@ -3643,11 +3642,11 @@ function populateFallbackColors(selectElement) {
             { name: 'Paper White', cmyk: { c: 0, m: 0, y: 0, k: 0 } }
         ]
     };
-    
+
     Object.keys(fallbackColors).forEach(category => {
         const optgroup = document.createElement('optgroup');
         optgroup.label = category;
-        
+
         fallbackColors[category].forEach(color => {
             const option = document.createElement('option');
             option.value = color.name;
@@ -3655,10 +3654,10 @@ function populateFallbackColors(selectElement) {
             option.dataset.colorData = JSON.stringify(color);
             optgroup.appendChild(option);
         });
-        
+
         selectElement.appendChild(optgroup);
     });
-    
+
     console.log(`Populated fallback colors: ${Object.keys(fallbackColors).length} categories`);
 }
 
@@ -3670,16 +3669,16 @@ function handlePresetSelection(colorType, presetName) {
     if (!presetName) {
         return;
     }
-    
+
     console.log(`Applying preset color "${presetName}" to ${colorType}`);
-    
+
     // Get the selected option element to access the color data
-    const selectElement = colorType === 'target' ? 
+    const selectElement = colorType === 'target' ?
         domElements.targetPresetSelect : domElements.samplePresetSelect;
     const selectedOption = selectElement.querySelector(`option[value="${presetName}"]`);
-    
+
     let presetColor = null;
-    
+
     // First try to get color data from the selected option's dataset
     if (selectedOption && selectedOption.dataset.colorData) {
         try {
@@ -3689,52 +3688,52 @@ function handlePresetSelection(colorType, presetName) {
             console.warn('Failed to parse color data from option:', error);
         }
     }
-    
+
     // Fallback to hardcoded preset colors
     if (!presetColor && PRESET_COLORS[presetName]) {
         presetColor = PRESET_COLORS[presetName];
         console.log('Using fallback preset color:', presetColor);
     }
-    
+
     if (!presetColor) {
         console.error(`Could not find preset color data for "${presetName}"`);
         return;
     }
-    
+
     // Get the appropriate input elements
     const inputs = getColorInputElements(colorType);
-    
+
     if (!inputs) {
         console.error(`Could not find input elements for ${colorType}`);
         return;
     }
-    
+
     // Apply the preset CMYK values (handle both Pantone and preset color structures)
     const cmyk = presetColor.cmyk || presetColor; // Pantone colors have .cmyk property, presets have values directly
-    
+
     inputs.c.value = cmyk.c.toFixed(1);
     inputs.m.value = cmyk.m.toFixed(1);
     inputs.y.value = cmyk.y.toFixed(1);
     inputs.k.value = cmyk.k.toFixed(1);
-    
+
     // Trigger input events to update validation and swatches
     [inputs.c, inputs.m, inputs.y, inputs.k].forEach(input => {
         input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    
+
     // Clear LAB values to let CMYK take precedence
     inputs.l.value = '';
     inputs.a.value = '';
     inputs.b.value = '';
-    
+
     // Trigger LAB input events
     [inputs.l, inputs.a, inputs.b].forEach(input => {
         input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    
+
     // Keep the selected value visible instead of resetting
     // selectElement.value = ''; // Commented out to keep selection visible
-    
+
     // Ensure the selection remains visible by setting it again after a short delay
     // This handles cases where other event listeners might be clearing it
     setTimeout(() => {
@@ -3743,10 +3742,10 @@ function handlePresetSelection(colorType, presetName) {
             console.log(`Restored preset selection: ${presetName}`);
         }
     }, 100);
-    
+
     // Show feedback
     showPresetAppliedFeedback(colorType, presetName);
-    
+
     console.log(`Applied preset "${presetName}": C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%`);
 }
 
@@ -3784,44 +3783,44 @@ function getColorInputElements(colorType) {
  */
 function setupWorkflowEnhancements() {
     console.log('Setting up workflow enhancements...');
-    
+
     // Clear buttons
     if (domElements.targetClearBtn) {
-        domElements.targetClearBtn.addEventListener('click', function() {
+        domElements.targetClearBtn.addEventListener('click', function () {
             clearColorInputs('target');
         });
     }
-    
+
     if (domElements.sampleClearBtn) {
-        domElements.sampleClearBtn.addEventListener('click', function() {
+        domElements.sampleClearBtn.addEventListener('click', function () {
             clearColorInputs('sample');
         });
     }
-    
+
     // Copy CMYK buttons
     if (domElements.targetCopyBtn) {
-        domElements.targetCopyBtn.addEventListener('click', function() {
+        domElements.targetCopyBtn.addEventListener('click', function () {
             copyCMYKToClipboard('target');
         });
     }
-    
+
     if (domElements.sampleCopyBtn) {
-        domElements.sampleCopyBtn.addEventListener('click', function() {
+        domElements.sampleCopyBtn.addEventListener('click', function () {
             copyCMYKToClipboard('sample');
         });
     }
-    
+
     // Reset all button
     if (domElements.resetAllBtn) {
-        domElements.resetAllBtn.addEventListener('click', function() {
+        domElements.resetAllBtn.addEventListener('click', function () {
             resetAllInputs();
         });
     }
-    
+
     // Workflow toggle button
     const workflowToggleBtn = document.getElementById('workflow-toggle-btn');
     if (workflowToggleBtn) {
-        workflowToggleBtn.addEventListener('click', function() {
+        workflowToggleBtn.addEventListener('click', function () {
             if (calculationWorkflow.isVisible) {
                 calculationWorkflow.hideWorkflow();
                 workflowToggleBtn.textContent = 'Show Process';
@@ -3833,12 +3832,12 @@ function setupWorkflowEnhancements() {
             }
         });
     }
-    
+
     // Professional help toggle button
     const helpToggleBtn = document.getElementById('help-toggle-btn');
     const helpPanel = document.getElementById('professional-help-panel');
     if (helpToggleBtn && helpPanel) {
-        helpToggleBtn.addEventListener('click', function() {
+        helpToggleBtn.addEventListener('click', function () {
             if (helpPanel.classList.contains('visible')) {
                 helpPanel.classList.remove('visible');
                 helpToggleBtn.textContent = 'Help Guide';
@@ -3850,7 +3849,7 @@ function setupWorkflowEnhancements() {
             }
         });
     }
-    
+
     console.log('Workflow enhancements set up successfully');
 }
 
@@ -3860,14 +3859,14 @@ function setupWorkflowEnhancements() {
  */
 function clearColorInputs(colorType) {
     console.log(`Clearing ${colorType} color inputs...`);
-    
+
     const inputs = getColorInputElements(colorType);
-    
+
     if (!inputs) {
         console.error(`Could not find input elements for ${colorType}`);
         return;
     }
-    
+
     // Clear all input values
     Object.values(inputs).forEach(input => {
         if (input) {
@@ -3876,26 +3875,26 @@ function clearColorInputs(colorType) {
             clearValidationError(input);
         }
     });
-    
+
     // Reset application state for this color
     if (colorType === 'target') {
-        appState.target = { 
-            cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
-            lab: { l: 50, a: 0, b: 0 } 
+        appState.target = {
+            cmyk: { c: 0, m: 0, y: 0, k: 0 },
+            lab: { l: 50, a: 0, b: 0 }
         };
     } else {
-        appState.sample = { 
-            cmyk: { c: 0, m: 0, y: 0, k: 0 }, 
-            lab: { l: 50, a: 0, b: 0 } 
+        appState.sample = {
+            cmyk: { c: 0, m: 0, y: 0, k: 0 },
+            lab: { l: 50, a: 0, b: 0 }
         };
     }
-    
+
     // Update color swatch to default
     updateColorSwatch(colorType);
-    
+
     // Show feedback
     showClearFeedback(colorType);
-    
+
     console.log(`${colorType} color inputs cleared`);
 }
 
@@ -3905,23 +3904,23 @@ function clearColorInputs(colorType) {
  */
 function copyCMYKToClipboard(colorType) {
     console.log(`Copying ${colorType} CMYK values to clipboard...`);
-    
+
     const inputs = getColorInputElements(colorType);
-    
+
     if (!inputs) {
         console.error(`Could not find input elements for ${colorType}`);
         return;
     }
-    
+
     // Get current CMYK values
     const c = parseFloat(inputs.c.value) || 0;
     const m = parseFloat(inputs.m.value) || 0;
     const y = parseFloat(inputs.y.value) || 0;
     const k = parseFloat(inputs.k.value) || 0;
-    
+
     // Format CMYK string
     const cmykString = `C:${c.toFixed(1)}% M:${m.toFixed(1)}% Y:${y.toFixed(1)}% K:${k.toFixed(1)}%`;
-    
+
     // Copy to clipboard
     copyTextToClipboard(cmykString)
         .then(() => {
@@ -3940,39 +3939,39 @@ function copyCMYKToClipboard(colorType) {
  */
 function resetAllInputs() {
     console.log('Resetting all inputs...');
-    
+
     // Clear both target and sample inputs
     clearColorInputs('target');
     clearColorInputs('sample');
-    
+
     // Clear results
     if (domElements.resultsSection) {
         domElements.resultsSection.classList.remove('visible');
         domElements.resultsSection.style.display = 'none';
     }
-    
+
     // Reset component deltas
     if (domElements.deltaL) domElements.deltaL.textContent = '--';
     if (domElements.deltaA) domElements.deltaA.textContent = '--';
     if (domElements.deltaB) domElements.deltaB.textContent = '--';
     if (domElements.deltaC) domElements.deltaC.textContent = '--';
     if (domElements.deltaH) domElements.deltaH.textContent = '--';
-    
+
     // Reset Delta E display
     if (domElements.deltaENumber) domElements.deltaENumber.textContent = '--';
     if (domElements.toleranceZone) domElements.toleranceZone.innerHTML = '';
     if (domElements.suggestionsList) domElements.suggestionsList.innerHTML = '';
-    
+
     // Reset application state
     appState.results = null;
-    
+
     // Reset preset dropdowns
     if (domElements.targetPresetSelect) domElements.targetPresetSelect.value = '';
     if (domElements.samplePresetSelect) domElements.samplePresetSelect.value = '';
-    
+
     // Show feedback
     showResetAllFeedback();
-    
+
     console.log('All inputs reset successfully');
 }
 
@@ -3994,7 +3993,7 @@ async function copyTextToClipboard(text) {
             document.body.appendChild(textArea);
             textArea.focus();
             textArea.select();
-            
+
             try {
                 const successful = document.execCommand('copy');
                 document.body.removeChild(textArea);
@@ -4020,7 +4019,7 @@ function showPresetAppliedFeedback(colorType, presetName) {
         const originalText = button.textContent;
         button.textContent = 'Applied!';
         button.classList.add('success');
-        
+
         setTimeout(() => {
             button.textContent = originalText;
             button.classList.remove('success');
@@ -4037,7 +4036,7 @@ function showClearFeedback(colorType) {
         const originalText = button.textContent;
         button.textContent = 'Cleared!';
         button.classList.add('success');
-        
+
         setTimeout(() => {
             button.textContent = originalText;
             button.classList.remove('success');
@@ -4052,7 +4051,7 @@ function showCopyFeedback(colorType, cmykString, success) {
     const button = colorType === 'target' ? domElements.targetCopyBtn : domElements.sampleCopyBtn;
     if (button) {
         const originalText = button.textContent;
-        
+
         if (success) {
             button.textContent = 'Copied!';
             button.classList.add('success');
@@ -4060,7 +4059,7 @@ function showCopyFeedback(colorType, cmykString, success) {
             button.textContent = 'Failed';
             button.style.backgroundColor = '#dc3545';
         }
-        
+
         setTimeout(() => {
             button.textContent = originalText;
             button.classList.remove('success');
@@ -4077,7 +4076,7 @@ function showResetAllFeedback() {
         const originalText = domElements.resetAllBtn.textContent;
         domElements.resetAllBtn.textContent = 'Reset Complete!';
         domElements.resetAllBtn.style.backgroundColor = '#28a745';
-        
+
         setTimeout(() => {
             domElements.resetAllBtn.textContent = originalText;
             domElements.resetAllBtn.style.backgroundColor = '';
@@ -4094,16 +4093,16 @@ function copySuggestionToClipboard(suggestionIndex) {
         console.error('No suggestions available to copy');
         return;
     }
-    
+
     const suggestion = appState.results.suggestions[suggestionIndex];
     if (!suggestion) {
         console.error(`Suggestion ${suggestionIndex} not found`);
         return;
     }
-    
+
     const cmyk = suggestion.cmyk;
     const cmykString = `C:${cmyk.c.toFixed(1)}% M:${cmyk.m.toFixed(1)}% Y:${cmyk.y.toFixed(1)}% K:${cmyk.k.toFixed(1)}%`;
-    
+
     copyTextToClipboard(cmykString)
         .then(() => {
             showSuggestionCopyFeedback(suggestionIndex, true);
@@ -4121,12 +4120,12 @@ function copySuggestionToClipboard(suggestionIndex) {
 function showSuggestionCopyFeedback(suggestionIndex, success) {
     const suggestionItem = document.querySelector(`[data-suggestion-index="${suggestionIndex}"]`);
     if (!suggestionItem) return;
-    
+
     const copyButton = suggestionItem.querySelector('.copy-suggestion-btn');
     if (!copyButton) return;
-    
+
     const originalText = copyButton.textContent;
-    
+
     if (success) {
         copyButton.textContent = 'Copied!';
         copyButton.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
@@ -4134,7 +4133,7 @@ function showSuggestionCopyFeedback(suggestionIndex, success) {
         copyButton.textContent = 'Failed';
         copyButton.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
     }
-    
+
     setTimeout(() => {
         copyButton.textContent = originalText;
         copyButton.style.background = '';
@@ -4144,58 +4143,58 @@ function showSuggestionCopyFeedback(suggestionIndex, success) {
 // Debug function to test validation (can be removed in production)
 function testValidation() {
     console.log('Testing validation system...');
-    
+
     // Test CMYK validation
     console.log('CMYK 50:', validateCMYKValue(50)); // Should be true
     console.log('CMYK 150:', validateCMYKValue(150)); // Should be false
     console.log('CMYK -10:', validateCMYKValue(-10)); // Should be false
-    
+
     // Test LAB validation
     console.log('LAB L* 50:', validateLABValue(50, 'l')); // Should be true
     console.log('LAB L* 150:', validateLABValue(150, 'l')); // Should be false
     console.log('LAB a* 50:', validateLABValue(50, 'a')); // Should be true
     console.log('LAB a* 150:', validateLABValue(150, 'a')); // Should be false
-    
+
     console.log('Validation tests completed');
 }
 
 // Debug function to test preset colors
 function testPresetColors() {
     console.log('Testing preset colors...');
-    
+
     // Test applying a preset to target
     handlePresetSelection('target', 'Process Cyan');
-    
+
     setTimeout(() => {
         // Test applying a preset to sample
         handlePresetSelection('sample', 'Pantone Red 032');
     }, 1000);
-    
+
     console.log('Preset color tests completed');
 }
 
 // Debug function to test workflow enhancements
 function testWorkflowEnhancements() {
     console.log('Testing workflow enhancements...');
-    
+
     // Load some test data first
     loadTestData();
-    
+
     setTimeout(() => {
         // Test copy functionality
         copyCMYKToClipboard('target');
     }, 1000);
-    
+
     setTimeout(() => {
         // Test clear functionality
         clearColorInputs('sample');
     }, 2000);
-    
+
     setTimeout(() => {
         // Test reset all functionality
         resetAllInputs();
     }, 3000);
-    
+
     console.log('Workflow enhancement tests completed');
 }/**
 
@@ -4218,7 +4217,7 @@ const g7State = {
  */
 function initializeG7Integration() {
     console.log('Initializing G7 integration...');
-    
+
     try {
         // Cache G7 DOM elements
         domElements.g7Container = document.getElementById('g7-analysis-container');
@@ -4228,30 +4227,30 @@ function initializeG7Integration() {
         domElements.g7RecommendationsList = document.getElementById('g7-recommendations-list');
         domElements.enableG7Checkbox = document.getElementById('enable-g7-analysis');
         domElements.prioritizeG7Checkbox = document.getElementById('prioritize-g7-suggestions');
-        
+
         // Set up G7 control event listeners
         if (domElements.enableG7Checkbox) {
-            domElements.enableG7Checkbox.addEventListener('change', function(e) {
+            domElements.enableG7Checkbox.addEventListener('change', function (e) {
                 g7State.enabled = e.target.checked;
                 toggleG7Analysis(g7State.enabled);
                 console.log(`G7 analysis ${g7State.enabled ? 'enabled' : 'disabled'}`);
             });
         }
-        
+
         if (domElements.prioritizeG7Checkbox) {
-            domElements.prioritizeG7Checkbox.addEventListener('change', function(e) {
+            domElements.prioritizeG7Checkbox.addEventListener('change', function (e) {
                 g7State.prioritizeG7 = e.target.checked;
                 console.log(`G7 prioritization ${g7State.prioritizeG7 ? 'enabled' : 'disabled'}`);
-                
+
                 // Refresh suggestions if we have current results
                 if (appState.results && g7State.enabled) {
                     updateG7Analysis();
                 }
             });
         }
-        
+
         console.log('G7 integration initialized successfully');
-        
+
     } catch (error) {
         console.error('Error initializing G7 integration:', error);
     }
@@ -4263,11 +4262,11 @@ function initializeG7Integration() {
  */
 function toggleG7Analysis(enabled) {
     if (!domElements.g7Container) return;
-    
+
     if (enabled) {
         domElements.g7Container.style.display = 'block';
         domElements.g7Container.classList.add('active');
-        
+
         // Trigger analysis if we have current color data
         const currentColors = getCurrentColorValues();
         if (hasValidColorData(currentColors.sample)) {
@@ -4287,42 +4286,42 @@ function performG7Analysis(cmykValues) {
     if (!g7State.enabled || !window.colorScience?.calculateG7GrayBalance) {
         return null;
     }
-    
+
     try {
         // Generate cache key for performance
         const cacheKey = `g7_${cmykValues.c}_${cmykValues.m}_${cmykValues.y}_${cmykValues.k}`;
-        
+
         // Check cache first
         if (g7State.analysisCache.has(cacheKey)) {
             const cachedResult = g7State.analysisCache.get(cacheKey);
             updateG7Display(cachedResult);
             return cachedResult;
         }
-        
+
         // Perform G7 analysis
         const g7Analysis = window.colorScience.calculateG7GrayBalance(
-            cmykValues.c, 
-            cmykValues.m, 
-            cmykValues.y, 
+            cmykValues.c,
+            cmykValues.m,
+            cmykValues.y,
             cmykValues.k
         );
-        
+
         // Cache the result
         g7State.analysisCache.set(cacheKey, g7Analysis);
         g7State.lastAnalysis = g7Analysis;
-        
+
         // Update display
         updateG7Display(g7Analysis);
-        
+
         console.log('G7 Analysis completed:', {
             compliant: g7Analysis.isG7Compliant,
             grayLevel: g7Analysis.grayLevel,
             deviation: g7Analysis.totalDeviation,
             recommendations: g7Analysis.recommendations?.length || 0
         });
-        
+
         return g7Analysis;
-        
+
     } catch (error) {
         console.error('Error performing G7 analysis:', error);
         displayG7Error(error.message);
@@ -4336,45 +4335,45 @@ function performG7Analysis(cmykValues) {
  */
 function updateG7Display(g7Analysis) {
     if (!g7Analysis || !domElements.g7ComplianceIndicator) return;
-    
+
     try {
         // Update compliance status
         const complianceIcon = domElements.g7ComplianceIndicator.querySelector('.compliance-icon');
         const complianceText = domElements.g7ComplianceIndicator.querySelector('.compliance-text');
-        
+
         if (complianceIcon && complianceText) {
             // Set compliance level styling
             const complianceLevel = g7Analysis.complianceLevel || 'unknown';
             complianceIcon.className = `compliance-icon ${complianceLevel}`;
-            
+
             // Set compliance icon and text
             const complianceInfo = getG7ComplianceDisplayInfo(g7Analysis);
             complianceIcon.textContent = complianceInfo.icon;
             complianceText.textContent = complianceInfo.text;
         }
-        
+
         // Update compliance details
         if (domElements.g7ComplianceDetails) {
             const grayLevelSpan = domElements.g7ComplianceDetails.querySelector('.gray-level');
             const deviationSpan = domElements.g7ComplianceDetails.querySelector('.deviation');
-            
+
             if (grayLevelSpan) {
                 grayLevelSpan.textContent = `Gray Level: ${g7Analysis.grayLevel}%`;
             }
-            
+
             if (deviationSpan) {
                 deviationSpan.textContent = `Total Deviation: ${g7Analysis.totalDeviation.toFixed(2)}`;
             }
         }
-        
+
         // Update recommendations
         updateG7Recommendations(g7Analysis.recommendations || []);
-        
+
         // Show the G7 container if it's hidden
         if (domElements.g7Container && domElements.g7Container.style.display === 'none') {
             domElements.g7Container.style.display = 'block';
         }
-        
+
     } catch (error) {
         console.error('Error updating G7 display:', error);
     }
@@ -4386,7 +4385,7 @@ function updateG7Display(g7Analysis) {
  */
 function getG7ComplianceDisplayInfo(g7Analysis) {
     const complianceLevel = g7Analysis.complianceLevel || 'unknown';
-    
+
     const displayInfo = {
         excellent: { icon: '✅', text: 'Excellent G7 Compliance' },
         good: { icon: '✅', text: 'Good G7 Compliance' },
@@ -4394,7 +4393,7 @@ function getG7ComplianceDisplayInfo(g7Analysis) {
         poor: { icon: '❌', text: 'Poor G7 Compliance' },
         unknown: { icon: '❓', text: 'G7 Analysis Error' }
     };
-    
+
     return displayInfo[complianceLevel] || displayInfo.unknown;
 }
 
@@ -4404,24 +4403,24 @@ function getG7ComplianceDisplayInfo(g7Analysis) {
  */
 function updateG7Recommendations(recommendations) {
     if (!domElements.g7RecommendationsList) return;
-    
+
     // Clear existing recommendations
     domElements.g7RecommendationsList.innerHTML = '';
-    
+
     if (!recommendations || recommendations.length === 0) {
         domElements.g7RecommendationsList.innerHTML = '<div class="no-recommendations">No G7 adjustments needed</div>';
         return;
     }
-    
+
     // Create recommendation items
     recommendations.forEach((rec, index) => {
         const recItem = document.createElement('div');
         recItem.className = `g7-recommendation-item ${rec.priority || 'medium'}-priority`;
-        
+
         // Add animation delay for staggered appearance
         recItem.style.animationDelay = `${index * 0.1}s`;
         recItem.classList.add('new-recommendation');
-        
+
         if (rec.channel === 'All') {
             // Info message
             recItem.innerHTML = `
@@ -4443,7 +4442,7 @@ function updateG7Recommendations(recommendations) {
                 </div>
             `;
         }
-        
+
         domElements.g7RecommendationsList.appendChild(recItem);
     });
 }
@@ -4454,16 +4453,16 @@ function updateG7Recommendations(recommendations) {
  */
 function displayG7Error(errorMessage) {
     if (!domElements.g7ComplianceIndicator) return;
-    
+
     const complianceIcon = domElements.g7ComplianceIndicator.querySelector('.compliance-icon');
     const complianceText = domElements.g7ComplianceIndicator.querySelector('.compliance-text');
-    
+
     if (complianceIcon && complianceText) {
         complianceIcon.className = 'compliance-icon error';
         complianceIcon.textContent = '❌';
         complianceText.textContent = `G7 Analysis Error: ${errorMessage}`;
     }
-    
+
     if (domElements.g7RecommendationsList) {
         domElements.g7RecommendationsList.innerHTML = '<div class="error-message">Unable to generate G7 recommendations</div>';
     }
@@ -4477,21 +4476,21 @@ function performEnhancedColorDifferenceCalculation() {
     try {
         // Start loading state
         setLoadingState('isCalculating', true);
-        
+
         // Get current color values
         const colorValues = getCurrentColorValues();
-        
+
         // Validate inputs
         if (!hasValidColorData(colorValues.target) || !hasValidColorData(colorValues.sample)) {
             throw new Error('Please enter valid color values for both target and sample colors');
         }
-        
+
         // Perform standard Delta E analysis
         const deltaEAnalysis = window.colorScience.performDeltaEAnalysis(
             colorValues.target.lab,
             colorValues.sample.lab
         );
-        
+
         // Generate enhanced CMYK suggestions with G7 integration
         let suggestions;
         if (g7State.enabled && window.colorScience.generateCMYKSuggestionsWithG7) {
@@ -4504,9 +4503,9 @@ function performEnhancedColorDifferenceCalculation() {
                     prioritizeG7: g7State.prioritizeG7
                 }
             );
-            
+
             suggestions = enhancedResult.suggestions || [];
-            
+
             // Update G7 analysis if available
             if (enhancedResult.g7Analysis) {
                 g7State.lastAnalysis = enhancedResult.g7Analysis;
@@ -4519,13 +4518,13 @@ function performEnhancedColorDifferenceCalculation() {
                 colorValues.sample.cmyk,
                 colorValues.sample.lab
             );
-            
+
             // Perform separate G7 analysis
             if (g7State.enabled) {
                 performG7Analysis(colorValues.sample.cmyk);
             }
         }
-        
+
         // Store results in app state
         appState.results = {
             ...deltaEAnalysis,
@@ -4534,18 +4533,18 @@ function performEnhancedColorDifferenceCalculation() {
             timestamp: new Date().toISOString(),
             colorValues: colorValues
         };
-        
+
         // Update displays
         updateDeltaEDisplay(deltaEAnalysis);
         updateSuggestionsDisplay(suggestions);
-        
+
         // Save to history
         if (window.colorStorage?.saveToHistory) {
             window.colorStorage.saveToHistory(appState.results);
         }
-        
+
         console.log('Enhanced color difference calculation completed with G7 integration');
-        
+
     } catch (error) {
         console.error('Error in enhanced color difference calculation:', error);
         displayCalculationError(error.message);
@@ -4560,7 +4559,7 @@ function performEnhancedColorDifferenceCalculation() {
  */
 function updateG7Analysis() {
     if (!g7State.enabled) return;
-    
+
     const currentColors = getCurrentColorValues();
     if (hasValidColorData(currentColors.sample)) {
         // Debounce G7 analysis to avoid excessive calculations
@@ -4582,31 +4581,31 @@ function updateG7Analysis() {
  */
 function updateEnhancedSuggestionsDisplay(suggestions) {
     if (!domElements.suggestionsList) return;
-    
+
     // Clear existing suggestions
     domElements.suggestionsList.innerHTML = '';
-    
+
     if (!suggestions || suggestions.length === 0) {
         domElements.suggestionsList.innerHTML = '<div class="no-suggestions">No suggestions available</div>';
         return;
     }
-    
+
     // Create suggestion items with G7 integration
     suggestions.forEach((suggestion, index) => {
         const suggestionItem = document.createElement('div');
         suggestionItem.className = 'suggestion-item';
-        
+
         // Add G7-specific styling
         if (suggestion.type === 'g7') {
             suggestionItem.classList.add('g7-suggestion');
         }
-        
+
         // Add animation delay
         suggestionItem.style.animationDelay = `${index * 0.1}s`;
-        
+
         // Create suggestion content
         const cmykText = `C${suggestion.cmyk.c.toFixed(1)} M${suggestion.cmyk.m.toFixed(1)} Y${suggestion.cmyk.y.toFixed(1)} K${suggestion.cmyk.k.toFixed(1)}`;
-        
+
         suggestionItem.innerHTML = `
             <div class="suggestion-cmyk">${cmykText}</div>
             <div class="suggestion-description">
@@ -4619,12 +4618,12 @@ function updateEnhancedSuggestionsDisplay(suggestions) {
                 </div>
             ` : ''}
         `;
-        
+
         // Add click handler to apply suggestion
         suggestionItem.addEventListener('click', () => {
             applySuggestion(suggestion);
         });
-        
+
         domElements.suggestionsList.appendChild(suggestionItem);
     });
 }
@@ -4635,14 +4634,14 @@ function updateEnhancedSuggestionsDisplay(suggestions) {
  */
 function applySuggestion(suggestion) {
     if (!suggestion || !suggestion.cmyk) return;
-    
+
     try {
         // Update sample CMYK inputs
         if (domElements.sampleC) domElements.sampleC.value = suggestion.cmyk.c.toFixed(1);
         if (domElements.sampleM) domElements.sampleM.value = suggestion.cmyk.m.toFixed(1);
         if (domElements.sampleY) domElements.sampleY.value = suggestion.cmyk.y.toFixed(1);
         if (domElements.sampleK) domElements.sampleK.value = suggestion.cmyk.k.toFixed(1);
-        
+
         // Trigger input events to update validation and swatches
         [domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK].forEach(input => {
             if (input) {
@@ -4650,19 +4649,19 @@ function applySuggestion(suggestion) {
                 input.dispatchEvent(new Event('blur'));
             }
         });
-        
+
         // Update G7 analysis with new values
         if (g7State.enabled) {
             setTimeout(() => {
                 performG7Analysis(suggestion.cmyk);
             }, 100);
         }
-        
+
         console.log('Applied suggestion:', suggestion.description);
-        
+
         // Show feedback
         showNotification(`Applied suggestion: ${suggestion.description}`, 'success');
-        
+
     } catch (error) {
         console.error('Error applying suggestion:', error);
         showNotification('Error applying suggestion', 'error');
@@ -4678,7 +4677,7 @@ function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
-    
+
     // Style the notification
     Object.assign(notification.style, {
         position: 'fixed',
@@ -4693,7 +4692,7 @@ function showNotification(message, type = 'info') {
         transform: 'translateY(-20px)',
         transition: 'all 0.3s ease'
     });
-    
+
     // Set background color based on type
     const colors = {
         success: '#28a745',
@@ -4702,16 +4701,16 @@ function showNotification(message, type = 'info') {
         info: '#17a2b8'
     };
     notification.style.backgroundColor = colors[type] || colors.info;
-    
+
     // Add to page
     document.body.appendChild(notification);
-    
+
     // Animate in
     setTimeout(() => {
         notification.style.opacity = '1';
         notification.style.transform = 'translateY(0)';
     }, 10);
-    
+
     // Remove after delay
     setTimeout(() => {
         notification.style.opacity = '0';
@@ -4735,7 +4734,7 @@ if (window.calculatorApp) {
         performEnhancedColorDifferenceCalculation,
         applySuggestion,
         showNotification,
-        
+
         // G7 State Access
         getG7State: () => g7State,
         setG7Enabled: (enabled) => {
@@ -4762,45 +4761,45 @@ console.log('G7 integration functions loaded successfully');
  */
 function testG7Integration() {
     console.log('Testing G7 integration...');
-    
+
     try {
         // Test G7 calculation with known values
         const testCmyk = { c: 19, m: 16, y: 16, k: 25 }; // Should be G7 compliant
-        
+
         if (window.colorScience?.calculateG7GrayBalance) {
             const g7Result = window.colorScience.calculateG7GrayBalance(
                 testCmyk.c, testCmyk.m, testCmyk.y, testCmyk.k
             );
-            
+
             console.log('G7 Test Result:', {
                 compliant: g7Result.isG7Compliant,
                 grayLevel: g7Result.grayLevel,
                 deviation: g7Result.totalDeviation,
                 complianceLevel: g7Result.complianceLevel
             });
-            
+
             // Test enhanced suggestions
             if (window.colorScience.generateCMYKSuggestionsWithG7) {
                 const testTargetLab = { l: 60, a: 0, b: 0 };
                 const testSampleLab = { l: 55, a: 2, b: -1 };
-                
+
                 const enhancedSuggestions = window.colorScience.generateCMYKSuggestionsWithG7(
                     testTargetLab, testCmyk, testSampleLab, { includeG7: true }
                 );
-                
+
                 console.log('Enhanced Suggestions Test:', {
                     totalSuggestions: enhancedSuggestions.suggestions?.length || 0,
                     g7Suggestions: enhancedSuggestions.suggestions?.filter(s => s.type === 'g7').length || 0,
                     hasG7Analysis: !!enhancedSuggestions.g7Analysis
                 });
             }
-            
+
             return true;
         } else {
             console.warn('G7 functions not available in colorScience module');
             return false;
         }
-        
+
     } catch (error) {
         console.error('G7 integration test failed:', error);
         return false;
@@ -4816,56 +4815,56 @@ if (window.calculatorApp) {
  */
 function initializeAccessibilityFeatures() {
     console.log('Initializing accessibility features...');
-    
+
     // Set up ARIA labels for main sections
     const targetSection = document.getElementById('target-section');
     if (targetSection) {
         targetSection.setAttribute('role', 'region');
         targetSection.setAttribute('aria-label', 'Target color input section');
     }
-    
+
     const sampleSection = document.getElementById('sample-section');
     if (sampleSection) {
         sampleSection.setAttribute('role', 'region');
         sampleSection.setAttribute('aria-label', 'Sample color input section');
     }
-    
+
     const deltaSection = document.getElementById('delta-section');
     if (deltaSection) {
         deltaSection.setAttribute('role', 'region');
         deltaSection.setAttribute('aria-label', 'Color difference results section');
     }
-    
+
     // Set up ARIA labels for color swatches
     const targetSwatch = document.getElementById('target-swatch');
     if (targetSwatch) {
         targetSwatch.setAttribute('role', 'img');
         targetSwatch.setAttribute('aria-label', 'Target color preview swatch');
     }
-    
+
     const sampleSwatch = document.getElementById('sample-swatch');
     if (sampleSwatch) {
         sampleSwatch.setAttribute('role', 'img');
         sampleSwatch.setAttribute('aria-label', 'Sample color preview swatch');
     }
-    
+
     // Set up ARIA live regions for dynamic content
     const resultsSection = document.getElementById('results-section');
     if (resultsSection) {
         resultsSection.setAttribute('aria-live', 'polite');
         resultsSection.setAttribute('aria-atomic', 'false');
     }
-    
+
     const deltaEValue = document.getElementById('delta-e-value');
     if (deltaEValue) {
         deltaEValue.setAttribute('role', 'status');
         deltaEValue.setAttribute('aria-live', 'polite');
         deltaEValue.setAttribute('aria-label', 'Total color difference result');
     }
-    
+
     // Set up input descriptions
     setupInputAccessibility();
-    
+
     console.log('Accessibility features initialized');
 }
 
@@ -4875,11 +4874,11 @@ function setupInputAccessibility() {
     inputs.forEach(input => {
         const label = input.closest('.input-field')?.querySelector('label')?.textContent;
         const section = input.closest('.color-section, .delta-section')?.querySelector('h2')?.textContent;
-        
+
         if (label && section) {
             input.setAttribute('aria-label', `${label} value for ${section} section`);
             input.setAttribute('aria-describedby', `${input.id}-description`);
-            
+
             // Create description element
             const description = document.createElement('span');
             description.id = `${input.id}-description`;
@@ -4893,17 +4892,17 @@ function setupInputAccessibility() {
 // Set up comprehensive keyboard navigation
 function setupKeyboardNavigation() {
     console.log('Setting up keyboard navigation...');
-    
+
     // Add keyboard shortcuts
     document.addEventListener('keydown', handleGlobalKeyboardShortcuts);
-    
+
     // Enhance focus management for tooltips
     document.addEventListener('focusin', handleFocusIn);
     document.addEventListener('focusout', handleFocusOut);
-    
+
     // Set up skip links for screen readers
     setupSkipLinks();
-    
+
     console.log('Keyboard navigation setup complete');
 }
 
@@ -4919,7 +4918,7 @@ function handleGlobalKeyboardShortcuts(event) {
         }
         return;
     }
-    
+
     // Ctrl/Cmd + R: Reset (prevent browser refresh)
     if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
         event.preventDefault();
@@ -4930,7 +4929,7 @@ function handleGlobalKeyboardShortcuts(event) {
         }
         return;
     }
-    
+
     // Escape: Close any open tooltips or modals
     if (event.key === 'Escape') {
         if (window.tooltipManager && window.tooltipManager.activeTooltip) {
@@ -4941,7 +4940,7 @@ function handleGlobalKeyboardShortcuts(event) {
         openModals.forEach(modal => modal.remove());
         return;
     }
-    
+
     // F1: Show help (prevent browser help)
     if (event.key === 'F1') {
         event.preventDefault();
@@ -4953,7 +4952,7 @@ function handleGlobalKeyboardShortcuts(event) {
 // Handle focus events for enhanced accessibility
 function handleFocusIn(event) {
     const element = event.target;
-    
+
     // Announce section changes to screen readers
     const section = element.closest('.color-section, .delta-section');
     if (section && !element.hasAttribute('data-section-announced')) {
@@ -4966,7 +4965,7 @@ function handleFocusIn(event) {
 // Handle focus out events
 function handleFocusOut(event) {
     const element = event.target;
-    
+
     // Clean up temporary attributes
     element.removeAttribute('data-section-announced');
 }
@@ -4978,9 +4977,9 @@ function announceToScreenReader(message) {
     announcement.setAttribute('aria-atomic', 'true');
     announcement.className = 'sr-only';
     announcement.textContent = message;
-    
+
     document.body.appendChild(announcement);
-    
+
     // Remove after announcement
     setTimeout(() => {
         if (document.body.contains(announcement)) {
@@ -4997,9 +4996,9 @@ function setupSkipLinks() {
     skipLink.className = 'skip-link sr-only';
     skipLink.addEventListener('focus', () => skipLink.classList.remove('sr-only'));
     skipLink.addEventListener('blur', () => skipLink.classList.add('sr-only'));
-    
+
     document.body.insertBefore(skipLink, document.body.firstChild);
-    
+
     // Add ID to main calculator for skip link target
     const calculatorMain = document.querySelector('.calculator-main');
     if (calculatorMain) {
@@ -5015,7 +5014,7 @@ function showKeyboardShortcutsHelp() {
     helpModal.setAttribute('role', 'dialog');
     helpModal.setAttribute('aria-labelledby', 'keyboard-help-title');
     helpModal.setAttribute('aria-modal', 'true');
-    
+
     helpModal.innerHTML = `
         <div class="modal-content">
             <h2 id="keyboard-help-title">Keyboard Shortcuts</h2>
@@ -5033,20 +5032,20 @@ function showKeyboardShortcutsHelp() {
             </button>
         </div>
     `;
-    
+
     document.body.appendChild(helpModal);
-    
+
     // Focus the close button
     const closeBtn = helpModal.querySelector('.close-help-btn');
     closeBtn.focus();
-    
+
     // Handle escape key to close
     helpModal.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             helpModal.remove();
         }
     });
-    
+
     // Trap focus within modal
     trapFocusInModal(helpModal);
 }
@@ -5058,7 +5057,7 @@ function trapFocusInModal(modal) {
     );
     const firstFocusable = focusableElements[0];
     const lastFocusable = focusableElements[focusableElements.length - 1];
-    
+
     modal.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') {
             if (e.shiftKey) {
