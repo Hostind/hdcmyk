@@ -1,8 +1,8 @@
 // Service Worker for LAB Color Matching Calculator
 // Requirements: 10.1, 10.2, 10.3 - PWA offline functionality
 
-const CACHE_NAME = 'lab-calculator-v11';
-const STATIC_CACHE_NAME = 'lab-calculator-static-v11';
+const CACHE_NAME = 'lab-calculator-v12';
+const STATIC_CACHE_NAME = 'lab-calculator-static-v12';
 
 // Core files needed for offline functionality
 const CORE_FILES = [
