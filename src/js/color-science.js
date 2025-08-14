@@ -1828,34 +1828,34 @@ function optimizeCMYKForTarget(targetLab, initialCmyk = [50, 50, 50, 0], options
         rangePct = 20,
         maxIterations = 100
     } = options;
-    
+
     try {
         let best = initialCmyk.slice().map(v => Math.max(0, Math.min(100, v)));
         let bestLab = cmykToLab(best[0], best[1], best[2], best[3]);
         let bestDE = calculateDeltaE(targetLab, bestLab);
-        
+
         // Multi-pass optimization with decreasing step sizes
         const passes = [
             { range: rangePct, step: step * 2 },
             { range: Math.max(6, Math.floor(rangePct / 2)), step: step },
             { range: Math.max(3, Math.floor(rangePct / 3)), step: Math.max(1, Math.floor(step / 2)) }
         ];
-        
+
         passes.forEach(pass => {
             const [c0, m0, y0, k0] = best;
-            
+
             for (let C = Math.max(0, c0 - pass.range); C <= Math.min(100, c0 + pass.range); C += pass.step) {
                 for (let M = Math.max(0, m0 - pass.range); M <= Math.min(100, m0 + pass.range); M += pass.step) {
                     for (let Y = Math.max(0, y0 - pass.range); Y <= Math.min(100, y0 + pass.range); Y += pass.step) {
                         const kmin = allowK ? Math.max(0, k0 - pass.range) : k0;
                         const kmax = allowK ? Math.min(100, k0 + pass.range) : k0;
-                        
+
                         for (let K = kmin; K <= kmax; K += pass.step) {
                             if (C + M + Y + K > inkLimit) continue;
-                            
+
                             const lab = cmykToLab(C, M, Y, K);
                             const dE = calculateDeltaE(targetLab, lab);
-                            
+
                             if (dE < bestDE) {
                                 bestDE = dE;
                                 best = [C, M, Y, K];
@@ -1866,14 +1866,14 @@ function optimizeCMYKForTarget(targetLab, initialCmyk = [50, 50, 50, 0], options
                 }
             }
         });
-        
+
         return {
             cmyk: best,
             lab: bestLab,
             deltaE: bestDE,
             totalInk: best.reduce((sum, val) => sum + val, 0)
         };
-        
+
     } catch (error) {
         console.error('Error in CMYK optimization:', error);
         return {
@@ -1893,13 +1893,13 @@ function cmykToLab(c, m, y, k) {
     try {
         // First convert CMYK to RGB using the existing function
         const rgb = cmykToRgb(c, m, y, k);
-        
+
         // Then convert RGB to XYZ
         const xyz = rgbToXyz(rgb.r, rgb.g, rgb.b);
-        
+
         // Finally convert XYZ to LAB
         const lab = xyzToLab(xyz.x, xyz.y, xyz.z);
-        
+
         return lab;
     } catch (error) {
         console.error('Error in CMYK to LAB conversion:', error);
