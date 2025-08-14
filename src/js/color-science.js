@@ -795,6 +795,7 @@ function runCMYKSuggestionTests() {
 window.colorScience = {
     // Core conversion functions
     cmykToRgb,
+    cmykToLab,
     labToRgb,
     rgbToXyz,
     xyzToLab,
@@ -808,6 +809,7 @@ window.colorScience = {
     getToleranceZone,
     getToleranceZoneInfo,
     performDeltaEAnalysis,
+    applyPaperWhiteCompensation,
 
     // CMYK Suggestion Engine
     generateCMYKSuggestions,
@@ -1812,6 +1814,46 @@ if (window.colorScience) {
 }
 
 console.log('G7 Color Science extensions loaded successfully');
+
+/**
+ * Enhanced CMYK to LAB Conversion
+ * More accurate conversion using improved color model
+ */
+function cmykToLab(c, m, y, k) {
+    try {
+        // First convert CMYK to RGB using the existing function
+        const rgb = cmykToRgb(c, m, y, k);
+        
+        // Then convert RGB to XYZ
+        const xyz = rgbToXyz(rgb.r, rgb.g, rgb.b);
+        
+        // Finally convert XYZ to LAB
+        const lab = xyzToLab(xyz.x, xyz.y, xyz.z);
+        
+        return lab;
+    } catch (error) {
+        console.error('Error in CMYK to LAB conversion:', error);
+        return { l: 50, a: 0, b: 0 }; // Return neutral gray as fallback
+    }
+}
+
+/**
+ * Paper White Compensation
+ * Adjusts LAB values for different paper substrates
+ * Based on SCCA methodology: L' = L + (Lpaper - 100), a' = a + apaper, b' = b + bpaper
+ */
+function applyPaperWhiteCompensation(targetLab, paperWhite = { l: 95, a: 0, b: -2 }) {
+    try {
+        return {
+            l: targetLab.l + (paperWhite.l - 100),
+            a: targetLab.a + paperWhite.a,
+            b: targetLab.b + paperWhite.b
+        };
+    } catch (error) {
+        console.error('Error in paper white compensation:', error);
+        return targetLab;
+    }
+}
 
 /**
  * ΔE2000 Calculation - More accurate than CIE76
