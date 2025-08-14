@@ -2605,18 +2605,26 @@ function performCalculationCore() {
         if (typeof window.colorExport !== 'undefined' && window.colorExport.updateExportButtonStates) {
             window.colorExport.updateExportButtonStates();
         }
-    
-    // Save calculation to history
-    saveCalculationToHistory(colorValues, analysis);
-    
-    // Save for offline sync if offline
-    if (typeof window.colorStorage !== 'undefined' && window.colorStorage.saveOfflineCalculation) {
-        window.colorStorage.saveOfflineCalculation({
-            colorValues,
-            analysis,
-            timestamp: new Date().toISOString()
-        });
-    }
+        
+        // Save calculation to history
+        saveCalculationToHistory(colorValues, analysis);
+        
+        // Save for offline sync if offline
+        if (typeof window.colorStorage !== 'undefined' && window.colorStorage.saveOfflineCalculation) {
+            window.colorStorage.saveOfflineCalculation({
+                colorValues,
+                analysis,
+                timestamp: new Date().toISOString()
+            });
+        }
+    }).catch(error => {
+        console.error('Calculation failed:', error);
+        setErrorStatus('Calculation failed: ' + error.message);
+        
+        if (calculationWorkflow.isVisible) {
+            calculationWorkflow.updateStep('calculate-deltae', 'error', error.message);
+        }
+    });
     
     console.log('Color difference calculation completed successfully');
     console.log('Delta E:', analysis.deltaE);
@@ -2826,7 +2834,7 @@ function hasAnyColorData(colorData) {
  */
 function displayCalculationResults(analysis) {
     // Display main Delta E value prominently
-    displayDeltaEValue(analysis.deltaE, analysis.tolerance);
+    displayDeltaEValue(analysis.deltaE, analysis.deltaE2000, analysis.tolerance);
     
     // Display component deltas
     displayComponentDeltas(analysis.componentDeltas);
@@ -2847,25 +2855,42 @@ function displayCalculationResults(analysis) {
 /**
  * Display the main Delta E value prominently
  * Requirements: 4.5 - Display total color difference prominently as ΔE*ab value
+ * Enhanced: Show both ΔE76 and ΔE2000 for better accuracy
  */
-function displayDeltaEValue(deltaE, tolerance) {
+function displayDeltaEValue(deltaE, deltaE2000, tolerance) {
     if (!domElements.deltaENumber) {
         console.error('Delta E number element not found');
         return;
     }
     
-    // Update the main Delta E display
+    // Update the main Delta E display (primary value)
     domElements.deltaENumber.textContent = deltaE.toFixed(2);
     
     // Add tolerance zone class for color coding
     domElements.deltaEValue.className = `delta-e-value ${tolerance.zone}`;
     
-    // Update tooltip with detailed information
-    domElements.deltaEValue.setAttribute('title', 
-        `Delta E: ${deltaE.toFixed(2)} - ${tolerance.description} (${tolerance.range})`
-    );
+    // Create enhanced tooltip with both values
+    const tooltipText = deltaE2000 ? 
+        `ΔE*ab (CIE76): ${deltaE.toFixed(2)} | ΔE00 (CIEDE2000): ${deltaE2000.toFixed(2)} - ${tolerance.description} (${tolerance.range})` :
+        `Delta E: ${deltaE.toFixed(2)} - ${tolerance.description} (${tolerance.range})`;
     
-    console.log(`Displayed Delta E value: ${deltaE.toFixed(2)}`);
+    domElements.deltaEValue.setAttribute('title', tooltipText);
+    
+    // If we have ΔE2000, show it as secondary information
+    if (deltaE2000 && domElements.deltaEValue.parentNode) {
+        let secondaryDisplay = domElements.deltaEValue.parentNode.querySelector('.delta-e-secondary');
+        if (!secondaryDisplay) {
+            secondaryDisplay = document.createElement('div');
+            secondaryDisplay.className = 'delta-e-secondary';
+            secondaryDisplay.style.fontSize = '0.8em';
+            secondaryDisplay.style.color = '#666';
+            secondaryDisplay.style.marginTop = '2px';
+            domElements.deltaEValue.parentNode.appendChild(secondaryDisplay);
+        }
+        secondaryDisplay.textContent = `ΔE2000: ${deltaE2000.toFixed(2)}`;
+    }
+    
+    console.log(`Displayed Delta E values - CIE76: ${deltaE.toFixed(2)}, CIEDE2000: ${deltaE2000?.toFixed(2) || 'N/A'}`);
 }
 
 /**
@@ -3707,15 +3732,22 @@ function handlePresetSelection(colorType, presetName) {
         input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     
-    // Reset dropdown to placeholder
-    if (selectElement) {
-        selectElement.value = '';
-    }
+    // Keep the selected value visible instead of resetting
+    // selectElement.value = ''; // Commented out to keep selection visible
+    
+    // Ensure the selection remains visible by setting it again after a short delay
+    // This handles cases where other event listeners might be clearing it
+    setTimeout(() => {
+        if (selectElement.value !== presetName) {
+            selectElement.value = presetName;
+            console.log(`Restored preset selection: ${presetName}`);
+        }
+    }, 100);
     
     // Show feedback
     showPresetAppliedFeedback(colorType, presetName);
     
-    console.log(`Applied preset "${presetName}": C:${presetColor.c}% M:${presetColor.m}% Y:${presetColor.y}% K:${presetColor.k}%`);
+    console.log(`Applied preset "${presetName}": C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%`);
 }
 
 /**
