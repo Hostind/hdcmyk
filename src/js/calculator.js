@@ -829,6 +829,9 @@ function initializeApp() {
     
     // Initialize dark mode
     initializeDarkMode();
+    
+    // Initialize preset selection monitoring
+    initializePresetMonitoring();
 
     // Cache DOM elements
     cacheDOMElements();
@@ -3715,11 +3718,27 @@ function setTheme(theme) {
 }
 
 /**
+ * Initialize preset selection monitoring to ensure selections persist
+ */
+function initializePresetMonitoring() {
+    // Check preset selections every 2 seconds and restore if needed
+    setInterval(() => {
+        if (!isApplyingPreset) {
+            restorePresetSelection('target');
+            restorePresetSelection('sample');
+        }
+    }, 2000);
+    
+    console.log('Preset selection monitoring initialized');
+}
+
+/**
  * Clear preset selection for a specific color type when user manually changes values
  */
 function clearPresetSelection(colorType) {
     // Don't clear if we're currently applying a preset
     if (isApplyingPreset) {
+        console.log(`Skipping preset clear for ${colorType} - currently applying preset`);
         return;
     }
     
@@ -3729,6 +3748,30 @@ function clearPresetSelection(colorType) {
     if (selectElement && selectElement.value) {
         console.log(`Clearing preset selection for ${colorType} due to manual input change`);
         selectElement.value = '';
+        
+        // Clear the stored preset name
+        if (colorType === 'target') {
+            window.lastTargetPreset = null;
+        } else {
+            window.lastSamplePreset = null;
+        }
+    }
+}
+
+/**
+ * Restore preset selection if it was recently applied
+ */
+function restorePresetSelection(colorType) {
+    if (isApplyingPreset) return;
+    
+    const selectElement = colorType === 'target' ? 
+        domElements.targetPresetSelect : domElements.samplePresetSelect;
+    const lastPreset = colorType === 'target' ? 
+        window.lastTargetPreset : window.lastSamplePreset;
+    
+    if (selectElement && lastPreset && !selectElement.value) {
+        console.log(`Restoring preset selection for ${colorType}: ${lastPreset}`);
+        selectElement.value = lastPreset;
     }
 }
 
@@ -3808,18 +3851,38 @@ function handlePresetSelection(colorType, presetName) {
     // Keep the selected value visible instead of resetting
     // selectElement.value = ''; // Commented out to keep selection visible
 
-    // Ensure the selection remains visible by setting it again after a short delay
-    // This handles cases where other event listeners might be clearing it
-    setTimeout(() => {
-        if (selectElement.value !== presetName) {
-            selectElement.value = presetName;
-            console.log(`Restored preset selection: ${presetName}`);
-        }
-        // Clear the flag after a longer delay to ensure all events have processed
+    // Store the preset name for this color type to restore it later
+    if (colorType === 'target') {
+        window.lastTargetPreset = presetName;
+    } else {
+        window.lastSamplePreset = presetName;
+    }
+    
+    // Ensure the selection remains visible by setting it multiple times with increasing delays
+    console.log(`Setting preset selection to: ${presetName}`);
+    selectElement.value = presetName;
+    
+    // Use requestAnimationFrame to ensure DOM updates are complete
+    requestAnimationFrame(() => {
+        selectElement.value = presetName;
+        console.log(`RAF - Set preset selection: ${presetName}`);
+        
         setTimeout(() => {
+            selectElement.value = presetName;
+            console.log(`100ms - Restored preset selection: ${presetName}`);
+        }, 100);
+        
+        setTimeout(() => {
+            selectElement.value = presetName;
+            console.log(`300ms - Restored preset selection: ${presetName}`);
+        }, 300);
+        
+        setTimeout(() => {
+            selectElement.value = presetName;
+            console.log(`600ms - Final restore preset selection: ${presetName}`);
             isApplyingPreset = false;
-        }, 200);
-    }, 100);
+        }, 600);
+    });
 
     // Show feedback
     showPresetAppliedFeedback(colorType, presetName);
