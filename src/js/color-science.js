@@ -817,6 +817,7 @@ window.colorScience = {
     isValidCMYKSuggestion,
     validateCMYKGamut,
     runCMYKSuggestionTests,
+    optimizeCMYKForTarget,
 
     // Utility functions
     validateAndClampRgb,
@@ -1082,7 +1083,7 @@ function performDeltaEAnalysis(targetLab, sampleLab) {
 
         // Calculate primary Delta E with error handling
         const deltaE = calculateDeltaE(targetLab, sampleLab);
-        
+
         // Also calculate ΔE2000 for more accurate results
         const deltaE2000 = calculateDeltaE2000(targetLab, sampleLab);
 
@@ -1816,6 +1817,75 @@ if (window.colorScience) {
 console.log('G7 Color Science extensions loaded successfully');
 
 /**
+ * CMYK Optimization Algorithm (from ChatGPT code)
+ * Finds optimal CMYK values to match target LAB color
+ */
+function optimizeCMYKForTarget(targetLab, initialCmyk = [50, 50, 50, 0], options = {}) {
+    const {
+        allowK = true,
+        inkLimit = 320,
+        step = 5,
+        rangePct = 20,
+        maxIterations = 100
+    } = options;
+    
+    try {
+        let best = initialCmyk.slice().map(v => Math.max(0, Math.min(100, v)));
+        let bestLab = cmykToLab(best[0], best[1], best[2], best[3]);
+        let bestDE = calculateDeltaE(targetLab, bestLab);
+        
+        // Multi-pass optimization with decreasing step sizes
+        const passes = [
+            { range: rangePct, step: step * 2 },
+            { range: Math.max(6, Math.floor(rangePct / 2)), step: step },
+            { range: Math.max(3, Math.floor(rangePct / 3)), step: Math.max(1, Math.floor(step / 2)) }
+        ];
+        
+        passes.forEach(pass => {
+            const [c0, m0, y0, k0] = best;
+            
+            for (let C = Math.max(0, c0 - pass.range); C <= Math.min(100, c0 + pass.range); C += pass.step) {
+                for (let M = Math.max(0, m0 - pass.range); M <= Math.min(100, m0 + pass.range); M += pass.step) {
+                    for (let Y = Math.max(0, y0 - pass.range); Y <= Math.min(100, y0 + pass.range); Y += pass.step) {
+                        const kmin = allowK ? Math.max(0, k0 - pass.range) : k0;
+                        const kmax = allowK ? Math.min(100, k0 + pass.range) : k0;
+                        
+                        for (let K = kmin; K <= kmax; K += pass.step) {
+                            if (C + M + Y + K > inkLimit) continue;
+                            
+                            const lab = cmykToLab(C, M, Y, K);
+                            const dE = calculateDeltaE(targetLab, lab);
+                            
+                            if (dE < bestDE) {
+                                bestDE = dE;
+                                best = [C, M, Y, K];
+                                bestLab = lab;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        return {
+            cmyk: best,
+            lab: bestLab,
+            deltaE: bestDE,
+            totalInk: best.reduce((sum, val) => sum + val, 0)
+        };
+        
+    } catch (error) {
+        console.error('Error in CMYK optimization:', error);
+        return {
+            cmyk: initialCmyk,
+            lab: cmykToLab(initialCmyk[0], initialCmyk[1], initialCmyk[2], initialCmyk[3]),
+            deltaE: 999,
+            totalInk: initialCmyk.reduce((sum, val) => sum + val, 0)
+        };
+    }
+}
+
+/**
  * Enhanced CMYK to LAB Conversion
  * More accurate conversion using improved color model
  */
@@ -1830,6 +1900,28 @@ function cmykToLab(c, m, y, k) {
         // Finally convert XYZ to LAB
         const lab = xyzToLab(xyz.x, xyz.y, xyz.z);
         
+        return lab;
+    } catch (error) {
+        console.error('Error in CMYK to LAB conversion:', error);
+        return { l: 50, a: 0, b: 0 }; // Return neutral gray as fallback
+    }
+}
+
+/**
+ * Enhanced CMYK to LAB Conversion
+ * More accurate conversion using improved color model
+ */
+function cmykToLab(c, m, y, k) {
+    try {
+        // First convert CMYK to RGB using the existing function
+        const rgb = cmykToRgb(c, m, y, k);
+
+        // Then convert RGB to XYZ
+        const xyz = rgbToXyz(rgb.r, rgb.g, rgb.b);
+
+        // Finally convert XYZ to LAB
+        const lab = xyzToLab(xyz.x, xyz.y, xyz.z);
+
         return lab;
     } catch (error) {
         console.error('Error in CMYK to LAB conversion:', error);
@@ -1863,54 +1955,54 @@ function calculateDeltaE2000(lab1, lab2) {
     try {
         const [L1, a1, b1] = [lab1.l, lab1.a, lab1.b];
         const [L2, a2, b2] = [lab2.l, lab2.a, lab2.b];
-        
+
         const C1 = Math.hypot(a1, b1);
         const C2 = Math.hypot(a2, b2);
         const Cm = (C1 + C2) / 2;
-        
-        const G = 0.5 * (1 - Math.sqrt((Cm**7) / ((Cm**7) + (25**7))));
-        
+
+        const G = 0.5 * (1 - Math.sqrt((Cm ** 7) / ((Cm ** 7) + (25 ** 7))));
+
         const a1p = (1 + G) * a1;
         const a2p = (1 + G) * a2;
         const C1p = Math.hypot(a1p, b1);
         const C2p = Math.hypot(a2p, b2);
         const Cpm = (C1p + C2p) / 2;
-        
+
         const h1p = (Math.atan2(b1, a1p) * 180 / Math.PI + 360) % 360;
         const h2p = (Math.atan2(b2, a2p) * 180 / Math.PI + 360) % 360;
-        
+
         const dLp = L2 - L1;
         const dCp = C2p - C1p;
-        
+
         let dh = h2p - h1p;
         if (C1p * C2p === 0) dh = 0;
         else {
             if (dh > 180) dh -= 360;
             if (dh < -180) dh += 360;
         }
-        
+
         const dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin((dh / 2) * Math.PI / 180);
-        
+
         let hp = (h1p + h2p) / 2;
         if (Math.abs(h1p - h2p) > 180) {
             hp += (h1p + h2p < 360) ? 180 : -180;
         }
-        
-        const Tt = 1 - 0.17 * Math.cos((hp - 30) * Math.PI / 180) + 
-                   0.24 * Math.cos((2 * hp) * Math.PI / 180) + 
-                   0.32 * Math.cos((3 * hp + 6) * Math.PI / 180) - 
-                   0.20 * Math.cos((4 * hp - 63) * Math.PI / 180);
-        
-        const Sl = 1 + (0.015 * (((L1 + L2) / 2 - 50)**2)) / Math.sqrt(20 + (((L1 + L2) / 2 - 50)**2));
+
+        const Tt = 1 - 0.17 * Math.cos((hp - 30) * Math.PI / 180) +
+            0.24 * Math.cos((2 * hp) * Math.PI / 180) +
+            0.32 * Math.cos((3 * hp + 6) * Math.PI / 180) -
+            0.20 * Math.cos((4 * hp - 63) * Math.PI / 180);
+
+        const Sl = 1 + (0.015 * (((L1 + L2) / 2 - 50) ** 2)) / Math.sqrt(20 + (((L1 + L2) / 2 - 50) ** 2));
         const Sc = 1 + 0.045 * Cpm;
         const Sh = 1 + 0.015 * Cpm * Tt;
-        
-        const dRo = 30 * Math.exp(-(((hp - 275) / 25)**2));
-        const Rc = 2 * Math.sqrt((Cpm**7) / ((Cpm**7) + (25**7)));
+
+        const dRo = 30 * Math.exp(-(((hp - 275) / 25) ** 2));
+        const Rc = 2 * Math.sqrt((Cpm ** 7) / ((Cpm ** 7) + (25 ** 7)));
         const Rt = -Math.sin(2 * dRo * Math.PI / 180) * Rc;
-        
-        return Math.sqrt((dLp / Sl)**2 + (dCp / Sc)**2 + (dHp / Sh)**2 + Rt * (dCp / Sc) * (dHp / Sh));
-        
+
+        return Math.sqrt((dLp / Sl) ** 2 + (dCp / Sc) ** 2 + (dHp / Sh) ** 2 + Rt * (dCp / Sc) * (dHp / Sh));
+
     } catch (error) {
         console.error('Error in ΔE2000 calculation:', error);
         // Fallback to CIE76

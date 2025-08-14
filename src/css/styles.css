@@ -49,6 +49,55 @@
     --active-bg: rgba(52, 152, 219, 0.2);
     --focus-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
     
+    /* Shadows */
+    --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.15);
+    --shadow-heavy: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Mode Variables */
+:root[data-theme="dark"] {
+    /* Primary Colors - Dark Mode */
+    --primary-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    --secondary-bg: #0f1419;
+    --card-bg: rgba(31, 41, 55, 0.9);
+    --accent-bg: rgba(17, 24, 39, 0.8);
+    
+    /* Borders and Lines */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-light: rgba(255, 255, 255, 0.05);
+    --border-accent: rgba(59, 130, 246, 0.3);
+    
+    /* Text Colors */
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-white: #ffffff;
+    
+    /* Modern Accent Colors - Adjusted for dark mode */
+    --accent-primary: #3b82f6;
+    --accent-secondary: #10b981;
+    --accent-warning: #f59e0b;
+    --accent-danger: #ef4444;
+    --accent-purple: #8b5cf6;
+    --accent-teal: #14b8a6;
+    
+    /* CMYK Inspired Colors - Dark mode variants */
+    --cyan-primary: #06b6d4;
+    --magenta-primary: #ec4899;
+    --yellow-primary: #eab308;
+    --black-primary: #1f2937;
+    
+    /* Interactive States */
+    --hover-bg: rgba(59, 130, 246, 0.1);
+    --active-bg: rgba(59, 130, 246, 0.2);
+    --focus-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    
+    /* Shadows - Enhanced for dark mode */
+    --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-heavy: 0 8px 30px rgba(0, 0, 0, 0.5);
+    
     /* Modern Shadows */
     --shadow-soft: 0 2px 20px rgba(0, 0, 0, 0.1);
     --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
@@ -190,10 +239,27 @@ body {
 
 /* Modern Header Design */
 .app-header {
-    text-align: center;
     margin-bottom: var(--spacing-xxl);
     padding-bottom: var(--spacing-xl);
     position: relative;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.header-text {
+    text-align: center;
+    flex: 1;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .app-header::after {
@@ -224,6 +290,43 @@ body {
     color: var(--text-secondary);
     font-weight: 400;
     opacity: 0.8;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-light);
+}
+
+.theme-toggle:hover {
+    background: var(--hover-bg);
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.theme-toggle:active {
+    transform: translateY(0);
+}
+
+.theme-icon {
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover .theme-icon {
+    transform: rotate(20deg);
 }
 
 /* Install App Button */
@@ -1096,6 +1199,15 @@ body {
     
     .app-header h1 {
         font-size: 2rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .header-controls {
+        justify-content: center;
     }
     
     .calculator-container {

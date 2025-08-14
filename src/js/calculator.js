@@ -826,6 +826,9 @@ function initializeApp() {
 
     // Initialize accessibility features first
     initializeAccessibilityFeatures();
+    
+    // Initialize dark mode
+    initializeDarkMode();
 
     // Cache DOM elements
     cacheDOMElements();
@@ -1647,6 +1650,9 @@ function setupCMYKValidation(colorType, component, inputElement) {
             // Update color swatch in real-time
             const colorType = inputElement.id.includes('target') ? 'target' : 'sample';
             updateColorSwatch(colorType);
+            
+            // Clear preset selection when user manually changes values
+            clearPresetSelection(colorType);
 
             // Immediate visual feedback (no debounce for validation state)
             updateInputValidationState(inputElement, isValid);
@@ -1708,6 +1714,9 @@ function setupLABValidation(colorType, component, inputElement) {
             // Update color swatch in real-time
             const colorType = inputElement.id.includes('target') ? 'target' : 'sample';
             updateColorSwatch(colorType);
+            
+            // Clear preset selection when user manually changes values
+            clearPresetSelection(colorType);
 
             // Immediate visual feedback (no debounce for validation state)
             updateInputValidationState(inputElement, isValid);
@@ -3661,6 +3670,68 @@ function populateFallbackColors(selectElement) {
     console.log(`Populated fallback colors: ${Object.keys(fallbackColors).length} categories`);
 }
 
+// Flag to prevent clearing preset selection during application
+let isApplyingPreset = false;
+
+// Dark mode functionality
+function initializeDarkMode() {
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = themeToggle?.querySelector('.theme-icon');
+    
+    if (!themeToggle || !themeIcon) {
+        console.warn('Theme toggle elements not found');
+        return;
+    }
+    
+    // Check for saved theme preference or default to light mode
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+    
+    // Add click event listener
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+    });
+    
+    console.log('Dark mode initialized');
+}
+
+function setTheme(theme) {
+    const themeIcon = document.querySelector('.theme-icon');
+    
+    // Set the theme attribute
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Update the icon
+    if (themeIcon) {
+        themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
+    }
+    
+    // Save preference
+    localStorage.setItem('theme', theme);
+    
+    console.log(`Theme set to: ${theme}`);
+}
+
+/**
+ * Clear preset selection for a specific color type when user manually changes values
+ */
+function clearPresetSelection(colorType) {
+    // Don't clear if we're currently applying a preset
+    if (isApplyingPreset) {
+        return;
+    }
+    
+    const selectElement = colorType === 'target' ? 
+        domElements.targetPresetSelect : domElements.samplePresetSelect;
+    
+    if (selectElement && selectElement.value) {
+        console.log(`Clearing preset selection for ${colorType} due to manual input change`);
+        selectElement.value = '';
+    }
+}
+
 /**
  * Handle preset color selection
  * Requirements: 8.4 - Quick-fill buttons for frequently used color combinations
@@ -3671,6 +3742,9 @@ function handlePresetSelection(colorType, presetName) {
     }
 
     console.log(`Applying preset color "${presetName}" to ${colorType}`);
+    
+    // Set flag to prevent clearing during application
+    isApplyingPreset = true;
 
     // Get the selected option element to access the color data
     const selectElement = colorType === 'target' ?
@@ -3741,6 +3815,10 @@ function handlePresetSelection(colorType, presetName) {
             selectElement.value = presetName;
             console.log(`Restored preset selection: ${presetName}`);
         }
+        // Clear the flag after a longer delay to ensure all events have processed
+        setTimeout(() => {
+            isApplyingPreset = false;
+        }, 200);
     }, 100);
 
     // Show feedback
