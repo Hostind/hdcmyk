@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Calculator Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-group { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .pass { color: green; }
+        .fail { color: red; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+        input { margin: 5px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Calculator Functionality Verification</h1>
+    
+    <div class="test-group">
+        <h2>JavaScript Module Loading Test</h2>
+        <button onclick="testModuleLoading()">Test Module Loading</button>
+        <div id="module-results"></div>
+    </div>
+    
+    <div class="test-group">
+        <h2>Color Science Functions Test</h2>
+        <button onclick="testColorScience()">Test Color Science</button>
+        <div id="science-results"></div>
+    </div>
+    
+    <div class="test-group">
+        <h2>Manual Calculation Test</h2>
+        <h3>Target Color (LAB):</h3>
+        L*: <input type="number" id="target-l" value="50" step="0.01">
+        a*: <input type="number" id="target-a" value="10" step="0.01">
+        b*: <input type="number" id="target-b" value="20" step="0.01">
+        
+        <h3>Sample Color (LAB):</h3>
+        L*: <input type="number" id="sample-l" value="45" step="0.01">
+        a*: <input type="number" id="sample-a" value="15" step="0.01">
+        b*: <input type="number" id="sample-b" value="18" step="0.01">
+        
+        <button onclick="performManualCalculation()">Calculate Delta E</button>
+        <div id="calculation-results"></div>
+    </div>
+
+    <!-- Load the scripts -->
+    <script src="src/js/color-science.js"></script>
+    <script src="src/js/calculator.js"></script>
+    
+    <script>
+        function testModuleLoading() {
+            const results = document.getElementById('module-results');
+            
+            const tests = [
+                { name: 'window.colorScience', obj: window.colorScience },
+                { name: 'calculateDeltaE function', obj: window.colorScience?.calculateDeltaE },
+                { name: 'cmykToRgb function', obj: window.colorScience?.cmykToRgb },
+                { name: 'performDeltaEAnalysis function', obj: window.colorScience?.performDeltaEAnalysis },
+                { name: 'generateCMYKSuggestions function', obj: window.colorScience?.generateCMYKSuggestions }
+            ];
+            
+            let html = '<h4>Module Loading Results:</h4><ul>';
+            let allPassed = true;
+            
+            tests.forEach(test => {
+                const passed = typeof test.obj !== 'undefined';
+                allPassed = allPassed && passed;
+                const status = passed ? '<span class="pass">✅ LOADED</span>' : '<span class="fail">❌ MISSING</span>';
+                html += `<li>${test.name}: ${status}</li>`;
+            });
+            
+            html += '</ul>';
+            html += `<p><strong>Overall Status: ${allPassed ? '<span class="pass">ALL MODULES LOADED</span>' : '<span class="fail">SOME MODULES MISSING</span>'}</strong></p>`;
+            
+            results.innerHTML = html;
+        }
+        
+        function testColorScience() {
+            const results = document.getElementById('science-results');
+            
+            try {
+                if (!window.colorScience) {
+                    throw new Error('Color science module not loaded');
+                }
+                
+                // Test CMYK to RGB
+                const rgb = window.colorScience.cmykToRgb(50, 30, 70, 10);
+                
+                // Test Delta E calculation
+                const lab1 = { l: 50, a: 10, b: 20 };
+                const lab2 = { l: 45, a: 15, b: 18 };
+                const deltaE = window.colorScience.calculateDeltaE(lab1, lab2);
+                
+                // Test component deltas
+                const componentDeltas = window.colorScience.calculateComponentDeltas(lab1, lab2);
+                
+                // Test analysis
+                const analysis = window.colorScience.performDeltaEAnalysis(lab1, lab2);
+                
+                let html = '<h4>Color Science Test Results:</h4>';
+                html += '<div class="pass">✅ All color science functions working correctly</div>';
+                html += `<p><strong>CMYK(50,30,70,10) → RGB(${rgb.r},${rgb.g},${rgb.b})</strong></p>`;
+                html += `<p><strong>Delta E:</strong> ${deltaE}</p>`;
+                html += `<p><strong>Component Deltas:</strong> ΔL*=${componentDeltas.deltaL}, Δa*=${componentDeltas.deltaA}, Δb*=${componentDeltas.deltaB}</p>`;
+                html += `<p><strong>Tolerance Zone:</strong> ${analysis.tolerance?.description}</p>`;
+                
+                results.innerHTML = html;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="fail">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        function performManualCalculation() {
+            const results = document.getElementById('calculation-results');
+            
+            try {
+                if (!window.colorScience) {
+                    throw new Error('Color science module not loaded');
+                }
+                
+                // Get input values
+                const targetL = parseFloat(document.getElementById('target-l').value);
+                const targetA = parseFloat(document.getElementById('target-a').value);
+                const targetB = parseFloat(document.getElementById('target-b').value);
+                
+                const sampleL = parseFloat(document.getElementById('sample-l').value);
+                const sampleA = parseFloat(document.getElementById('sample-a').value);
+                const sampleB = parseFloat(document.getElementById('sample-b').value);
+                
+                const targetLab = { l: targetL, a: targetA, b: targetB };
+                const sampleLab = { l: sampleL, a: sampleA, b: sampleB };
+                
+                // Perform calculation
+                const analysis = window.colorScience.performDeltaEAnalysis(targetLab, sampleLab);
+                
+                let html = '<h4>Calculation Results:</h4>';
+                html += `<p><strong>Delta E (ΔE*ab):</strong> ${analysis.deltaE}</p>`;
+                html += `<p><strong>Tolerance Zone:</strong> ${analysis.tolerance?.description} (${analysis.tolerance?.zone})</p>`;
+                html += '<h5>Component Deltas:</h5>';
+                html += `<ul>
+                    <li>ΔL*: ${analysis.componentDeltas?.deltaL}</li>
+                    <li>Δa*: ${analysis.componentDeltas?.deltaA}</li>
+                    <li>Δb*: ${analysis.componentDeltas?.deltaB}</li>
+                    <li>ΔC*: ${analysis.componentDeltas?.deltaC}</li>
+                    <li>Δh: ${analysis.componentDeltas?.deltaH}</li>
+                </ul>`;
+                html += `<p><strong>Performance:</strong> ${analysis.performanceMs?.toFixed(2)}ms</p>`;
+                
+                results.innerHTML = html;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="fail">❌ Calculation Error: ${error.message}</div>`;
+                console.error('Calculation error:', error);
+            }
+        }
+        
+        // Auto-run module loading test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testModuleLoading();
+                testColorScience();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

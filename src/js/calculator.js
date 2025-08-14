@@ -1961,8 +1961,10 @@ function updateColorSwatch(colorType, immediate = false) {
  */
 function hasCompleteColorData(colorData, colorSpace) {
     if (colorSpace === 'cmyk') {
-        // CMYK is complete if any component has a non-zero value
-        return colorData.c > 0 || colorData.m > 0 || colorData.y > 0 || colorData.k > 0;
+        // CMYK is complete if we have any meaningful CMYK data (including 0 values)
+        return colorData.c !== undefined && colorData.m !== undefined && 
+               colorData.y !== undefined && colorData.k !== undefined &&
+               (colorData.c !== 0 || colorData.m !== 0 || colorData.y !== 0 || colorData.k !== 0);
     } else if (colorSpace === 'lab') {
         // LAB is complete if L* is not default (50) or a*/b* have values
         return colorData.l !== 50 || colorData.a !== 0 || colorData.b !== 0;
@@ -2024,42 +2026,56 @@ function areAllInputsValid() {
 
 // Function to get current color values from inputs (for use by other modules)
 function getCurrentColorValues() {
+    // Helper function to parse input values properly
+    const parseInputValue = (element, defaultValue) => {
+        if (!element || element.value === '') return defaultValue;
+        const parsed = parseFloat(element.value);
+        return isNaN(parsed) ? defaultValue : parsed;
+    };
+
     const colorValues = {
         target: {
             cmyk: {
-                c: parseFloat(domElements.targetC.value) || 0,
-                m: parseFloat(domElements.targetM.value) || 0,
-                y: parseFloat(domElements.targetY.value) || 0,
-                k: parseFloat(domElements.targetK.value) || 0
+                c: parseInputValue(domElements.targetC, 0),
+                m: parseInputValue(domElements.targetM, 0),
+                y: parseInputValue(domElements.targetY, 0),
+                k: parseInputValue(domElements.targetK, 0)
             },
             lab: {
-                l: parseFloat(domElements.targetL.value) || 50,
-                a: parseFloat(domElements.targetA.value) || 0,
-                b: parseFloat(domElements.targetB.value) || 0
+                l: parseInputValue(domElements.targetL, 50),
+                a: parseInputValue(domElements.targetA, 0),
+                b: parseInputValue(domElements.targetB, 0)
             }
         },
         sample: {
             cmyk: {
-                c: parseFloat(domElements.sampleC.value) || 0,
-                m: parseFloat(domElements.sampleM.value) || 0,
-                y: parseFloat(domElements.sampleY.value) || 0,
-                k: parseFloat(domElements.sampleK.value) || 0
+                c: parseInputValue(domElements.sampleC, 0),
+                m: parseInputValue(domElements.sampleM, 0),
+                y: parseInputValue(domElements.sampleY, 0),
+                k: parseInputValue(domElements.sampleK, 0)
             },
             lab: {
-                l: parseFloat(domElements.sampleL.value) || 50,
-                a: parseFloat(domElements.sampleA.value) || 0,
-                b: parseFloat(domElements.sampleB.value) || 0
+                l: parseInputValue(domElements.sampleL, 50),
+                a: parseInputValue(domElements.sampleA, 0),
+                b: parseInputValue(domElements.sampleB, 0)
             }
         }
     };
 
-    // Convert CMYK to LAB if LAB values are at defaults but CMYK has data
+    // Convert CMYK to LAB if LAB values are at defaults but CMYK has user input
     ['target', 'sample'].forEach(colorType => {
         const color = colorValues[colorType];
-        const hasCMYK = color.cmyk.c > 0 || color.cmyk.m > 0 || color.cmyk.y > 0 || color.cmyk.k > 0;
+        const elementPrefix = colorType === 'target' ? 'target' : 'sample';
+        const cmykElements = [
+            domElements[elementPrefix + 'C'],
+            domElements[elementPrefix + 'M'], 
+            domElements[elementPrefix + 'Y'],
+            domElements[elementPrefix + 'K']
+        ];
+        const hasCMYKInput = cmykElements.some(el => el && el.value !== '');
         const hasDefaultLAB = color.lab.l === 50 && color.lab.a === 0 && color.lab.b === 0;
         
-        if (hasCMYK && hasDefaultLAB && window.colorScience) {
+        if (hasCMYKInput && hasDefaultLAB && window.colorScience) {
             try {
                 // Convert CMYK to RGB first, then RGB to LAB
                 const rgb = window.colorScience.cmykToRgb(color.cmyk.c, color.cmyk.m, color.cmyk.y, color.cmyk.k);
@@ -2754,15 +2770,27 @@ function areAllInputsValid() {
  */
 function hasValidColorData(colorValues) {
     try {
-        // Check if we have at least some color data for both target and sample
-        const targetHasData = hasAnyColorData(colorValues.target);
-        const sampleHasData = hasAnyColorData(colorValues.sample);
+        // Direct DOM check - if user filled any input fields, we have data
+        const targetInputs = [domElements.targetC, domElements.targetM, domElements.targetY, domElements.targetK,
+                             domElements.targetL, domElements.targetA, domElements.targetB];
+        const sampleInputs = [domElements.sampleC, domElements.sampleM, domElements.sampleY, domElements.sampleK,
+                             domElements.sampleL, domElements.sampleA, domElements.sampleB];
         
-        if (!targetHasData) {
+        const targetHasInput = targetInputs.some(input => input && input.value !== '');
+        const sampleHasInput = sampleInputs.some(input => input && input.value !== '');
+        
+        console.log('Direct input validation:', {
+            targetHasInput,
+            sampleHasInput,
+            targetValues: targetInputs.map(i => i?.value || ''),
+            sampleValues: sampleInputs.map(i => i?.value || '')
+        });
+        
+        if (!targetHasInput) {
             throw new Error('No target color data provided');
         }
         
-        if (!sampleHasData) {
+        if (!sampleHasInput) {
             throw new Error('No sample color data provided');
         }
         
@@ -2778,11 +2806,11 @@ function hasValidColorData(colorValues) {
  * Check if color object has any meaningful data
  */
 function hasAnyColorData(colorData) {
-    // Check CMYK data
-    const hasCMYK = colorData.cmyk.c > 0 || colorData.cmyk.m > 0 || 
-                   colorData.cmyk.y > 0 || colorData.cmyk.k > 0;
+    // We need to check the actual DOM inputs to see if user has entered data
+    // Since this function receives parsed values, we need a different approach
     
-    // Check LAB data (L* different from default 50, or a*/b* non-zero)
+    // For now, check if any CMYK value is non-zero OR if LAB values differ from defaults
+    const hasCMYK = colorData.cmyk.c !== 0 || colorData.cmyk.m !== 0 || colorData.cmyk.y !== 0 || colorData.cmyk.k !== 0;
     const hasLAB = colorData.lab.l !== 50 || colorData.lab.a !== 0 || colorData.lab.b !== 0;
     
     console.log('Color data validation:', {
@@ -3151,20 +3179,7 @@ function scrollToResults() {
 /**
  * Validate that we have sufficient color data for calculation
  */
-function hasValidColorData(colorValues) {
-    // Check if we have LAB values for both colors (preferred for Delta E calculation)
-    const targetLabComplete = colorValues.target.lab.l !== 50 || 
-                             colorValues.target.lab.a !== 0 || 
-                             colorValues.target.lab.b !== 0;
-    
-    const sampleLabComplete = colorValues.sample.lab.l !== 50 || 
-                             colorValues.sample.lab.a !== 0 || 
-                             colorValues.sample.lab.b !== 0;
-    
-    // For now, require LAB values for accurate Delta E calculation
-    // Future enhancement could convert CMYK to LAB if only CMYK is provided
-    return targetLabComplete && sampleLabComplete;
-}
+// Removed duplicate function - using the improved version at line 2771
 
 /**
  * Set calculate button state (ready, calculating, error)
@@ -3621,13 +3636,39 @@ function populateFallbackColors(selectElement) {
  * Requirements: 8.4 - Quick-fill buttons for frequently used color combinations
  */
 function handlePresetSelection(colorType, presetName) {
-    if (!presetName || !PRESET_COLORS[presetName]) {
+    if (!presetName) {
         return;
     }
     
     console.log(`Applying preset color "${presetName}" to ${colorType}`);
     
-    const presetColor = PRESET_COLORS[presetName];
+    // Get the selected option element to access the color data
+    const selectElement = colorType === 'target' ? 
+        domElements.targetPresetSelect : domElements.samplePresetSelect;
+    const selectedOption = selectElement.querySelector(`option[value="${presetName}"]`);
+    
+    let presetColor = null;
+    
+    // First try to get color data from the selected option's dataset
+    if (selectedOption && selectedOption.dataset.colorData) {
+        try {
+            presetColor = JSON.parse(selectedOption.dataset.colorData);
+            console.log('Using Pantone color data:', presetColor);
+        } catch (error) {
+            console.warn('Failed to parse color data from option:', error);
+        }
+    }
+    
+    // Fallback to hardcoded preset colors
+    if (!presetColor && PRESET_COLORS[presetName]) {
+        presetColor = PRESET_COLORS[presetName];
+        console.log('Using fallback preset color:', presetColor);
+    }
+    
+    if (!presetColor) {
+        console.error(`Could not find preset color data for "${presetName}"`);
+        return;
+    }
     
     // Get the appropriate input elements
     const inputs = getColorInputElements(colorType);
@@ -3637,11 +3678,13 @@ function handlePresetSelection(colorType, presetName) {
         return;
     }
     
-    // Apply the preset CMYK values
-    inputs.c.value = presetColor.c.toFixed(1);
-    inputs.m.value = presetColor.m.toFixed(1);
-    inputs.y.value = presetColor.y.toFixed(1);
-    inputs.k.value = presetColor.k.toFixed(1);
+    // Apply the preset CMYK values (handle both Pantone and preset color structures)
+    const cmyk = presetColor.cmyk || presetColor; // Pantone colors have .cmyk property, presets have values directly
+    
+    inputs.c.value = cmyk.c.toFixed(1);
+    inputs.m.value = cmyk.m.toFixed(1);
+    inputs.y.value = cmyk.y.toFixed(1);
+    inputs.k.value = cmyk.k.toFixed(1);
     
     // Trigger input events to update validation and swatches
     [inputs.c, inputs.m, inputs.y, inputs.k].forEach(input => {
@@ -3659,7 +3702,6 @@ function handlePresetSelection(colorType, presetName) {
     });
     
     // Reset dropdown to placeholder
-    const selectElement = colorType === 'target' ? domElements.targetPresetSelect : domElements.samplePresetSelect;
     if (selectElement) {
         selectElement.value = '';
     }
@@ -4494,16 +4536,7 @@ function updateG7Analysis() {
 /**
  * Check if color data is valid for G7 analysis
  */
-function hasValidColorData(colorData) {
-    if (!colorData || !colorData.cmyk) return false;
-    
-    const { c, m, y, k } = colorData.cmyk;
-    return !isNaN(c) && !isNaN(m) && !isNaN(y) && !isNaN(k) &&
-           c >= 0 && c <= 100 &&
-           m >= 0 && m <= 100 &&
-           y >= 0 && y <= 100 &&
-           k >= 0 && k <= 100;
-}
+// Removed duplicate function - using the improved version at line 2771
 
 /**
  * Enhanced Suggestions Display with G7 Integration

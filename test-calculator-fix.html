@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; font-weight: bold; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculator Fix Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Module Loading Test</h2>
+        <div id="module-test-results"></div>
+        <button onclick="testModuleLoading()">Test Module Loading</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>DOM Elements Test</h2>
+        <div id="dom-test-results"></div>
+        <button onclick="testDOMElements()">Test DOM Elements</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Preset Colors Test</h2>
+        <div id="preset-test-results"></div>
+        <button onclick="testPresetColors()">Test Preset Colors</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Calculator Functions Test</h2>
+        <div id="calc-test-results"></div>
+        <button onclick="testCalculatorFunctions()">Test Calculator Functions</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Quick Fix Application</h2>
+        <div id="fix-results"></div>
+        <button onclick="applyQuickFix()">Apply Quick Fix</button>
+        <button onclick="testCalculation()">Test Calculation</button>
+    </div>
+
+    <script>
+        function testModuleLoading() {
+            const results = document.getElementById('module-test-results');
+            let html = '<h3>Module Loading Status:</h3>';
+            
+            const modules = [
+                { name: 'window.colorScience', obj: window.colorScience },
+                { name: 'window.pantoneColors', obj: window.pantoneColors },
+                { name: 'window.calculatorFix', obj: window.calculatorFix }
+            ];
+            
+            modules.forEach(module => {
+                const status = module.obj ? '✅ Loaded' : '❌ Missing';
+                const className = module.obj ? 'success' : 'error';
+                html += `<div class="${className}">${module.name}: ${status}</div>`;
+                
+                if (module.obj && typeof module.obj === 'object') {
+                    const functions = Object.keys(module.obj).filter(key => typeof module.obj[key] === 'function');
+                    if (functions.length > 0) {
+                        html += `<div class="info">  Functions: ${functions.join(', ')}</div>`;
+                    }
+                }
+            });
+            
+            results.innerHTML = html;
+        }
+        
+        function testDOMElements() {
+            const results = document.getElementById('dom-test-results');
+            let html = '<h3>DOM Elements Status:</h3>';
+            
+            const elements = [
+                'target-preset-select',
+                'sample-preset-select',
+                'calculate-btn',
+                'target-c', 'target-m', 'target-y', 'target-k',
+                'sample-c', 'sample-m', 'sample-y', 'sample-k',
+                'target-swatch', 'sample-swatch'
+            ];
+            
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                const status = element ? '✅ Found' : '❌ Missing';
+                const className = element ? 'success' : 'error';
+                html += `<div class="${className}">${id}: ${status}</div>`;
+            });
+            
+            results.innerHTML = html;
+        }
+        
+        function testPresetColors() {
+            const results = document.getElementById('preset-test-results');
+            let html = '<h3>Preset Colors Test:</h3>';
+            
+            const targetSelect = document.getElementById('target-preset-select');
+            const sampleSelect = document.getElementById('sample-preset-select');
+            
+            if (targetSelect && sampleSelect) {
+                html += `<div class="success">✅ Preset selects found</div>`;
+                html += `<div class="info">Target options: ${targetSelect.options.length}</div>`;
+                html += `<div class="info">Sample options: ${sampleSelect.options.length}</div>`;
+                
+                // Test applying a preset
+                if (window.calculatorFix && window.calculatorFix.applyPresetColor) {
+                    try {
+                        window.calculatorFix.applyPresetColor('target', 'Process Cyan');
+                        html += `<div class="success">✅ Preset application test passed</div>`;
+                    } catch (error) {
+                        html += `<div class="error">❌ Preset application failed: ${error.message}</div>`;
+                    }
+                } else {
+                    html += `<div class="error">❌ Calculator fix functions not available</div>`;
+                }
+            } else {
+                html += `<div class="error">❌ Preset selects not found</div>`;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        function testCalculatorFunctions() {
+            const results = document.getElementById('calc-test-results');
+            let html = '<h3>Calculator Functions Test:</h3>';
+            
+            // Test basic calculation
+            if (window.calculatorFix && window.calculatorFix.performSimpleCalculation) {
+                try {
+                    // Set some test values
+                    const targetC = document.getElementById('target-c');
+                    const targetM = document.getElementById('target-m');
+                    const sampleC = document.getElementById('sample-c');
+                    const sampleM = document.getElementById('sample-m');
+                    
+                    if (targetC && targetM && sampleC && sampleM) {
+                        targetC.value = '50';
+                        targetM.value = '25';
+                        sampleC.value = '45';
+                        sampleM.value = '30';
+                        
+                        const result = window.calculatorFix.performSimpleCalculation();
+                        html += `<div class="success">✅ Calculation test passed: ΔE = ${result.toFixed(2)}</div>`;
+                    } else {
+                        html += `<div class="error">❌ Input elements not found for calculation test</div>`;
+                    }
+                } catch (error) {
+                    html += `<div class="error">❌ Calculation test failed: ${error.message}</div>`;
+                }
+            } else {
+                html += `<div class="error">❌ Calculator fix functions not available</div>`;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        function applyQuickFix() {
+            const results = document.getElementById('fix-results');
+            let html = '<h3>Quick Fix Application:</h3>';
+            
+            if (window.calculatorFix && window.calculatorFix.applyAllFixes) {
+                try {
+                    window.calculatorFix.applyAllFixes();
+                    html += `<div class="success">✅ Quick fix applied successfully</div>`;
+                    html += `<div class="info">Check browser console for detailed logs</div>`;
+                } catch (error) {
+                    html += `<div class="error">❌ Quick fix failed: ${error.message}</div>`;
+                }
+            } else {
+                html += `<div class="error">❌ Calculator fix not available</div>`;
+                html += `<div class="info">Make sure calculator-fix.js is loaded</div>`;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        function testCalculation() {
+            const results = document.getElementById('fix-results');
+            let currentHtml = results.innerHTML;
+            
+            // Test the calculate button
+            const calculateBtn = document.getElementById('calculate-btn');
+            if (calculateBtn) {
+                try {
+                    calculateBtn.click();
+                    currentHtml += `<div class="success">✅ Calculate button clicked successfully</div>`;
+                } catch (error) {
+                    currentHtml += `<div class="error">❌ Calculate button click failed: ${error.message}</div>`;
+                }
+            } else {
+                currentHtml += `<div class="error">❌ Calculate button not found</div>`;
+            }
+            
+            results.innerHTML = currentHtml;
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                testModuleLoading();
+                testDOMElements();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

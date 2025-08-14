@@ -1561,3 +1561,325 @@ select:focus {
     50% { background-color: rgba(46, 204, 113, 0.2); }
     100% { background-color: transparent; }
 }
+/*
+ Enhanced Tooltip System */
+.tooltip-enhanced {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip-enhanced:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    white-space: pre-line;
+    z-index: 1001;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    margin-bottom: 8px;
+    max-width: 320px;
+    text-align: left;
+    line-height: 1.4;
+    font-weight: 400;
+    animation: tooltipFadeIn 0.3s ease-out;
+}
+
+.tooltip-enhanced:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1a252f;
+    z-index: 1001;
+    margin-bottom: 2px;
+    animation: tooltipFadeIn 0.3s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Tooltip positioning variants */
+.tooltip-enhanced.tooltip-left:hover::after {
+    left: 0;
+    transform: translateX(0);
+}
+
+.tooltip-enhanced.tooltip-left:hover::before {
+    left: 20px;
+    transform: translateX(0);
+}
+
+.tooltip-enhanced.tooltip-right:hover::after {
+    right: 0;
+    left: auto;
+    transform: translateX(0);
+}
+
+.tooltip-enhanced.tooltip-right:hover::before {
+    right: 20px;
+    left: auto;
+    transform: translateX(0);
+}
+
+.tooltip-enhanced.tooltip-bottom:hover::after {
+    top: 100%;
+    bottom: auto;
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+.tooltip-enhanced.tooltip-bottom:hover::before {
+    top: 100%;
+    bottom: auto;
+    border-top-color: transparent;
+    border-bottom-color: #1a252f;
+    margin-top: 2px;
+    margin-bottom: 0;
+}
+
+/* Mobile tooltip adjustments */
+@media (max-width: 768px) {
+    .tooltip-enhanced:hover::after {
+        max-width: 280px;
+        font-size: 0.85rem;
+        padding: 10px 14px;
+    }
+    
+    .tooltip-enhanced:hover::before {
+        border-width: 5px;
+    }
+}
+
+/* Disable tooltips on touch devices to prevent issues */
+@media (hover: none) and (pointer: coarse) {
+    .tooltip-enhanced:hover::after,
+    .tooltip-enhanced:hover::before {
+        display: none;
+    }
+    
+    /* Add tap-to-show functionality for mobile */
+    .tooltip-enhanced.tooltip-active::after {
+        display: block;
+    }
+    
+    .tooltip-enhanced.tooltip-active::before {
+        display: block;
+    }
+}
+
+/* Gold accent enhancements */
+.tooltip-enhanced.gold-accent {
+    color: #d4af37;
+}
+
+.tooltip-enhanced.gold-accent:hover::after {
+    background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+    color: white;
+}
+
+.tooltip-enhanced.gold-accent:hover::before {
+    border-top-color: #d4af37;
+}
+
+/* Accessibility improvements */
+.tooltip-enhanced:focus::after,
+.tooltip-enhanced:focus::before {
+    display: block;
+}
+
+.tooltip-enhanced[aria-describedby] {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .tooltip-enhanced:hover::after {
+        background: #000000;
+        border: 2px solid #ffffff;
+    }
+    
+    .tooltip-enhanced:hover::before {
+        border-top-color: #000000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .tooltip-enhanced:hover::after,
+    .tooltip-enhanced:hover::before {
+        animation: none;
+    }
+}/* Gold A
+ccent System */
+:root {
+    --gold-primary: #d4af37;
+    --gold-light: #f4e4a6;
+    --gold-dark: #b8941f;
+    --gold-gradient: linear-gradient(135deg, #d4af37 0%, #f4e4a6 50%, #d4af37 100%);
+}
+
+/* Gold accent text */
+.gold-accent {
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+}
+
+/* Gold accent for important values */
+.important-value .value {
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+/* Gold border accents */
+.gold-border {
+    border-color: var(--gold-primary) !important;
+}
+
+/* Gold shadow effects */
+.gold-shadow {
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+/* Gold button variants */
+.btn-gold {
+    background: transparent;
+    border: 2px solid var(--gold-primary);
+    color: var(--gold-primary);
+    transition: all 0.3s ease;
+}
+
+.btn-gold:hover {
+    background: var(--gold-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+/* Enhanced button outlines */
+.calculate-button,
+.reset-button,
+.export-btn,
+.quick-action-btn {
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.calculate-button {
+    border-color: #007bff;
+}
+
+.calculate-button:hover {
+    border-color: var(--gold-primary);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+}
+
+.reset-button {
+    border-color: #dc3545;
+}
+
+.export-btn,
+.quick-action-btn {
+    border-color: #6c757d;
+}
+
+.export-btn:hover,
+.quick-action-btn:hover {
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+}
+
+/* Gold accents for excellent results */
+.delta-e-value.excellent {
+    background: linear-gradient(135deg, #f4e4a6 0%, #fff9e6 100%);
+    border: 2px solid var(--gold-primary);
+}
+
+.delta-e-value.excellent .delta-e-number {
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.tolerance-zone.excellent {
+    background: var(--gold-gradient);
+    color: white;
+    border: 1px solid var(--gold-dark);
+}
+
+/* Gold accents for section headers */
+.color-section h2,
+.delta-section h2 {
+    position: relative;
+}
+
+.color-section h2::after,
+.delta-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 2px;
+    background: var(--gold-gradient);
+    border-radius: 1px;
+}
+
+/* Premium status indicators */
+.status-value.complete {
+    color: var(--gold-primary);
+    font-weight: 600;
+}
+
+.delta-value.excellent {
+    color: var(--gold-primary);
+    font-weight: 700;
+}
+
+/* Responsive gold accents */
+@media (max-width: 768px) {
+    .gold-accent,
+    .important-value .value {
+        /* Fallback for mobile devices that might not support background-clip */
+        color: var(--gold-primary);
+    }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+    .gold-accent,
+    .important-value .value {
+        color: #000000;
+        background: none;
+        -webkit-text-fill-color: #000000;
+    }
+    
+    .btn-gold {
+        border-color: #000000;
+        color: #000000;
+    }
+}

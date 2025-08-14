@@ -50,7 +50,7 @@
         <div class="equation-container">
             <!-- Target Color Section -->
             <section class="color-section" id="target-section">
-                <h2>Target Color</h2>
+                <h2 class="tooltip-enhanced" data-tooltip="Enter the desired color values for your target.&#10;Supports both CMYK ink percentages and LAB measurements.&#10;Use presets for common colors or input custom values.&#10;&#10;• CMYK: Cyan, Magenta, Yellow, Black percentages (0-100%)&#10;• LAB: L* (lightness 0-100), a* (green-red -128 to +127), b* (blue-yellow -128 to +127)&#10;&#10;Real-time color swatch shows approximate appearance.">Target Color</h2>
                 <div class="color-display">
                     <div class="color-swatch" id="target-swatch" aria-label="Target color preview"></div>
                 </div>
@@ -127,7 +127,7 @@
 
             <!-- Sample Color Section -->
             <section class="color-section" id="sample-section">
-                <h2>Sample Color</h2>
+                <h2 class="tooltip-enhanced" data-tooltip="Enter the measured color values from your sample.&#10;Compare against target to calculate color difference.&#10;Real-time swatch preview shows approximate color.&#10;&#10;• Use spectrophotometer readings for LAB values&#10;• Use densitometer readings for CMYK values&#10;• Preset colors available for quick testing&#10;&#10;Sample color will be compared against target for Delta E calculation.">Sample Color</h2>
                 <div class="color-display">
                     <div class="color-swatch" id="sample-swatch" aria-label="Sample color preview"></div>
                 </div>
@@ -365,6 +365,9 @@
     <script src="src/js/storage.js"></script>
     <script src="src/js/export.js"></script>
     <script src="src/js/calculator.js"></script>
+    
+    <!-- Calculator Fix Script -->
+    <script src="calculator-fix.js"></script>
     
     <!-- PWA Service Worker Registration -->
     <script>

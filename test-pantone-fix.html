@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Pantone Preset Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .test-group { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .pass { color: green; }
+        .fail { color: red; }
+        select { width: 100%; padding: 8px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+        .preset-info { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Pantone Preset System Test</h1>
+    
+    <div class="test-group">
+        <h2>Module Loading Test</h2>
+        <button onclick="testPantoneModule()">Test Pantone Module</button>
+        <div id="module-results"></div>
+    </div>
+    
+    <div class="test-group">
+        <h2>Preset Dropdown Test</h2>
+        <label>Target Color Preset:</label>
+        <select id="target-preset-select">
+            <option value="">Select a preset color...</option>
+        </select>
+        
+        <label>Sample Color Preset:</label>
+        <select id="sample-preset-select">
+            <option value="">Select a preset color...</option>
+        </select>
+        
+        <button onclick="populateTestDropdowns()">Populate Dropdowns</button>
+        <div id="dropdown-results"></div>
+    </div>
+    
+    <div class="test-group">
+        <h2>Color Selection Test</h2>
+        <button onclick="testSpecificColors()">Test Specific Pantone Colors</button>
+        <div id="color-results"></div>
+    </div>
+    
+    <div class="test-group">
+        <h2>Selected Color Info</h2>
+        <div id="selected-color-info" class="preset-info">
+            Select a color from the dropdown above to see its CMYK values
+        </div>
+    </div>
+
+    <!-- Load scripts in correct order -->
+    <script src="src/js/pantone-colors.js"></script>
+    
+    <script>
+        function testPantoneModule() {
+            const results = document.getElementById('module-results');
+            
+            const tests = [
+                { name: 'window.pantoneColors exists', test: () => !!window.pantoneColors },
+                { name: 'pantoneColors.colors array exists', test: () => Array.isArray(window.pantoneColors?.colors) },
+                { name: 'pantoneColors has 1089 colors', test: () => window.pantoneColors?.colors?.length === 1089 },
+                { name: 'generatePantonePresetOptions function exists', test: () => typeof window.pantoneColors?.generatePantonePresetOptions === 'function' },
+                { name: 'getPantoneColor function exists', test: () => typeof window.pantoneColors?.getPantoneColor === 'function' },
+                { name: 'searchPantoneColors function exists', test: () => typeof window.pantoneColors?.searchPantoneColors === 'function' }
+            ];
+            
+            let html = '<h4>Module Test Results:</h4><ul>';
+            let allPassed = true;
+            
+            tests.forEach(test => {
+                try {
+                    const passed = test.test();
+                    allPassed = allPassed && passed;
+                    const status = passed ? '<span class="pass">✅ PASS</span>' : '<span class="fail">❌ FAIL</span>';
+                    html += `<li>${test.name}: ${status}</li>`;
+                } catch (error) {
+                    allPassed = false;
+                    html += `<li>${test.name}: <span class="fail">❌ ERROR: ${error.message}</span></li>`;
+                }
+            });
+            
+            html += '</ul>';
+            html += `<p><strong>Overall Status: ${allPassed ? '<span class="pass">ALL TESTS PASSED</span>' : '<span class="fail">SOME TESTS FAILED</span>'}</strong></p>`;
+            
+            if (allPassed && window.pantoneColors?.colors) {
+                html += `<p>✅ Pantone database loaded with ${window.pantoneColors.colors.length} colors</p>`;
+                html += `<p>Sample colors: ${window.pantoneColors.colors.slice(0, 3).map(c => c.name).join(', ')}</p>`;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        function populateTestDropdowns() {
+            const results = document.getElementById('dropdown-results');
+            
+            try {
+                if (!window.pantoneColors || !window.pantoneColors.generatePantonePresetOptions) {
+                    throw new Error('Pantone module not loaded properly');
+                }
+                
+                const options = window.pantoneColors.generatePantonePresetOptions();
+                console.log('Generated preset options:', options);
+                
+                // Populate both dropdowns
+                const targetSelect = document.getElementById('target-preset-select');
+                const sampleSelect = document.getElementById('sample-preset-select');
+                
+                [targetSelect, sampleSelect].forEach(selectElement => {
+                    // Clear existing options except first
+                    while (selectElement.children.length > 1) {
+                        selectElement.removeChild(selectElement.lastChild);
+                    }
+                    
+                    let currentOptgroup = null;
+                    
+                    options.forEach(option => {
+                        if (option.type === 'header') {
+                            currentOptgroup = document.createElement('optgroup');
+                            currentOptgroup.label = option.label;
+                            selectElement.appendChild(currentOptgroup);
+                        } else if (option.type === 'color' && currentOptgroup) {
+                            const optionElement = document.createElement('option');
+                            optionElement.value = option.value;
+                            optionElement.textContent = option.label;
+                            optionElement.dataset.colorData = JSON.stringify(option.color);
+                            currentOptgroup.appendChild(optionElement);
+                        }
+                    });
+                });
+                
+                results.innerHTML = `<div class="pass">✅ Dropdowns populated successfully with ${options.length} options</div>`;
+                
+                // Add event listeners
+                [targetSelect, sampleSelect].forEach(select => {
+                    select.addEventListener('change', function(e) {
+                        if (e.target.value && e.target.selectedOptions[0].dataset.colorData) {
+                            const colorData = JSON.parse(e.target.selectedOptions[0].dataset.colorData);
+                            displayColorInfo(e.target.value, colorData);
+                        }
+                    });
+                });
+                
+            } catch (error) {
+                results.innerHTML = `<div class="fail">❌ Error: ${error.message}</div>`;
+                console.error('Dropdown population error:', error);
+            }
+        }
+        
+        function testSpecificColors() {
+            const results = document.getElementById('color-results');
+            
+            try {
+                const testColors = ['PANTONE 117 PC', 'PANTONE 312 PC', 'PANTONE 2612 PC'];
+                let html = '<h4>Specific Color Tests:</h4><ul>';
+                
+                testColors.forEach(colorName => {
+                    const color = window.pantoneColors.getPantoneColor(colorName);
+                    if (color) {
+                        const cmyk = color.cmyk;
+                        html += `<li><span class="pass">✅ ${colorName}</span>: C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}</li>`;
+                    } else {
+                        html += `<li><span class="fail">❌ ${colorName}</span>: Not found</li>`;
+                    }
+                });
+                
+                html += '</ul>';
+                results.innerHTML = html;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="fail">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        function displayColorInfo(colorName, colorData) {
+            const info = document.getElementById('selected-color-info');
+            const cmyk = colorData.cmyk;
+            
+            info.innerHTML = `
+                <h4>${colorName}</h4>
+                <p><strong>CMYK Values:</strong></p>
+                <ul>
+                    <li>Cyan: ${cmyk.c}%</li>
+                    <li>Magenta: ${cmyk.m}%</li>
+                    <li>Yellow: ${cmyk.y}%</li>
+                    <li>Black: ${cmyk.k}%</li>
+                </ul>
+            `;
+        }
+        
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testPantoneModule();
+                populateTestDropdowns();
+                testSpecificColors();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
