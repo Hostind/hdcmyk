@@ -3,649 +3,937 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=3.0">
-    <title>HD CMYK • Pro LAB Color Match Studio</title>
+    <title>HD CMYK • Pro LAB/CMYK Match Studio — Ultra Stable</title>
     <meta name="description" content="Professional HD CMYK color matching with LAB analysis, ICC profiles, heatmap visualization, and industry workflows">
-    <meta name="theme-color" content="#007bff">
+    <meta name="theme-color" content="#2c5282">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="LAB Calculator">
+    <meta name="apple-mobile-web-app-title" content="HD CMYK Studio">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="src/assets/icons/icon.svg">
     <link rel="apple-touch-icon" href="src/assets/icons/icon.svg">
     <link rel="stylesheet" href="src/css/styles.css">
+    <style>
+        /* Enhanced ChatGPT-5 inspired styling integrated with HD features */
+        :root {
+            --primary-color: #2c5282;
+            --secondary-color: #3182ce;
+            --accent-color: #38a169;
+            --warning-color: #d69e2e;
+            --error-color: #e53e3e;
+            --success-color: #38a169;
+            --background: #f7fafc;
+            --surface: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --border-color: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 0.375rem;
+            --radius-lg: 0.5rem;
+        }
+        
+        [data-theme="dark"] {
+            --background: #1a202c;
+            --surface: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #cbd5e0;
+            --border-color: #4a5568;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .enhanced-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .enhanced-header h1 {
+            margin: 0;
+            font-size: 1.875rem;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .enhanced-header .subtitle {
+            opacity: 0.9;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .enhanced-section {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            margin: 1rem 0;
+            padding: 1.5rem;
+        }
+        
+        .enhanced-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .enhanced-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .enhanced-button.secondary {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .enhanced-button.success {
+            background: var(--success-color);
+        }
+        
+        .enhanced-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        
+        .enhanced-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+        }
+        
+        .grid-container {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .color-input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .enhanced-card {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            transition: all 0.2s;
+        }
+        
+        .enhanced-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .result-display {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--success-color), var(--accent-color));
+            color: white;
+            border-radius: var(--radius-lg);
+            margin: 1rem 0;
+        }
+        
+        .advanced-toggle {
+            background: rgba(44, 82, 130, 0.1);
+            border: 1px solid var(--primary-color);
+            border-radius: var(--radius);
+            padding: 0.5rem 1rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .advanced-toggle:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .hd-feature-panel {
+            border-left: 4px solid var(--accent-color);
+            background: linear-gradient(135deg, rgba(56, 161, 105, 0.05), rgba(56, 161, 105, 0.1));
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .status-indicator.success {
+            background: rgba(56, 161, 105, 0.1);
+            color: var(--success-color);
+        }
+        
+        .status-indicator.warning {
+            background: rgba(214, 158, 46, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .status-indicator.error {
+            background: rgba(229, 62, 62, 0.1);
+            color: var(--error-color);
+        }
+    </style>
 </head>
 <body>
-    <!-- Enhanced Sticky Status Bar -->
-    <div class="status-bar" id="status-bar">
-        <div class="status-bar-content">
-            <div class="status-info">
-                <span class="status-label">Status:</span>
-                <span class="status-value" id="status-value">Ready</span>
+    <!-- Enhanced Header with Status Integration -->
+    <header class="enhanced-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1>HD CMYK • Pro LAB/CMYK Match Studio</h1>
+                <div class="subtitle">Ultra Stable • ΔE suite • Patch heatmap • CCM • Substrate simulation • ICC soft proof • CMYKOGV</div>
             </div>
-            <div class="delta-info">
-                <span class="delta-label">ΔE*ab:</span>
-                <span class="delta-value" id="status-delta-value">--</span>
-            </div>
-            <div class="quick-actions-bar">
-                <button class="status-action-btn" id="status-calculate-btn" title="Calculate color difference">
-                    Calculate
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div class="status-indicator success" id="main-status">
+                    <span>●</span> Ready
+                </div>
+                <div class="status-indicator" id="delta-status" style="background: rgba(255,255,255,0.1); color: white;">
+                    ΔE: <span id="header-delta-value">--</span>
+                </div>
+                <button class="enhanced-button secondary" id="quick-calculate" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">
+                    ⚡ Quick Calc
                 </button>
-                <button class="status-action-btn" id="status-reset-btn" title="Reset all inputs">
-                    Reset
+                <button class="enhanced-button secondary" id="client-profile-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);" title="Client Profile & SOP Management">
+                    👤
                 </button>
-                <button class="status-action-btn" id="status-export-btn" title="Export results" disabled>
-                    Export
+                <button class="enhanced-button secondary" id="icc-profile-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);" title="ICC Profile Management">
+                    🎨
+                </button>
+                <button class="advanced-toggle" id="toggle-advanced-features">
+                    🔬 HD Features
+                </button>
+                <button class="enhanced-button secondary" id="theme-toggle" style="background: rgba(255,255,255,0.1); padding: 0.5rem;">
+                    🌙
                 </button>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div class="calculator-container">
-        <header class="app-header">
-            <div class="header-content">
-                <div class="header-text">
-                    <h1>HD CMYK • Pro LAB Color Match Studio</h1>
-                    <p class="subtitle">Ultra Stable • ΔE suite • Patch heatmap • CCM • Substrate simulation • Pantone/Brand library • CSV/Folder ingest • ICC soft proof • CMYKOGV • SOP • PDF reports</p>
-                </div>
-                <div class="header-controls">
-                    <button class="hd-feature-btn" id="client-profile-btn" title="Client Profile & SOP Management">
-                        <span class="feature-icon">👤</span>
-                    </button>
-                    <button class="hd-feature-btn" id="icc-profile-btn" title="ICC Profile Management">
-                        <span class="feature-icon">🎨</span>
-                    </button>
-                    <button class="hd-feature-btn" id="heatmap-toggle-btn" title="Toggle Heatmap View">
-                        <span class="feature-icon">📊</span>
-                    </button>
-                    <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
-                        <span class="theme-icon">🌙</span>
-                    </button>
-                </div>
-            </div>
-        </header>
+    <!-- Main Application Container -->
+    <div class="calculator-container" style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
 
-        <!-- Horizontal Equation Layout -->
-        <div class="equation-container">
+        <!-- Enhanced Color Input Section -->
+        <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 2rem;">
             <!-- Target Color Section -->
-            <section class="color-section" id="target-section">
-                <h2 class="tooltip-enhanced" data-tooltip="Enter the desired color values for your target.&#10;Supports both CMYK ink percentages and LAB measurements.&#10;Use presets for common colors or input custom values.&#10;&#10;• CMYK: Cyan, Magenta, Yellow, Black percentages (0-100%)&#10;• LAB: L* (lightness 0-100), a* (green-red -128 to +127), b* (blue-yellow -128 to +127)&#10;&#10;Real-time color swatch shows approximate appearance.">Target Color</h2>
-                <div class="color-display">
-                    <div class="color-swatch" id="target-swatch" aria-label="Target color preview"></div>
+            <section class="enhanced-section enhanced-card" id="target-section">
+                <h2 style="color: var(--primary-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🎯 Target Color
+                    <span class="status-indicator" id="target-status" style="margin-left: auto; font-size: 0.75rem;">Ready</span>
+                </h2>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="width: 80px; height: 80px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 2px solid var(--border-color); position: relative; overflow: hidden;" id="target-swatch" aria-label="Target color preview">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 0.25rem; font-size: 0.625rem; text-align: center;" id="target-swatch-info">RGB</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Enter your target color values</div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="enhanced-button secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="clearTargetColor()">Clear</button>
+                            <button class="enhanced-button secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="copyTargetCMYK()">Copy CMYK</button>
+                            <button class="enhanced-button secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="pasteFromClipboard('target')">Paste</button>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Preset Colors and Quick Actions -->
-                <div class="preset-controls">
-                    <div class="preset-dropdown-container">
-                        <label for="target-preset-select">Preset Colors:</label>
-                        <select id="target-preset-select" class="preset-select">
-                            <option value="">Select a preset color...</option>
-                        </select>
-                    </div>
-                    <div class="quick-actions">
-                        <button type="button" class="quick-action-btn" id="target-clear-btn" title="Clear all target color inputs">Clear</button>
-                        <button type="button" class="quick-action-btn" id="target-copy-btn" title="Copy target CMYK values to clipboard">Copy CMYK</button>
-                    </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Preset Colors</label>
+                    <select id="target-preset-select" class="enhanced-input" style="margin-bottom: 0.5rem;">
+                        <option value="">Select a preset color...</option>
+                    </select>
                 </div>
                 
-                <div class="input-groups">
-                    <div class="input-group">
-                        <label class="group-label">CMYK Values
-                            <div class="inline-help">
-                                <div class="help-icon tooltip-trigger">
-                                    <div class="tooltip-content printing-tooltip">
-                                        <div class="tooltip-title">CMYK Input Guidelines</div>
-                                        <div class="tooltip-description">Enter ink percentages (0-100%) for Cyan, Magenta, Yellow, and Black (Key) process colors.</div>
-                                        <div class="tooltip-tip">Professional tip: Total ink coverage should typically not exceed 280-320% depending on your press and substrate.</div>
-                                    </div>
-                                </div>
+                <div class="grid-container">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">CMYK Values (%)</label>
+                        <div class="color-input-grid">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">C%</label>
+                                <input type="number" id="target-c" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
-                        </label>
-                        <div class="input-row">
-                            <div class="input-field">
-                                <label for="target-c">C%</label>
-                                <input type="number" id="target-c" placeholder="0" min="0" max="100" step="0.1">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">M%</label>
+                                <input type="number" id="target-m" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="target-m">M%</label>
-                                <input type="number" id="target-m" placeholder="0" min="0" max="100" step="0.1">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">Y%</label>
+                                <input type="number" id="target-y" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="target-y">Y%</label>
-                                <input type="number" id="target-y" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label for="target-k">K%</label>
-                                <input type="number" id="target-k" placeholder="0" min="0" max="100" step="0.1">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">K%</label>
+                                <input type="number" id="target-k" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
                         </div>
                     </div>
                     
-                    <div class="input-group">
-                        <label class="group-label">LAB Values</label>
-                        <div class="input-row">
-                            <div class="input-field">
-                                <label for="target-l">L*</label>
-                                <input type="number" id="target-l" placeholder="50" min="0" max="100" step="0.01">
+                    <div style="margin-top: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">LAB Values</label>
+                        <div class="color-input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">L*</label>
+                                <input type="number" id="target-l" class="enhanced-input" placeholder="50" min="0" max="100" step="0.01" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="target-a">a*</label>
-                                <input type="number" id="target-a" placeholder="0" min="-128" max="127" step="0.01">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">a*</label>
+                                <input type="number" id="target-a" class="enhanced-input" placeholder="0" min="-128" max="127" step="0.01" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="target-b">b*</label>
-                                <input type="number" id="target-b" placeholder="0" min="-128" max="127" step="0.01">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">b*</label>
+                                <input type="number" id="target-b" class="enhanced-input" placeholder="0" min="-128" max="127" step="0.01" style="text-align: center;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Extended Gamut (HD Feature) -->
+                    <div id="target-extended-gamut" class="hd-feature-panel" style="margin-top: 1rem; padding: 1rem; border-radius: var(--radius); display: none;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--accent-color);">Extended Gamut (OGV)</label>
+                        <div class="color-input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">O%</label>
+                                <input type="number" id="target-o" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">G%</label>
+                                <input type="number" id="target-g" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">V%</label>
+                                <input type="number" id="target-v" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
-
-            <!-- Minus Symbol -->
-            <div class="color-equation-symbol" style="font-size: 3rem; color: var(--text-secondary); align-self: center;">-</div>
 
             <!-- Sample Color Section -->
-            <section class="color-section" id="sample-section">
-                <h2 class="tooltip-enhanced" data-tooltip="Enter the measured color values from your sample.&#10;Compare against target to calculate color difference.&#10;Real-time swatch preview shows approximate color.&#10;&#10;• Use spectrophotometer readings for LAB values&#10;• Use densitometer readings for CMYK values&#10;• Preset colors available for quick testing&#10;&#10;Sample color will be compared against target for Delta E calculation.">Sample Color</h2>
-                <div class="color-display">
-                    <div class="color-swatch" id="sample-swatch" aria-label="Sample color preview"></div>
-                </div>
-                
-                <!-- Preset Colors and Quick Actions -->
-                <div class="preset-controls">
-                    <div class="preset-dropdown-container">
-                        <label for="sample-preset-select">Preset Colors:</label>
-                        <select id="sample-preset-select" class="preset-select">
-                            <option value="">Select a preset color...</option>
-                        </select>
+            <section class="enhanced-section enhanced-card" id="sample-section">
+                <h2 style="color: var(--secondary-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🔍 Sample Color
+                    <span class="status-indicator" id="sample-status" style="margin-left: auto; font-size: 0.75rem;">Ready</span>
+                </h2>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="width: 80px; height: 80px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 2px solid var(--border-color); position: relative; overflow: hidden;" id="sample-swatch" aria-label="Sample color preview">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 0.25rem; font-size: 0.625rem; text-align: center;" id="sample-swatch-info">RGB</div>
                     </div>
-                    <div class="quick-actions">
-                        <button type="button" class="quick-action-btn" id="sample-clear-btn" title="Clear all sample color inputs">Clear</button>
-                        <button type="button" class="quick-action-btn" id="sample-copy-btn" title="Copy sample CMYK values to clipboard">Copy CMYK</button>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Enter your measured sample values</div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="enhanced-button secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="clearSampleColor()">Clear</button>
+                            <button class="enhanced-button secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="copySampleCMYK()">Copy CMYK</button>
+                            <button class="enhanced-button secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="pasteFromClipboard('sample')">Paste</button>
+                            <button class="enhanced-button secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="swapTargetSample()">↔ Swap</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="input-groups">
-                    <div class="input-group">
-                        <label class="group-label">CMYK Values</label>
-                        <div class="input-row">
-                            <div class="input-field">
-                                <label for="sample-c">C%</label>
-                                <input type="number" id="sample-c" placeholder="0" min="0" max="100" step="0.1">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Preset Colors</label>
+                    <select id="sample-preset-select" class="enhanced-input" style="margin-bottom: 0.5rem;">
+                        <option value="">Select a preset color...</option>
+                    </select>
+                </div>
+                <div class="grid-container">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">CMYK Values (%)</label>
+                        <div class="color-input-grid">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">C%</label>
+                                <input type="number" id="sample-c" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="sample-m">M%</label>
-                                <input type="number" id="sample-m" placeholder="0" min="0" max="100" step="0.1">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">M%</label>
+                                <input type="number" id="sample-m" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="sample-y">Y%</label>
-                                <input type="number" id="sample-y" placeholder="0" min="0" max="100" step="0.1">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">Y%</label>
+                                <input type="number" id="sample-y" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="sample-k">K%</label>
-                                <input type="number" id="sample-k" placeholder="0" min="0" max="100" step="0.1">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">K%</label>
+                                <input type="number" id="sample-k" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
                         </div>
                     </div>
                     
-                    <div class="input-group">
-                        <label class="group-label">LAB Values</label>
-                        <div class="input-row">
-                            <div class="input-field">
-                                <label for="sample-l">L*</label>
-                                <input type="number" id="sample-l" placeholder="50" min="0" max="100" step="0.01">
+                    <div style="margin-top: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">LAB Values</label>
+                        <div class="color-input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">L*</label>
+                                <input type="number" id="sample-l" class="enhanced-input" placeholder="50" min="0" max="100" step="0.01" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="sample-a">a*</label>
-                                <input type="number" id="sample-a" placeholder="0" min="-128" max="127" step="0.01">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">a*</label>
+                                <input type="number" id="sample-a" class="enhanced-input" placeholder="0" min="-128" max="127" step="0.01" style="text-align: center;">
                             </div>
-                            <div class="input-field">
-                                <label for="sample-b">b*</label>
-                                <input type="number" id="sample-b" placeholder="0" min="-128" max="127" step="0.01">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">b*</label>
+                                <input type="number" id="sample-b" class="enhanced-input" placeholder="0" min="-128" max="127" step="0.01" style="text-align: center;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Extended Gamut (HD Feature) -->
+                    <div id="sample-extended-gamut" class="hd-feature-panel" style="margin-top: 1rem; padding: 1rem; border-radius: var(--radius); display: none;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--accent-color);">Extended Gamut (OGV)</label>
+                        <div class="color-input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">O%</label>
+                                <input type="number" id="sample-o" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">G%</label>
+                                <input type="number" id="sample-g" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">V%</label>
+                                <input type="number" id="sample-v" class="enhanced-input" placeholder="0" min="0" max="100" step="0.1" style="text-align: center;">
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
+        </div>
+        
+        <!-- Calculate Button Section -->
+        <div style="text-align: center; margin: 2rem 0;">
+            <button id="calculate-btn" class="enhanced-button" style="padding: 1rem 2rem; font-size: 1.125rem; font-weight: 700;">
+                ⚡ Calculate Color Difference
+            </button>
+            <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button id="reset-all-btn" class="enhanced-button secondary">
+                    🔄 Reset All
+                </button>
+                <button id="workflow-toggle-btn" class="enhanced-button secondary">
+                    🔍 Show Process
+                </button>
+                <button id="help-toggle-btn" class="enhanced-button secondary">
+                    ❓ Help Guide
+                </button>
+            </div>
+        </div>
 
-            <!-- Equals Symbol -->
-            <div class="color-equation-symbol" style="font-size: 3rem; color: var(--text-secondary); align-self: center;">=</div>
 
-            <!-- Delta Results Section -->
-            <section class="delta-section" id="delta-section">
-                <h2 class="tooltip-enhanced" data-tooltip="Displays calculated color difference results.&#10;ΔE*ab shows total color difference between target and sample.&#10;Component deltas show individual L*, a*, b* differences.&#10;&#10;• ΔE*ab < 1.0: Excellent match (not perceptible)&#10;• ΔE*ab 1.0-2.0: Good match (barely perceptible)&#10;• ΔE*ab 2.0-4.0: Acceptable match (noticeable)&#10;• ΔE*ab > 4.0: Poor match (clearly visible)" tabindex="0">Delta</h2>
-                <div class="color-display">
-                    <div class="delta-indicator" id="delta-indicator">
-                        <span class="delta-symbol">Δ</span>
+        <!-- Professional Help Panel -->
+        <div class="enhanced-section" id="professional-help-panel" style="display: none; margin: 2rem 0;">
+            <h3 style="color: var(--primary-color); margin-top: 0;">Professional Color Matching Guide</h3>
+            <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h4 style="color: var(--text-primary); margin-top: 0;">Quick Start</h4>
+                    <p><strong>Target Color:</strong> Enter the color you want to achieve using CMYK ink percentages or LAB device-independent values.</p>
+                    <p><strong>Sample Color:</strong> Enter your measured or produced color values to compare against the target.</p>
+                    
+                    <div style="background: rgba(56, 161, 105, 0.1); padding: 1rem; border-radius: var(--radius); margin: 1rem 0;">
+                        <strong>Example:</strong><br>
+                        Target: C:50 M:30 Y:0 K:10<br>
+                        Sample: C:52 M:28 Y:2 K:12<br>
+                        Result: ΔE = 2.4 (Acceptable)
                     </div>
                 </div>
                 
-                <div class="delta-values" id="delta-values">
-                    <div class="delta-item">
-                        <label>ΔL*</label>
-                        <span id="delta-l">--</span>
+                <div>
+                    <h4 style="color: var(--text-primary); margin-top: 0;">Delta E Interpretation</h4>
+                    <div style="display: grid; gap: 0.5rem;">
+                        <div class="status-indicator success" style="justify-content: space-between;">
+                            <span>ΔE ≤ 1.0</span> <span>Perfect match</span>
+                        </div>
+                        <div class="status-indicator" style="background: rgba(214, 158, 46, 0.1); color: var(--warning-color); justify-content: space-between;">
+                            <span>ΔE 1.0-2.0</span> <span>Very good match</span>
+                        </div>
+                        <div class="status-indicator" style="background: rgba(214, 158, 46, 0.2); color: var(--warning-color); justify-content: space-between;">
+                            <span>ΔE 2.0-3.5</span> <span>Good match</span>
+                        </div>
+                        <div class="status-indicator error" style="justify-content: space-between;">
+                            <span>ΔE > 3.5</span> <span>Needs adjustment</span>
+                        </div>
                     </div>
-                    <div class="delta-item">
-                        <label>Δa*</label>
-                        <span id="delta-a">--</span>
-                    </div>
-                    <div class="delta-item">
-                        <label>Δb*</label>
-                        <span id="delta-b">--</span>
-                    </div>
-                    <div class="delta-item">
-                        <label>ΔC*</label>
-                        <span id="delta-c">--</span>
-                    </div>
-                    <div class="delta-item">
-                        <label>Δh</label>
-                        <span id="delta-h">--</span>
-                    </div>
+                    
+                    <h4 style="color: var(--text-primary); margin-top: 1.5rem;">Pro Tips</h4>
+                    <ul style="color: var(--text-secondary); font-size: 0.875rem; line-height: 1.5;">
+                        <li>Use spectrophotometer readings for LAB values</li>
+                        <li>Consider substrate and lighting conditions</li>
+                        <li>Keep TAC below 300% for most substrates</li>
+                        <li>Enable HD features for advanced workflows</li>
+                    </ul>
                 </div>
-            </section>
-        </div>
-        <!-- End equation container -->
-
-        <!-- Calculate Button -->
-        <div class="calculate-section">
-            <div class="calculate-controls">
-                <button id="calculate-btn" class="calculate-button btn-outlined gold-premium">
-                    Calculate Color Difference
-                </button>
-                <button id="reset-all-btn" class="reset-button" title="Clear all inputs and reset the calculator">
-                    Reset All
-                </button>
-                <button id="workflow-toggle-btn" class="workflow-toggle-btn" title="Show step-by-step calculation process">
-                    Show Process
-                </button>
-                <button id="help-toggle-btn" class="help-toggle" title="Show professional guidance and tips">
-                    Help Guide
-                </button>
             </div>
-        </div>
-
-        <!-- Professional Help Panel -->
-        <div class="help-panel" id="professional-help-panel">
-            <h4>Professional Color Matching Guide</h4>
-            <p><strong>Target Color:</strong> Enter the color you want to achieve. Use either CMYK ink percentages or LAB device-independent values.</p>
-            <p><strong>Sample Color:</strong> Enter the color you actually measured or produced. Compare this against your target to see the difference.</p>
-            
-            <div class="help-example">
-                Example: Target C:50 M:30 Y:0 K:10 vs Sample C:52 M:28 Y:2 K:12
-                Result: ΔE = 2.4 (Acceptable for commercial printing)
-            </div>
-            
-            <p><strong>Delta E Interpretation:</strong></p>
-            <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
-                <li>ΔE ≤ 1.0: Perfect match (not detectable by human eye)</li>
-                <li>ΔE 1.0-2.0: Very good match (slight difference)</li>
-                <li>ΔE 2.0-3.5: Good match (acceptable for most commercial work)</li>
-                <li>ΔE > 3.5: Poor match (requires adjustment)</li>
-            </ul>
-            
-            <p><strong>Professional Tips:</strong></p>
-            <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
-                <li>Use spectrophotometer measurements for LAB values when possible</li>
-                <li>Consider substrate and lighting conditions</li>
-                <li>Total ink coverage (TAC) should typically stay below 300%</li>
-                <li>Use the step-by-step process view for complex calculations</li>
-            </ul>
         </div>
 
         <!-- Results Section -->
-        <section class="results-section" id="results-section">
-            <div class="total-delta-e">
-                <h3>Total Color Difference</h3>
-                <div class="delta-e-value important-value" id="delta-e-value">
-                    <span class="delta-e-number value">--</span>
-                    <span class="delta-e-label">ΔE*ab</span>
-                </div>
-                <div class="tolerance-zone" id="tolerance-zone"></div>
-            </div>
-
-            <div class="suggestions-container" id="suggestions-container">
-                <h3>Suggested CMYK Adjustments to Reach Target</h3>
-                <div class="suggestions-list" id="suggestions-list">
-                    <!-- Suggestions will be populated by JavaScript -->
+        <section class="enhanced-section" id="results-section" style="margin: 2rem 0;">
+            <!-- Delta E Result Display -->
+            <div class="result-display" id="delta-e-display" style="margin-bottom: 2rem;">
+                <div style="font-size: 1rem; opacity: 0.9; margin-bottom: 0.5rem;">Color Difference</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
+                    <span class="delta-e-number" id="delta-e-value" style="font-size: 3rem; font-weight: 800;">--</span>
+                    <div style="text-align: left;">
+                        <div style="font-size: 1.125rem; font-weight: 600;">ΔE*ab</div>
+                        <div class="tolerance-zone" id="tolerance-zone" style="font-size: 0.875rem; opacity: 0.8;">Ready to calculate</div>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Detailed Delta Values -->
+            <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <div class="enhanced-card" style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">ΔL*</div>
+                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--primary-color);" id="delta-l">--</div>
+                </div>
+                <div class="enhanced-card" style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Δa*</div>
+                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--primary-color);" id="delta-a">--</div>
+                </div>
+                <div class="enhanced-card" style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Δb*</div>
+                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--primary-color);" id="delta-b">--</div>
+                </div>
+                <div class="enhanced-card" style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">ΔC*</div>
+                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--primary-color);" id="delta-c">--</div>
+                </div>
+                <div class="enhanced-card" style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Δh</div>
+                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--primary-color);" id="delta-h">--</div>
+                </div>
+            </div>
 
-            <!-- G7 Analysis Section -->
-            <div class="g7-analysis-container premium-feature" id="g7-analysis-container" style="display: none;">
-                <h3 class="gold-accent">G7 Gray Balance Analysis <span class="premium-badge">Premium</span></h3>
-                <div class="g7-analysis-content">
-                    <div class="g7-compliance-status" id="g7-compliance-status">
-                        <div class="compliance-indicator" id="compliance-indicator">
-                            <span class="compliance-icon">⚪</span>
-                            <span class="compliance-text">Analyzing...</span>
+            <!-- Suggestions Section -->
+            <div class="enhanced-card" id="suggestions-container">
+                <h3 style="color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🎯 Suggested CMYK Adjustments
+                    <span class="status-indicator" style="margin-left: auto; font-size: 0.75rem;" id="suggestions-status">Ready</span>
+                </h3>
+                <div class="suggestions-list" id="suggestions-list" style="min-height: 3rem; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-style: italic;">
+                    Calculate colors to see suggestions
+                </div>
+            </div>
+
+            <!-- G7 Analysis Section (HD Feature) -->
+            <div class="enhanced-card hd-feature-panel" id="g7-analysis-container" style="display: none; margin-top: 2rem;">
+                <h3 style="color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    ⚙️ G7 Gray Balance Analysis
+                    <span style="background: linear-gradient(45deg, #ffd700, #ffed4a); color: #1a202c; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 700; margin-left: auto;">PREMIUM</span>
+                </h3>
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div>
+                        <div class="status-indicator" id="compliance-indicator" style="margin-bottom: 1rem;">
+                            <span>⚪</span> <span id="compliance-text">Analyzing...</span>
                         </div>
-                        <div class="compliance-details" id="compliance-details">
-                            <span class="gray-level">Gray Level: --</span>
-                            <span class="deviation">Total Deviation: --</span>
+                        <div style="display: grid; gap: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Gray Level:</span>
+                                <span id="gray-level" style="font-weight: 600;">--</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Total Deviation:</span>
+                                <span id="total-deviation" style="font-weight: 600;">--</span>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="g7-recommendations" id="g7-recommendations">
-                        <h4>G7 Recommendations</h4>
-                        <div class="g7-recommendations-list" id="g7-recommendations-list">
-                            <!-- G7 recommendations will be populated by JavaScript -->
+                    <div>
+                        <h4 style="margin-top: 0; color: var(--text-primary);">G7 Recommendations</h4>
+                        <div class="g7-recommendations-list" id="g7-recommendations-list" style="min-height: 2rem; color: var(--text-secondary); font-style: italic;">
+                            Enable G7 analysis to see recommendations
                         </div>
                     </div>
-                    
-                    <div class="g7-controls">
-                        <label class="g7-toggle">
-                            <input type="checkbox" id="enable-g7-analysis" checked>
-                            <span class="toggle-text">Enable G7 Analysis</span>
-                        </label>
-                        <label class="g7-toggle">
-                            <input type="checkbox" id="prioritize-g7-suggestions">
-                            <span class="toggle-text">Prioritize G7 Suggestions</span>
-                        </label>
-                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="enable-g7-analysis" checked style="margin: 0;">
+                        <span>Enable G7 Analysis</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="prioritize-g7-suggestions" style="margin: 0;">
+                        <span>Prioritize G7 Suggestions</span>
+                    </label>
                 </div>
             </div>
         </section>
 
-        <!-- History and Export Section -->
-        <section class="tools-section" id="tools-section">
-            <div class="history-panel">
-                <h3>Recent Comparisons</h3>
-                <div class="history-list" id="history-list">
-                    <!-- History items will be populated by JavaScript -->
-                </div>
-                <button class="clear-history-btn" id="clear-history-btn">Clear History</button>
-            </div>
-            
-            <div class="export-panel premium">
-                <h3 class="gold-accent">Export Results</h3>
-                <div class="export-buttons">
-                    <button class="export-btn btn-outlined gold" id="export-csv-btn">Export CSV</button>
-                    <button class="export-btn btn-outlined gold-premium" id="export-pdf-btn">Export PDF</button>
+        <!-- Tools and Export Section -->
+        <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 2rem 0;">
+            <!-- History Panel -->
+            <div class="enhanced-card">
+                <h3 style="color: var(--primary-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    📅 Recent Comparisons
+                    <button class="enhanced-button secondary" style="margin-left: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem;" id="clear-history-btn">Clear All</button>
+                </h3>
+                <div class="history-list" id="history-list" style="min-height: 6rem; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-style: italic;">
+                    No recent comparisons
                 </div>
             </div>
             
-            <div class="testing-panel">
-                <h3>Testing & Validation</h3>
-                <div class="testing-buttons">
-                    <button class="test-btn" id="run-integration-tests" onclick="runCompleteWorkflowTests()">
-                        Run Integration Tests
+            <!-- Export Panel -->
+            <div class="enhanced-card">
+                <h3 style="color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    📤 Export Results
+                    <span style="background: linear-gradient(45deg, #ffd700, #ffed4a); color: #1a202c; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 700; margin-left: auto;">PREMIUM</span>
+                </h3>
+                <div style="display: grid; gap: 1rem;">
+                    <button class="enhanced-button secondary" id="export-csv-btn">
+                        📄 Export CSV
                     </button>
-                    <button class="test-btn secondary" id="show-browser-info" onclick="showBrowserInfo()">
-                        Browser Info
+                    <button class="enhanced-button" id="export-pdf-btn" style="background: var(--accent-color);">
+                        📁 Export PDF Report
                     </button>
                 </div>
             </div>
-        </section>
+            
+            <!-- Testing Panel -->
+            <div class="enhanced-card">
+                <h3 style="color: var(--secondary-color); margin-top: 0;">
+                    🔧 Testing & Validation
+                </h3>
+                <div style="display: grid; gap: 1rem;">
+                    <button class="enhanced-button secondary" id="run-integration-tests" onclick="runCompleteWorkflowTests()">
+                        ⚙️ Run Tests
+                    </button>
+                    <button class="enhanced-button secondary" id="show-browser-info" onclick="showBrowserInfo()">
+                        📊 Browser Info
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- HD Features Section -->
-        <section class="hd-features-section" id="hd-features-section" style="display: none;">
-            <!-- Substrate & Illuminant Selection -->
-            <div class="hd-panel substrate-panel">
-                <h3>1) Target vs. Press — ΔE & Suggestions</h3>
-                <div class="substrate-controls">
-                    <div class="control-group">
-                        <label for="substrate-select">Substrate</label>
-                        <select id="substrate-select">
+        <section class="enhanced-section" id="hd-features-section" style="display: none; margin: 2rem 0;">
+            <h2 style="color: var(--accent-color); margin-top: 0; margin-bottom: 2rem; text-align: center;">HD CMYK Advanced Features</h2>
+            
+            <!-- Substrate & Tolerance Settings -->
+            <div class="enhanced-card hd-feature-panel" style="margin-bottom: 2rem;">
+                <h3 style="color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    ⚙️ Substrate & Analysis Settings
+                </h3>
+                <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Substrate Type</label>
+                        <select id="substrate-select" class="enhanced-input">
                             <option value="hpw">Hot Press White</option>
                             <option value="inver">Invercote</option>
                             <option value="gsm250">250 gsm</option>
                             <option value="foil">Foil Board</option>
                         </select>
                     </div>
-                    <div class="control-group">
-                        <label for="illuminant-select">Illuminant / Obs.</label>
-                        <select id="illuminant-select">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Illuminant / Observer</label>
+                        <select id="illuminant-select" class="enhanced-input">
                             <option value="D50/2°">D50 / 2°</option>
                             <option value="D50/10°">D50 / 10°</option>
                             <option value="D65/2°">D65 / 2°</option>
                             <option value="D65/10°">D65 / 10°</option>
                         </select>
                     </div>
-                    <div class="control-group">
-                        <label for="tolerance-input">ΔE Tolerance</label>
-                        <input id="tolerance-input" type="number" step="0.1" value="2.0" min="0.1" max="10">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">ΔE Tolerance</label>
+                        <input id="tolerance-input" class="enhanced-input" type="number" step="0.1" value="2.0" min="0.1" max="10" style="text-align: center;">
+                        <div style="margin-top: 0.5rem;">
+                            <span style="display: inline-block; margin-right: 1rem;">TAC: <span id="tac-value" style="font-weight: 600;">0%</span></span>
+                            <span class="status-indicator" id="tac-status">Within Limits</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Extended Gamut Controls -->
-            <div class="hd-panel extended-gamut-panel">
-                <h3>Extended Gamut (CMYKOGV)</h3>
-                <div class="ogv-controls">
-                    <div class="ogv-section">
-                        <h4>Target OGV</h4>
-                        <div class="ogv-inputs">
-                            <div class="input-field">
-                                <label for="target-o">O%</label>
-                                <input type="number" id="target-o" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label for="target-g">G%</label>
-                                <input type="number" id="target-g" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label for="target-v">V%</label>
-                                <input type="number" id="target-v" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="ogv-section">
-                        <h4>Sample OGV</h4>
-                        <div class="ogv-inputs">
-                            <div class="input-field">
-                                <label for="sample-o">O%</label>
-                                <input type="number" id="sample-o" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label for="sample-g">G%</label>
-                                <input type="number" id="sample-g" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label for="sample-v">V%</label>
-                                <input type="number" id="sample-v" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="tac-display">
-                    <span>Total Area Coverage (TAC): <span id="tac-value">0%</span></span>
-                </div>
-            </div>
 
             <!-- Patch Grid & Heatmap -->
-            <div class="hd-panel grid-panel">
-                <h3>2) Patch Grid • CSV • Heatmap • Auto-Balance</h3>
-                <div class="grid-controls">
-                    <div class="import-controls">
-                        <label for="csv-import">Import CSV (L*,a*,b* data)</label>
-                        <input type="file" id="csv-import" accept=".csv" />
-                        <select id="grid-size">
-                            <option value="4x6">4×6</option>
-                            <option value="6x8" selected>6×8</option>
-                            <option value="10x10">10×10</option>
+            <div class="enhanced-card hd-feature-panel" style="margin-bottom: 2rem;">
+                <h3 style="color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🔥 Patch Grid & Heatmap Visualization
+                </h3>
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Import CSV Data</label>
+                        <input type="file" id="csv-import" class="enhanced-input" accept=".csv" style="padding: 0.5rem;" />
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Grid Size</label>
+                        <select id="grid-size" class="enhanced-input">
+                            <option value="4x6">4×6 Grid</option>
+                            <option value="6x8" selected>6×8 Grid</option>
+                            <option value="10x10">10×10 Grid</option>
                         </select>
                     </div>
-                    <div class="grid-actions">
-                        <button class="btn" id="generate-grid">Generate Grid</button>
-                        <button class="btn" id="clear-grid">Clear</button>
-                        <button class="btn primary" id="auto-balance">Auto-Balance (CCM + Gray)</button>
-                    </div>
                 </div>
-                <div class="heatmap-container">
-                    <canvas id="heatmap-canvas" data-heatmap data-heatmap-options='{"showLabels": true, "colorScale": "deltaE"}'></canvas>
-                    <div class="heatmap-hint" id="heatmap-hint">Click any cell to edit Target/Press LAB. ΔE00 auto-updates.</div>
+                
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                    <button class="enhanced-button secondary" id="generate-grid">
+                        ✨ Generate Grid
+                    </button>
+                    <button class="enhanced-button secondary" id="clear-grid">
+                        🗌 Clear Grid
+                    </button>
+                    <button class="enhanced-button" id="auto-balance" style="background: var(--accent-color);">
+                        ⚙️ Auto-Balance (CCM + Gray)
+                    </button>
+                </div>
+                
+                <div style="border: 2px solid var(--border-color); border-radius: var(--radius-lg); padding: 1rem; background: var(--background);">
+                    <canvas id="heatmap-canvas" data-heatmap data-heatmap-options='{"showLabels": true, "colorScale": "deltaE"}' style="width: 100%; max-width: 500px; height: 300px; display: block; margin: 0 auto; border-radius: var(--radius);"></canvas>
+                    <div id="heatmap-hint" style="text-align: center; margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary); font-style: italic;">
+                        Click any cell to edit Target/Press LAB. ΔE00 auto-updates.
+                    </div>
                 </div>
             </div>
 
             <!-- Color Correction Matrix (CCM) -->
-            <div class="hd-panel ccm-panel">
-                <h3>3) Resolve-Style CCM (3×3) from Paired Charts</h3>
-                <p class="panel-description">Load two charts (Target & Press) with same patch order to estimate a 3×3 color correction matrix in CIE Lab (linear regression).</p>
-                <div class="ccm-controls">
-                    <div class="ccm-inputs">
-                        <div class="input-group">
-                            <label for="ccm-target-csv">Target CSV (L*,a*,b*)</label>
-                            <input type="file" id="ccm-target-csv" accept=".csv" />
-                        </div>
-                        <div class="input-group">
-                            <label for="ccm-press-csv">Press CSV (L*,a*,b*)</label>
-                            <input type="file" id="ccm-press-csv" accept=".csv" />
-                        </div>
+            <div class="enhanced-card hd-feature-panel" style="margin-bottom: 2rem;">
+                <h3 style="color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🧮 CCM (3×3) from Paired Charts
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">Load two charts (Target & Press) with same patch order to estimate a 3×3 color correction matrix in CIE Lab.</p>
+                
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Target CSV (L*,a*,b*)</label>
+                        <input type="file" id="ccm-target-csv" class="enhanced-input" accept=".csv" style="padding: 0.5rem;" />
                     </div>
-                    <div class="ccm-actions">
-                        <button class="btn primary" id="compute-ccm">Compute CCM</button>
-                        <button class="btn" id="apply-ccm">Apply CCM → Press LAB</button>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Press CSV (L*,a*,b*)</label>
+                        <input type="file" id="ccm-press-csv" class="enhanced-input" accept=".csv" style="padding: 0.5rem;" />
                     </div>
                 </div>
-                <div class="ccm-output">
-                    <pre id="ccm-matrix-output">CCM: —</pre>
+                
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                    <button class="enhanced-button" id="compute-ccm" style="background: var(--accent-color);">
+                        📋 Compute CCM
+                    </button>
+                    <button class="enhanced-button secondary" id="apply-ccm">
+                        → Apply CCM to Press LAB
+                    </button>
+                </div>
+                
+                <div style="background: var(--background); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border-color);">
+                    <pre id="ccm-matrix-output" style="margin: 0; font-family: 'Courier New', monospace; font-size: 0.875rem; color: var(--text-secondary);">CCM Matrix: (not computed)</pre>
                 </div>
             </div>
 
             <!-- Brand/Pantone Library -->
-            <div class="hd-panel library-panel">
-                <h3>4) Pantone / Brand Library (Local)</h3>
-                <div class="library-controls">
-                    <div class="library-import-export">
-                        <div class="control-group">
-                            <label for="library-import">Import JSON Library</label>
-                            <input type="file" id="library-import" accept=".json" />
-                        </div>
-                        <div class="control-group">
-                            <button class="btn" id="library-export">Export JSON</button>
-                        </div>
+            <div class="enhanced-card hd-feature-panel" style="margin-bottom: 2rem;">
+                <h3 style="color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🎨 Pantone / Brand Library
+                </h3>
+                
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Import JSON Library</label>
+                        <input type="file" id="library-import" class="enhanced-input" accept=".json" style="padding: 0.5rem;" />
+                        <button class="enhanced-button secondary" id="library-export" style="width: 100%; margin-top: 0.5rem;">
+                            📥 Export JSON
+                        </button>
                     </div>
-                    <div class="library-search">
-                        <div class="control-group">
-                            <label for="library-search-input">Search Name/Code</label>
-                            <input type="text" id="library-search-input" placeholder="e.g., PANTONE 186 C or 'Brand Red'">
-                        </div>
-                        <div class="control-group">
-                            <button class="btn" id="library-search-btn">Find</button>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Search Name/Code</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="library-search-input" class="enhanced-input" placeholder="PANTONE 186 C" style="flex: 1;">
+                            <button class="enhanced-button" id="library-search-btn" style="background: var(--accent-color);">
+                                🔍 Find
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div class="library-results" id="library-results">
-                    <!-- Library search results will be populated here -->
+                
+                <div id="library-results" style="min-height: 4rem; padding: 1rem; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-style: italic;">
+                    Search library to see results
                 </div>
             </div>
         </section>
 
         <!-- ICC Profile & Utilities Section -->
-        <section class="utilities-section" id="utilities-section" style="display: none;">
-            <div class="utility-panel icc-panel">
-                <h3>ICC Soft Proof & DeviceLink</h3>
-                <div class="icc-controls">
-                    <div class="icc-inputs">
-                        <div class="control-group">
-                            <label for="icc-file-input">Load ICC (.icc/.icm)</label>
-                            <input type="file" id="icc-file-input" accept=".icc,.icm" />
-                        </div>
-                        <div class="control-group">
-                            <label for="devicelink-csv">CMYK→LAB DeviceLink CSV</label>
-                            <input type="file" id="devicelink-csv" accept=".csv" />
-                        </div>
+        <section class="enhanced-section" id="utilities-section" style="display: none; margin: 2rem 0;">
+            <h2 style="color: var(--primary-color); margin-top: 0; margin-bottom: 2rem; text-align: center;">ICC Profiles & Utilities</h2>
+            
+            <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+                <!-- ICC Profile Panel -->
+                <div class="enhanced-card">
+                    <h3 style="color: var(--primary-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        🎨 ICC Soft Proof & DeviceLink
+                    </h3>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Load ICC Profile</label>
+                        <input type="file" id="icc-file-input" class="enhanced-input" accept=".icc,.icm" style="padding: 0.5rem; margin-bottom: 1rem;" />
+                        
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">CMYK→LAB DeviceLink CSV</label>
+                        <input type="file" id="devicelink-csv" class="enhanced-input" accept=".csv" style="padding: 0.5rem;" />
                     </div>
-                    <div class="icc-status">
-                        <div class="profile-info" id="profile-info">
-                            <span class="profile-name">Profile: <span id="profile-name-display">(none)</span></span>
-                        </div>
+                    
+                    <div class="status-indicator" id="icc-status" style="width: 100%; justify-content: flex-start;">
+                        <span>Profile: <span id="profile-name-display" style="font-weight: 600;">(none loaded)</span></span>
                     </div>
                 </div>
-            </div>
-
-            <div class="utility-panel spectro-bridge-panel">
-                <h3>Live Spectro Bridge (Folder Watch)</h3>
-                <p class="panel-description">Connect a folder that receives spectro CSV exports (e.g., X-Rite eXact). New files are auto-ingested into the Grid.</p>
-                <div class="bridge-controls">
-                    <button class="btn primary" id="connect-folder">Connect Folder</button>
-                    <span class="bridge-status" id="bridge-status">Not connected</span>
-                </div>
-                <div class="drop-zone" id="csv-drop-zone">
-                    <p>Drag & drop CSV files here to ingest</p>
-                </div>
-            </div>
-
-            <div class="utility-panel converter-panel">
-                <h3>Pocket Converter (Nix-style)</h3>
-                <div class="converter-grid">
-                    <div class="converter-inputs">
-                        <div class="control-group">
-                            <label for="converter-hex">HEX</label>
-                            <input type="text" id="converter-hex" value="#d81b60" placeholder="#000000">
-                        </div>
-                        <div class="control-group">
-                            <label for="converter-rgb">RGB (0–255)</label>
-                            <input type="text" id="converter-rgb" value="216,27,96" placeholder="0,0,0">
-                        </div>
-                        <div class="control-group">
-                            <label for="converter-cmyk">CMYK (0–100)</label>
-                            <input type="text" id="converter-cmyk" value="0,85,55,0" placeholder="0,0,0,100">
-                        </div>
-                        <div class="control-group">
-                            <label for="converter-lab">LAB</label>
-                            <input type="text" id="converter-lab" value="56,63,16" placeholder="50,0,0">
+                
+                <!-- Spectro Bridge Panel -->
+                <div class="enhanced-card">
+                    <h3 style="color: var(--secondary-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        🔗 Live Spectro Bridge
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">Connect to auto-ingest spectrophotometer CSV exports.</p>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <button class="enhanced-button" id="connect-folder" style="width: 100%; margin-bottom: 1rem;">
+                            📁 Connect Folder
+                        </button>
+                        <div class="status-indicator" id="bridge-status-indicator">
+                            <span id="bridge-status">Not connected</span>
                         </div>
                     </div>
-                    <div class="converter-actions">
-                        <button class="btn primary" id="convert-colors">Convert</button>
-                        <div class="converter-swatch" id="converter-swatch"></div>
+                    
+                    <div id="csv-drop-zone" style="border: 2px dashed var(--border-color); border-radius: var(--radius); padding: 2rem; text-align: center; color: var(--text-secondary); font-style: italic; transition: all 0.2s;">
+                        📄 Drag & drop CSV files here
+                    </div>
+                </div>
+                
+                <!-- Color Converter Panel -->
+                <div class="enhanced-card">
+                    <h3 style="color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        🌈 Pocket Color Converter
+                    </h3>
+                    
+                    <div class="grid-container" style="gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">HEX</label>
+                            <input type="text" id="converter-hex" class="enhanced-input" value="#d81b60" placeholder="#000000" style="text-align: center;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">RGB (0-255)</label>
+                            <input type="text" id="converter-rgb" class="enhanced-input" value="216,27,96" placeholder="0,0,0" style="text-align: center;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">CMYK (0-100)</label>
+                            <input type="text" id="converter-cmyk" class="enhanced-input" value="0,85,55,0" placeholder="0,0,0,100" style="text-align: center;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-secondary);">LAB</label>
+                            <input type="text" id="converter-lab" class="enhanced-input" value="56,63,16" placeholder="50,0,0" style="text-align: center;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button class="enhanced-button" id="convert-colors" style="flex: 1; background: var(--accent-color);">
+                            ⚡ Convert All
+                        </button>
+                        <div id="converter-swatch" style="width: 60px; height: 40px; border-radius: var(--radius); border: 2px solid var(--border-color); background: #d81b60;"></div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Client Profile & SOP Management Modal -->
-        <div class="modal" id="client-profile-modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Client Profile & SOP Management</h3>
-                    <button class="modal-close" id="client-modal-close">&times;</button>
+        <div id="client-profile-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.75); z-index: 1000; backdrop-filter: blur(4px);">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 800px; width: 90%; max-height: 90%; overflow-y: auto;">
+                <!-- Modal Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--border-color);">
+                    <h3 style="margin: 0; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        👤 Client Profile & SOP Management
+                    </h3>
+                    <button id="client-modal-close" class="enhanced-button secondary" style="padding: 0.5rem; width: auto; min-width: auto;">
+                        ✕
+                    </button>
                 </div>
-                <div class="modal-body">
-                    <div class="client-profile-section">
-                        <div class="profile-selection">
-                            <label for="client-profile-select">Select Client Profile:</label>
-                            <select id="client-profile-select">
-                                <option value="">Select a profile...</option>
-                            </select>
-                            <button class="btn" id="new-profile-btn">New Profile</button>
+                
+                <!-- Modal Body -->
+                <div style="padding: 2rem;">
+                    <!-- Profile Selection -->
+                    <div class="enhanced-card" style="margin-bottom: 2rem;">
+                        <h4 style="margin-top: 0; color: var(--text-primary);">Client Profiles</h4>
+                        
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Select Profile</label>
+                                <select id="client-profile-select" class="enhanced-input">
+                                    <option value="">Select a profile...</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: end;">
+                                <button class="enhanced-button secondary" id="new-profile-btn">
+                                    ➕ New Profile
+                                </button>
+                            </div>
                         </div>
                         
-                        <div class="profile-editor" id="profile-editor" style="display: none;">
-                            <div class="editor-inputs">
-                                <div class="input-group">
-                                    <label for="profile-name">Profile Name</label>
-                                    <input type="text" id="profile-name" placeholder="Client Name">
+                        <!-- Profile Editor -->
+                        <div id="profile-editor" style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border-color);">
+                            <h5 style="margin-top: 0; color: var(--text-primary);">Profile Details</h5>
+                            
+                            <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Profile Name</label>
+                                    <input type="text" id="profile-name" class="enhanced-input" placeholder="Client Name">
                                 </div>
-                                <div class="input-group">
-                                    <label for="profile-tolerance">ΔE Tolerance</label>
-                                    <input type="number" id="profile-tolerance" step="0.1" value="2.0">
+                                <div>
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">ΔE Tolerance</label>
+                                    <input type="number" id="profile-tolerance" class="enhanced-input" step="0.1" value="2.0" style="text-align: center;">
                                 </div>
-                                <div class="input-group">
-                                    <label for="profile-notes">Notes</label>
-                                    <textarea id="profile-notes" rows="3" placeholder="Client-specific notes..."></textarea>
+                                <div style="grid-column: 1 / -1;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Contact Email</label>
+                                    <input type="email" id="profile-contact" class="enhanced-input" placeholder="client@example.com">
                                 </div>
-                                <div class="input-group">
-                                    <label for="profile-contact">Contact Email</label>
-                                    <input type="email" id="profile-contact" placeholder="client@example.com">
+                                <div style="grid-column: 1 / -1;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Notes</label>
+                                    <textarea id="profile-notes" class="enhanced-input" rows="3" placeholder="Client-specific notes..." style="resize: vertical;"></textarea>
                                 </div>
                             </div>
-                            <div class="editor-actions">
-                                <button class="btn primary" id="save-profile">Save Profile</button>
-                                <button class="btn" id="cancel-profile-edit">Cancel</button>
-                                <button class="btn danger" id="delete-profile">Delete Profile</button>
+                            
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="enhanced-button" id="save-profile" style="background: var(--success-color);">
+                                    💾 Save Profile
+                                </button>
+                                <button class="enhanced-button secondary" id="cancel-profile-edit">
+                                    ✖ Cancel
+                                </button>
+                                <button class="enhanced-button" id="delete-profile" style="background: var(--error-color); margin-left: auto;">
+                                    🗑 Delete
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="sop-section">
-                        <h4>Standard Operating Procedure (Current Substrate)</h4>
-                        <div class="sop-checklist" id="sop-checklist">
-                            <!-- SOP items will be populated by JavaScript -->
+                    <!-- SOP Section -->
+                    <div class="enhanced-card">
+                        <h4 style="margin-top: 0; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                            📋 Standard Operating Procedure
+                            <span style="margin-left: auto; font-size: 0.875rem; color: var(--text-secondary);" id="sop-substrate-label">Current Substrate</span>
+                        </h4>
+                        
+                        <div id="sop-checklist" style="margin-bottom: 1.5rem; max-height: 300px; overflow-y: auto; padding: 1rem; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border-color);">
+                            <div style="text-align: center; color: var(--text-secondary); font-style: italic; padding: 2rem;">Select a substrate to view SOP checklist</div>
                         </div>
-                        <div class="sop-actions">
-                            <button class="btn" id="reset-sop">Reset SOP</button>
-                            <button class="btn primary" id="generate-report">Generate PDF Report</button>
+                        
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button class="enhanced-button secondary" id="reset-sop">
+                                🔄 Reset SOP
+                            </button>
+                            <button class="enhanced-button" id="generate-report" style="background: var(--accent-color); margin-left: auto;">
+                                📁 Generate PDF Report
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -653,7 +941,7 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Core Scripts -->
     <script src="src/js/color-science.js"></script>
     <script src="src/js/pantone-colors.js"></script>
     <script src="src/js/storage.js"></script>
@@ -669,6 +957,712 @@
     
     <!-- Main Calculator (loads after all modules) -->
     <script src="src/js/calculator.js"></script>
+    
+    <!-- Enhanced UI Integration Script -->
+    <script>
+        // Enhanced UI Integration for ChatGPT-5 Design
+        console.log('Enhanced UI Integration loading...');
+        
+        // UI State Management
+        let UI_STATE = {
+            isDarkMode: localStorage.getItem('darkMode') === 'true',
+            hdFeaturesVisible: localStorage.getItem('hdFeaturesVisible') === 'true',
+            helpPanelVisible: false,
+            lastCalculationTime: null,
+            currentTheme: 'light'
+        };
+        
+        // Initialize Enhanced UI
+        function initializeEnhancedUI() {
+            try {
+                console.log('Initializing Enhanced UI...');
+                
+                // Apply saved theme
+                if (UI_STATE.isDarkMode) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    UI_STATE.currentTheme = 'dark';
+                }
+                
+                // Show HD features if previously enabled
+                if (UI_STATE.hdFeaturesVisible) {
+                    toggleHDFeatures(true);
+                }
+                
+                // Setup event listeners
+                setupEnhancedEventListeners();
+                setupColorInputHandlers();
+                setupUtilityFunctions();
+                setupKeyboardShortcuts();
+                
+                // Initialize real-time updates
+                setupRealTimeUpdates();
+                
+                console.log('Enhanced UI initialized successfully');
+                updateMainStatus('Enhanced UI Ready', 'success');
+                
+            } catch (error) {
+                console.error('Error initializing Enhanced UI:', error);
+                updateMainStatus('UI Error', 'error');
+            }
+        }
+        
+        // Setup Enhanced Event Listeners
+        function setupEnhancedEventListeners() {
+            // Theme toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+            
+            // HD Features toggle
+            const hdToggle = document.getElementById('toggle-advanced-features');
+            if (hdToggle) {
+                hdToggle.addEventListener('click', () => toggleHDFeatures());
+            }
+            
+            // Quick calculate button
+            const quickCalc = document.getElementById('quick-calculate');
+            if (quickCalc) {
+                quickCalc.addEventListener('click', performQuickCalculation);
+            }
+            
+            // Enhanced calculate button
+            const calcBtn = document.getElementById('calculate-btn');
+            if (calcBtn) {
+                calcBtn.addEventListener('click', performEnhancedCalculation);
+            }
+            
+            // Help panel toggle
+            const helpToggle = document.getElementById('help-toggle-btn');
+            if (helpToggle) {
+                helpToggle.addEventListener('click', () => toggleHelpPanel());
+            }
+            
+            // Reset button
+            const resetBtn = document.getElementById('reset-all-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', resetAllInputs);
+            }
+            
+            // Client profile button
+            const clientProfileBtn = document.getElementById('client-profile-btn');
+            if (clientProfileBtn) {
+                clientProfileBtn.addEventListener('click', () => toggleModal('client-profile-modal'));
+            }
+            
+            // ICC profile button
+            const iccProfileBtn = document.getElementById('icc-profile-btn');
+            if (iccProfileBtn) {
+                iccProfileBtn.addEventListener('click', () => toggleSection('utilities-section'));
+            }
+            
+            // Modal close buttons
+            const clientModalClose = document.getElementById('client-modal-close');
+            if (clientModalClose) {
+                clientModalClose.addEventListener('click', () => toggleModal('client-profile-modal', false));
+            }
+            
+            // Click outside modal to close
+            const clientModal = document.getElementById('client-profile-modal');
+            if (clientModal) {
+                clientModal.addEventListener('click', (e) => {
+                    if (e.target === clientModal) {
+                        toggleModal('client-profile-modal', false);
+                    }
+                });
+            }
+        }
+        
+        // Setup Color Input Handlers
+        function setupColorInputHandlers() {
+            // Real-time color swatch updates
+            const colorInputs = [
+                'target-c', 'target-m', 'target-y', 'target-k',
+                'target-l', 'target-a', 'target-b',
+                'sample-c', 'sample-m', 'sample-y', 'sample-k',
+                'sample-l', 'sample-a', 'sample-b'
+            ];
+            
+            // Add HD inputs if available
+            const hdInputs = ['target-o', 'target-g', 'target-v', 'sample-o', 'sample-g', 'sample-v'];
+            colorInputs.push(...hdInputs);
+            
+            colorInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', debounce(() => {
+                        updateColorSwatch(inputId);
+                        updateTACDisplay();
+                    }, 300));
+                    
+                    // Add focus/blur effects
+                    input.addEventListener('focus', (e) => {
+                        e.target.style.borderColor = 'var(--primary-color)';
+                        e.target.style.boxShadow = '0 0 0 3px rgba(44, 82, 130, 0.1)';
+                    });
+                    
+                    input.addEventListener('blur', (e) => {
+                        e.target.style.borderColor = 'var(--border-color)';
+                        e.target.style.boxShadow = 'none';
+                    });
+                }
+            });
+        }
+        
+        // Enhanced Calculation Function
+        function performEnhancedCalculation() {
+            try {
+                updateMainStatus('Calculating...', 'warning');
+                
+                const targetLAB = getLabValues('target');
+                const sampleLAB = getLabValues('sample');
+                
+                if (!targetLAB || !sampleLAB) {
+                    updateMainStatus('Missing LAB values', 'error');
+                    return;
+                }
+                
+                // Perform calculation using enhanced engine if available
+                let deltaE = 0;
+                if (window.hdColorEngine) {
+                    deltaE = window.hdColorEngine.calculateEnhancedDeltaE(targetLAB, sampleLAB, 'de2000');
+                } else if (window.colorScience) {
+                    deltaE = window.colorScience.calculateDeltaE(targetLAB, sampleLAB);
+                } else {
+                    deltaE = calculateBasicDeltaE(targetLAB, sampleLAB);
+                }
+                
+                // Calculate component deltas
+                const deltaL = sampleLAB.l - targetLAB.l;
+                const deltaA = sampleLAB.a - targetLAB.a;
+                const deltaB = sampleLAB.b - targetLAB.b;
+                
+                // Update displays
+                updateDeltaEDisplay(deltaE);
+                updateComponentDeltas(deltaL, deltaA, deltaB);
+                updateToleranceStatus(deltaE);
+                
+                // Generate suggestions if HD engine available
+                if (window.hdColorEngine) {
+                    generateHDSuggestions(targetLAB, sampleLAB, deltaE);
+                }
+                
+                // Save to history
+                saveCalculationToHistory({
+                    target: targetLAB,
+                    sample: sampleLAB,
+                    deltaE: deltaE,
+                    timestamp: new Date()
+                });
+                
+                UI_STATE.lastCalculationTime = new Date();
+                updateMainStatus(`ΔE = ${deltaE.toFixed(2)}`, getToleranceClass(deltaE));
+                
+            } catch (error) {
+                console.error('Calculation error:', error);
+                updateMainStatus('Calculation failed', 'error');
+            }
+        }
+        
+        // Quick Calculation (header button)
+        function performQuickCalculation() {
+            performEnhancedCalculation();
+        }
+        
+        // Toggle Functions
+        function toggleTheme() {
+            UI_STATE.isDarkMode = !UI_STATE.isDarkMode;
+            UI_STATE.currentTheme = UI_STATE.isDarkMode ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', UI_STATE.currentTheme);
+            localStorage.setItem('darkMode', UI_STATE.isDarkMode.toString());
+            
+            const themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+                themeBtn.innerHTML = UI_STATE.isDarkMode ? '☀️' : '🌙';
+            }
+        }
+        
+        function toggleHDFeatures(forceShow = null) {
+            const hdSection = document.getElementById('hd-features-section');
+            const hdToggleBtn = document.getElementById('toggle-advanced-features');
+            const extendedGamutTargets = document.querySelectorAll('[id*="extended-gamut"]');
+            
+            if (hdSection) {
+                const shouldShow = forceShow !== null ? forceShow : hdSection.style.display === 'none';
+                hdSection.style.display = shouldShow ? 'block' : 'none';
+                
+                // Show/hide extended gamut inputs in main form
+                extendedGamutTargets.forEach(el => {
+                    el.style.display = shouldShow ? 'block' : 'none';
+                });
+                
+                UI_STATE.hdFeaturesVisible = shouldShow;
+                localStorage.setItem('hdFeaturesVisible', shouldShow.toString());
+                
+                if (hdToggleBtn) {
+                    hdToggleBtn.textContent = shouldShow ? '🔬 Hide HD Features' : '🔬 HD Features';
+                    hdToggleBtn.style.background = shouldShow ? 'var(--accent-color)' : 'rgba(255,255,255,0.2)';
+                    hdToggleBtn.style.color = shouldShow ? 'white' : 'white';
+                }
+            }
+        }
+        
+        function toggleHelpPanel() {
+            const helpPanel = document.getElementById('professional-help-panel');
+            if (helpPanel) {
+                UI_STATE.helpPanelVisible = helpPanel.style.display !== 'none';
+                helpPanel.style.display = UI_STATE.helpPanelVisible ? 'none' : 'block';
+                UI_STATE.helpPanelVisible = !UI_STATE.helpPanelVisible;
+            }
+        }
+        
+        // Update Functions
+        function updateMainStatus(message, type = 'success') {
+            const statusEl = document.getElementById('main-status');
+            if (statusEl) {
+                statusEl.className = `status-indicator ${type}`;
+                statusEl.innerHTML = `<span>●</span> ${message}`;
+            }
+        }
+        
+        function updateDeltaEDisplay(deltaE) {
+            const deltaDisplay = document.getElementById('delta-e-value');
+            const headerDelta = document.getElementById('header-delta-value');
+            const toleranceZone = document.getElementById('tolerance-zone');
+            
+            if (deltaDisplay) {
+                deltaDisplay.textContent = deltaE.toFixed(2);
+            }
+            
+            if (headerDelta) {
+                headerDelta.textContent = deltaE.toFixed(2);
+            }
+            
+            if (toleranceZone) {
+                toleranceZone.textContent = getToleranceMessage(deltaE);
+            }
+            
+            // Update result display background color
+            const resultDisplay = document.getElementById('delta-e-display');
+            if (resultDisplay) {
+                const color = getToleranceColor(deltaE);
+                resultDisplay.style.background = `linear-gradient(135deg, ${color}, ${color}dd)`;
+            }
+        }
+        
+        function updateComponentDeltas(deltaL, deltaA, deltaB) {
+            const elements = {
+                'delta-l': deltaL.toFixed(2),
+                'delta-a': deltaA.toFixed(2),
+                'delta-b': deltaB.toFixed(2)
+            };
+            
+            Object.entries(elements).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            });
+        }
+        
+        function updateColorSwatch(inputId) {
+            const isTarget = inputId.startsWith('target');
+            const swatchId = isTarget ? 'target-swatch' : 'sample-swatch';
+            const infoId = isTarget ? 'target-swatch-info' : 'sample-swatch-info';
+            const statusId = isTarget ? 'target-status' : 'sample-status';
+            
+            try {
+                const cmyk = getCMYKValues(isTarget ? 'target' : 'sample');
+                const rgb = window.colorScience ? window.colorScience.cmykToRgb(cmyk.c, cmyk.m, cmyk.y, cmyk.k) : {r: 128, g: 128, b: 128};
+                
+                const swatch = document.getElementById(swatchId);
+                const info = document.getElementById(infoId);
+                const status = document.getElementById(statusId);
+                
+                if (swatch) {
+                    swatch.style.backgroundColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                }
+                
+                if (info) {
+                    info.textContent = `${rgb.r}, ${rgb.g}, ${rgb.b}`;
+                }
+                
+                if (status) {
+                    const hasValues = Object.values(cmyk).some(v => v > 0);
+                    status.className = `status-indicator ${hasValues ? 'success' : ''}`;
+                    status.textContent = hasValues ? 'Set' : 'Ready';
+                }
+                
+            } catch (error) {
+                console.warn('Error updating color swatch:', error);
+            }
+        }
+        
+        // Utility Functions
+        function getLabValues(prefix) {
+            const l = parseFloat(document.getElementById(`${prefix}-l`)?.value);
+            const a = parseFloat(document.getElementById(`${prefix}-a`)?.value);
+            const b = parseFloat(document.getElementById(`${prefix}-b`)?.value);
+            
+            if (isNaN(l) || isNaN(a) || isNaN(b)) return null;
+            return { l, a, b };
+        }
+        
+        function getCMYKValues(prefix) {
+            return {
+                c: parseFloat(document.getElementById(`${prefix}-c`)?.value) || 0,
+                m: parseFloat(document.getElementById(`${prefix}-m`)?.value) || 0,
+                y: parseFloat(document.getElementById(`${prefix}-y`)?.value) || 0,
+                k: parseFloat(document.getElementById(`${prefix}-k`)?.value) || 0
+            };
+        }
+        
+        function getToleranceClass(deltaE) {
+            if (deltaE <= 1.0) return 'success';
+            if (deltaE <= 2.0) return 'warning';
+            if (deltaE <= 3.5) return 'warning';
+            return 'error';
+        }
+        
+        function getToleranceColor(deltaE) {
+            if (deltaE <= 1.0) return 'var(--success-color)';
+            if (deltaE <= 2.0) return 'var(--warning-color)';
+            if (deltaE <= 3.5) return '#ff8c00';
+            return 'var(--error-color)';
+        }
+        
+        function getToleranceMessage(deltaE) {
+            if (deltaE <= 1.0) return 'Excellent match - Not perceptible';
+            if (deltaE <= 2.0) return 'Very good match - Barely perceptible';
+            if (deltaE <= 3.5) return 'Good match - Acceptable for commercial';
+            return 'Poor match - Requires adjustment';
+        }
+        
+        function calculateBasicDeltaE(lab1, lab2) {
+            const deltaL = lab2.l - lab1.l;
+            const deltaA = lab2.a - lab1.a;
+            const deltaB = lab2.b - lab1.b;
+            return Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB);
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // Clear functions for buttons
+        function clearTargetColor() {
+            ['c', 'm', 'y', 'k', 'l', 'a', 'b', 'o', 'g', 'v'].forEach(channel => {
+                const input = document.getElementById(`target-${channel}`);
+                if (input) input.value = '';
+            });
+            updateColorSwatch('target-c');
+        }
+        
+        function clearSampleColor() {
+            ['c', 'm', 'y', 'k', 'l', 'a', 'b', 'o', 'g', 'v'].forEach(channel => {
+                const input = document.getElementById(`sample-${channel}`);
+                if (input) input.value = '';
+            });
+            updateColorSwatch('sample-c');
+        }
+        
+        function resetAllInputs() {
+            clearTargetColor();
+            clearSampleColor();
+            
+            // Reset displays
+            const deltaEValue = document.getElementById('delta-e-value');
+            const headerDelta = document.getElementById('header-delta-value');
+            if (deltaEValue) deltaEValue.textContent = '--';
+            if (headerDelta) headerDelta.textContent = '--';
+            
+            ['delta-l', 'delta-a', 'delta-b', 'delta-c', 'delta-h'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '--';
+            });
+            
+            // Reset result display
+            const resultDisplay = document.getElementById('delta-e-display');
+            if (resultDisplay) {
+                resultDisplay.style.background = 'linear-gradient(135deg, var(--success-color), var(--accent-color))';
+            }
+            
+            updateMainStatus('Reset complete', 'success');
+        }
+        
+        function toggleModal(modalId, show = null) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                const isCurrentlyVisible = modal.style.display !== 'none';
+                const shouldShow = show !== null ? show : !isCurrentlyVisible;
+                modal.style.display = shouldShow ? 'block' : 'none';
+                
+                if (shouldShow && modalId === 'client-profile-modal') {
+                    // Populate client profiles when opening
+                    if (window.clientProfiles) {
+                        populateClientProfiles();
+                    }
+                }
+            }
+        }
+        
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                const isVisible = section.style.display !== 'none';
+                section.style.display = isVisible ? 'none' : 'block';
+                
+                if (sectionId === 'utilities-section' && !isVisible) {
+                    updateMainStatus('ICC utilities opened', 'success');
+                }
+            }
+        }
+        
+        function populateClientProfiles() {
+            if (!window.clientProfiles) return;
+            
+            const profileSelect = document.getElementById('client-profile-select');
+            if (profileSelect) {
+                const profiles = window.clientProfiles.getAllProfiles();
+                profileSelect.innerHTML = '<option value="">Select a profile...</option>';
+                
+                profiles.forEach(profile => {
+                    const option = document.createElement('option');
+                    option.value = profile.name;
+                    option.textContent = profile.name;
+                    profileSelect.appendChild(option);
+                });
+            }
+        }
+        
+        function updateTACDisplay() {
+            try {
+                const targetCMYK = getCMYKValues('target');
+                const sampleCMYK = getCMYKValues('sample');
+                
+                // Add extended gamut values if available
+                const targetO = parseFloat(document.getElementById('target-o')?.value) || 0;
+                const targetG = parseFloat(document.getElementById('target-g')?.value) || 0;
+                const targetV = parseFloat(document.getElementById('target-v')?.value) || 0;
+                const sampleO = parseFloat(document.getElementById('sample-o')?.value) || 0;
+                const sampleG = parseFloat(document.getElementById('sample-g')?.value) || 0;
+                const sampleV = parseFloat(document.getElementById('sample-v')?.value) || 0;
+                
+                const targetTAC = Object.values(targetCMYK).reduce((sum, val) => sum + val, 0) + targetO + targetG + targetV;
+                const sampleTAC = Object.values(sampleCMYK).reduce((sum, val) => sum + val, 0) + sampleO + sampleG + sampleV;
+                const maxTAC = Math.max(targetTAC, sampleTAC);
+                
+                const tacDisplay = document.getElementById('tac-value');
+                const tacStatus = document.getElementById('tac-status');
+                
+                if (tacDisplay) {
+                    tacDisplay.textContent = `${maxTAC.toFixed(1)}%`;
+                }
+                
+                if (tacStatus) {
+                    if (maxTAC > 400) {
+                        tacStatus.className = 'status-indicator error';
+                        tacStatus.textContent = 'Over Limit';
+                    } else if (maxTAC > 320) {
+                        tacStatus.className = 'status-indicator warning';
+                        tacStatus.textContent = 'High TAC';
+                    } else {
+                        tacStatus.className = 'status-indicator success';
+                        tacStatus.textContent = 'Within Limits';
+                    }
+                }
+            } catch (error) {
+                console.warn('Error updating TAC display:', error);
+            }
+        }
+        
+        function setupRealTimeUpdates() {
+            // Update color swatches on page load
+            updateColorSwatch('target-c');
+            updateColorSwatch('sample-c');
+            updateTACDisplay();
+        }
+        
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + Enter to calculate
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    performEnhancedCalculation();
+                }
+                
+                // Escape to close modals
+                if (e.key === 'Escape') {
+                    const modals = ['client-profile-modal', 'professional-help-panel'];
+                    modals.forEach(modalId => {
+                        const modal = document.getElementById(modalId);
+                        if (modal && modal.style.display !== 'none') {
+                            modal.style.display = 'none';
+                        }
+                    });
+                }
+                
+                // Ctrl/Cmd + R to reset (prevent default browser refresh)
+                if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                    e.preventDefault();
+                    resetAllInputs();
+                }
+            });
+        }
+        
+        function setupUtilityFunctions() {
+            // Setup CSV drop zone functionality
+            const dropZone = document.getElementById('csv-drop-zone');
+            if (dropZone) {
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = 'var(--primary-color)';
+                    dropZone.style.backgroundColor = 'rgba(44, 82, 130, 0.05)';
+                });
+                
+                dropZone.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = 'var(--border-color)';
+                    dropZone.style.backgroundColor = 'transparent';
+                });
+                
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = 'var(--border-color)';
+                    dropZone.style.backgroundColor = 'transparent';
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0 && files[0].type === 'text/csv') {
+                        updateMainStatus('CSV file dropped - processing...', 'success');
+                        // Process CSV file here
+                    }
+                });
+            }
+        }
+        
+        // Additional utility functions for button actions
+        function copyTargetCMYK() {
+            const cmyk = getCMYKValues('target');
+            const text = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
+            navigator.clipboard.writeText(text).then(() => {
+                updateMainStatus('Target CMYK copied to clipboard', 'success');
+            });
+        }
+        
+        function copySampleCMYK() {
+            const cmyk = getCMYKValues('sample');
+            const text = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
+            navigator.clipboard.writeText(text).then(() => {
+                updateMainStatus('Sample CMYK copied to clipboard', 'success');
+            });
+        }
+        
+        function swapTargetSample() {
+            const targetCMYK = getCMYKValues('target');
+            const sampleCMYK = getCMYKValues('sample');
+            const targetLAB = getLabValues('target');
+            const sampleLAB = getLabValues('sample');
+            
+            // Swap CMYK values
+            ['c', 'm', 'y', 'k'].forEach(channel => {
+                const targetInput = document.getElementById(`target-${channel}`);
+                const sampleInput = document.getElementById(`sample-${channel}`);
+                if (targetInput && sampleInput) {
+                    const temp = targetInput.value;
+                    targetInput.value = sampleInput.value;
+                    sampleInput.value = temp;
+                }
+            });
+            
+            // Swap LAB values
+            ['l', 'a', 'b'].forEach(channel => {
+                const targetInput = document.getElementById(`target-${channel}`);
+                const sampleInput = document.getElementById(`sample-${channel}`);
+                if (targetInput && sampleInput) {
+                    const temp = targetInput.value;
+                    targetInput.value = sampleInput.value;
+                    sampleInput.value = temp;
+                }
+            });
+            
+            updateColorSwatch('target-c');
+            updateColorSwatch('sample-c');
+            updateMainStatus('Target and sample swapped', 'success');
+        }
+        
+        function pasteFromClipboard(type) {
+            navigator.clipboard.readText().then(text => {
+                // Try to parse CMYK values from clipboard
+                const cmykMatch = text.match(/C:?(\d+\.?\d*)\s*M:?(\d+\.?\d*)\s*Y:?(\d+\.?\d*)\s*K:?(\d+\.?\d*)/i);
+                if (cmykMatch) {
+                    document.getElementById(`${type}-c`).value = cmykMatch[1];
+                    document.getElementById(`${type}-m`).value = cmykMatch[2];
+                    document.getElementById(`${type}-y`).value = cmykMatch[3];
+                    document.getElementById(`${type}-k`).value = cmykMatch[4];
+                    updateColorSwatch(`${type}-c`);
+                    updateMainStatus(`${type} CMYK pasted from clipboard`, 'success');
+                }
+            });
+        }
+        
+        function generateHDSuggestions(targetLAB, sampleLAB, deltaE) {
+            // This would integrate with the HD Color Engine for suggestions
+            const suggestionsList = document.getElementById('suggestions-list');
+            if (suggestionsList && deltaE > 1.0) {
+                suggestionsList.innerHTML = `
+                    <div style="padding: 1rem; border-left: 4px solid var(--warning-color); background: rgba(214, 158, 46, 0.1); border-radius: var(--radius); margin-bottom: 1rem;">
+                        <strong>Suggested Adjustments:</strong><br>
+                        • Reduce Magenta by ${Math.round(deltaE * 2)}%<br>
+                        • Increase Yellow by ${Math.round(deltaE * 1.5)}%<br>
+                        • Consider substrate compensation
+                    </div>
+                `;
+            } else if (suggestionsList) {
+                suggestionsList.innerHTML = '<div style="color: var(--success-color); font-weight: 600; text-align: center; padding: 1rem;">Excellent color match - no adjustments needed!</div>';
+            }
+        }
+        
+        function saveCalculationToHistory(calculation) {
+            // Save to localStorage or integrate with existing history system
+            const historyList = document.getElementById('history-list');
+            if (historyList) {
+                const historyItem = document.createElement('div');
+                historyItem.style.cssText = 'padding: 0.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; color: var(--text-secondary);';
+                historyItem.innerHTML = `
+                    ΔE: ${calculation.deltaE.toFixed(2)} • ${new Date().toLocaleTimeString()}
+                `;
+                historyList.insertBefore(historyItem, historyList.firstChild);
+                
+                // Keep only last 10 items
+                while (historyList.children.length > 10) {
+                    historyList.removeChild(historyList.lastChild);
+                }
+                
+                // Update empty state
+                if (historyList.children.length > 0) {
+                    const emptyState = historyList.querySelector('[style*="italic"]');
+                    if (emptyState) emptyState.remove();
+                }
+            }
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeEnhancedUI);
+        } else {
+            initializeEnhancedUI();
+        }
+        
+        console.log('Enhanced UI Integration loaded successfully');
+    </script>
+    
     
     <!-- PWA Service Worker Registration -->
     <script>
