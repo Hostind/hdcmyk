@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=3.0">
-    <title>LAB Color Matching Calculator</title>
-    <meta name="description" content="Professional CMYK to LAB color difference calculator for printing industry">
+    <title>HD CMYK • Pro LAB Color Match Studio</title>
+    <meta name="description" content="Professional HD CMYK color matching with LAB analysis, ICC profiles, heatmap visualization, and industry workflows">
     <meta name="theme-color" content="#007bff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -44,10 +44,19 @@
         <header class="app-header">
             <div class="header-content">
                 <div class="header-text">
-                    <h1>LAB Color Matching Calculator</h1>
-                    <p class="subtitle">Professional CMYK-to-LAB Visual Color Difference Calculator</p>
+                    <h1>HD CMYK • Pro LAB Color Match Studio</h1>
+                    <p class="subtitle">Ultra Stable • ΔE suite • Patch heatmap • CCM • Substrate simulation • Pantone/Brand library • CSV/Folder ingest • ICC soft proof • CMYKOGV • SOP • PDF reports</p>
                 </div>
                 <div class="header-controls">
+                    <button class="hd-feature-btn" id="client-profile-btn" title="Client Profile & SOP Management">
+                        <span class="feature-icon">👤</span>
+                    </button>
+                    <button class="hd-feature-btn" id="icc-profile-btn" title="ICC Profile Management">
+                        <span class="feature-icon">🎨</span>
+                    </button>
+                    <button class="hd-feature-btn" id="heatmap-toggle-btn" title="Toggle Heatmap View">
+                        <span class="feature-icon">📊</span>
+                    </button>
                     <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
                         <span class="theme-icon">🌙</span>
                     </button>
@@ -366,6 +375,282 @@
                 </div>
             </div>
         </section>
+
+        <!-- HD Features Section -->
+        <section class="hd-features-section" id="hd-features-section" style="display: none;">
+            <!-- Substrate & Illuminant Selection -->
+            <div class="hd-panel substrate-panel">
+                <h3>1) Target vs. Press — ΔE & Suggestions</h3>
+                <div class="substrate-controls">
+                    <div class="control-group">
+                        <label for="substrate-select">Substrate</label>
+                        <select id="substrate-select">
+                            <option value="hpw">Hot Press White</option>
+                            <option value="inver">Invercote</option>
+                            <option value="gsm250">250 gsm</option>
+                            <option value="foil">Foil Board</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="illuminant-select">Illuminant / Obs.</label>
+                        <select id="illuminant-select">
+                            <option value="D50/2°">D50 / 2°</option>
+                            <option value="D50/10°">D50 / 10°</option>
+                            <option value="D65/2°">D65 / 2°</option>
+                            <option value="D65/10°">D65 / 10°</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="tolerance-input">ΔE Tolerance</label>
+                        <input id="tolerance-input" type="number" step="0.1" value="2.0" min="0.1" max="10">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Extended Gamut Controls -->
+            <div class="hd-panel extended-gamut-panel">
+                <h3>Extended Gamut (CMYKOGV)</h3>
+                <div class="ogv-controls">
+                    <div class="ogv-section">
+                        <h4>Target OGV</h4>
+                        <div class="ogv-inputs">
+                            <div class="input-field">
+                                <label for="target-o">O%</label>
+                                <input type="number" id="target-o" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="target-g">G%</label>
+                                <input type="number" id="target-g" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="target-v">V%</label>
+                                <input type="number" id="target-v" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ogv-section">
+                        <h4>Sample OGV</h4>
+                        <div class="ogv-inputs">
+                            <div class="input-field">
+                                <label for="sample-o">O%</label>
+                                <input type="number" id="sample-o" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="sample-g">G%</label>
+                                <input type="number" id="sample-g" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="input-field">
+                                <label for="sample-v">V%</label>
+                                <input type="number" id="sample-v" placeholder="0" min="0" max="100" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tac-display">
+                    <span>Total Area Coverage (TAC): <span id="tac-value">0%</span></span>
+                </div>
+            </div>
+
+            <!-- Patch Grid & Heatmap -->
+            <div class="hd-panel grid-panel">
+                <h3>2) Patch Grid • CSV • Heatmap • Auto-Balance</h3>
+                <div class="grid-controls">
+                    <div class="import-controls">
+                        <label for="csv-import">Import CSV (L*,a*,b* data)</label>
+                        <input type="file" id="csv-import" accept=".csv" />
+                        <select id="grid-size">
+                            <option value="4x6">4×6</option>
+                            <option value="6x8" selected>6×8</option>
+                            <option value="10x10">10×10</option>
+                        </select>
+                    </div>
+                    <div class="grid-actions">
+                        <button class="btn" id="generate-grid">Generate Grid</button>
+                        <button class="btn" id="clear-grid">Clear</button>
+                        <button class="btn primary" id="auto-balance">Auto-Balance (CCM + Gray)</button>
+                    </div>
+                </div>
+                <div class="heatmap-container">
+                    <canvas id="heatmap-canvas" data-heatmap data-heatmap-options='{"showLabels": true, "colorScale": "deltaE"}'></canvas>
+                    <div class="heatmap-hint" id="heatmap-hint">Click any cell to edit Target/Press LAB. ΔE00 auto-updates.</div>
+                </div>
+            </div>
+
+            <!-- Color Correction Matrix (CCM) -->
+            <div class="hd-panel ccm-panel">
+                <h3>3) Resolve-Style CCM (3×3) from Paired Charts</h3>
+                <p class="panel-description">Load two charts (Target & Press) with same patch order to estimate a 3×3 color correction matrix in CIE Lab (linear regression).</p>
+                <div class="ccm-controls">
+                    <div class="ccm-inputs">
+                        <div class="input-group">
+                            <label for="ccm-target-csv">Target CSV (L*,a*,b*)</label>
+                            <input type="file" id="ccm-target-csv" accept=".csv" />
+                        </div>
+                        <div class="input-group">
+                            <label for="ccm-press-csv">Press CSV (L*,a*,b*)</label>
+                            <input type="file" id="ccm-press-csv" accept=".csv" />
+                        </div>
+                    </div>
+                    <div class="ccm-actions">
+                        <button class="btn primary" id="compute-ccm">Compute CCM</button>
+                        <button class="btn" id="apply-ccm">Apply CCM → Press LAB</button>
+                    </div>
+                </div>
+                <div class="ccm-output">
+                    <pre id="ccm-matrix-output">CCM: —</pre>
+                </div>
+            </div>
+
+            <!-- Brand/Pantone Library -->
+            <div class="hd-panel library-panel">
+                <h3>4) Pantone / Brand Library (Local)</h3>
+                <div class="library-controls">
+                    <div class="library-import-export">
+                        <div class="control-group">
+                            <label for="library-import">Import JSON Library</label>
+                            <input type="file" id="library-import" accept=".json" />
+                        </div>
+                        <div class="control-group">
+                            <button class="btn" id="library-export">Export JSON</button>
+                        </div>
+                    </div>
+                    <div class="library-search">
+                        <div class="control-group">
+                            <label for="library-search-input">Search Name/Code</label>
+                            <input type="text" id="library-search-input" placeholder="e.g., PANTONE 186 C or 'Brand Red'">
+                        </div>
+                        <div class="control-group">
+                            <button class="btn" id="library-search-btn">Find</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="library-results" id="library-results">
+                    <!-- Library search results will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ICC Profile & Utilities Section -->
+        <section class="utilities-section" id="utilities-section" style="display: none;">
+            <div class="utility-panel icc-panel">
+                <h3>ICC Soft Proof & DeviceLink</h3>
+                <div class="icc-controls">
+                    <div class="icc-inputs">
+                        <div class="control-group">
+                            <label for="icc-file-input">Load ICC (.icc/.icm)</label>
+                            <input type="file" id="icc-file-input" accept=".icc,.icm" />
+                        </div>
+                        <div class="control-group">
+                            <label for="devicelink-csv">CMYK→LAB DeviceLink CSV</label>
+                            <input type="file" id="devicelink-csv" accept=".csv" />
+                        </div>
+                    </div>
+                    <div class="icc-status">
+                        <div class="profile-info" id="profile-info">
+                            <span class="profile-name">Profile: <span id="profile-name-display">(none)</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="utility-panel spectro-bridge-panel">
+                <h3>Live Spectro Bridge (Folder Watch)</h3>
+                <p class="panel-description">Connect a folder that receives spectro CSV exports (e.g., X-Rite eXact). New files are auto-ingested into the Grid.</p>
+                <div class="bridge-controls">
+                    <button class="btn primary" id="connect-folder">Connect Folder</button>
+                    <span class="bridge-status" id="bridge-status">Not connected</span>
+                </div>
+                <div class="drop-zone" id="csv-drop-zone">
+                    <p>Drag & drop CSV files here to ingest</p>
+                </div>
+            </div>
+
+            <div class="utility-panel converter-panel">
+                <h3>Pocket Converter (Nix-style)</h3>
+                <div class="converter-grid">
+                    <div class="converter-inputs">
+                        <div class="control-group">
+                            <label for="converter-hex">HEX</label>
+                            <input type="text" id="converter-hex" value="#d81b60" placeholder="#000000">
+                        </div>
+                        <div class="control-group">
+                            <label for="converter-rgb">RGB (0–255)</label>
+                            <input type="text" id="converter-rgb" value="216,27,96" placeholder="0,0,0">
+                        </div>
+                        <div class="control-group">
+                            <label for="converter-cmyk">CMYK (0–100)</label>
+                            <input type="text" id="converter-cmyk" value="0,85,55,0" placeholder="0,0,0,100">
+                        </div>
+                        <div class="control-group">
+                            <label for="converter-lab">LAB</label>
+                            <input type="text" id="converter-lab" value="56,63,16" placeholder="50,0,0">
+                        </div>
+                    </div>
+                    <div class="converter-actions">
+                        <button class="btn primary" id="convert-colors">Convert</button>
+                        <div class="converter-swatch" id="converter-swatch"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Client Profile & SOP Management Modal -->
+        <div class="modal" id="client-profile-modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Client Profile & SOP Management</h3>
+                    <button class="modal-close" id="client-modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="client-profile-section">
+                        <div class="profile-selection">
+                            <label for="client-profile-select">Select Client Profile:</label>
+                            <select id="client-profile-select">
+                                <option value="">Select a profile...</option>
+                            </select>
+                            <button class="btn" id="new-profile-btn">New Profile</button>
+                        </div>
+                        
+                        <div class="profile-editor" id="profile-editor" style="display: none;">
+                            <div class="editor-inputs">
+                                <div class="input-group">
+                                    <label for="profile-name">Profile Name</label>
+                                    <input type="text" id="profile-name" placeholder="Client Name">
+                                </div>
+                                <div class="input-group">
+                                    <label for="profile-tolerance">ΔE Tolerance</label>
+                                    <input type="number" id="profile-tolerance" step="0.1" value="2.0">
+                                </div>
+                                <div class="input-group">
+                                    <label for="profile-notes">Notes</label>
+                                    <textarea id="profile-notes" rows="3" placeholder="Client-specific notes..."></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label for="profile-contact">Contact Email</label>
+                                    <input type="email" id="profile-contact" placeholder="client@example.com">
+                                </div>
+                            </div>
+                            <div class="editor-actions">
+                                <button class="btn primary" id="save-profile">Save Profile</button>
+                                <button class="btn" id="cancel-profile-edit">Cancel</button>
+                                <button class="btn danger" id="delete-profile">Delete Profile</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sop-section">
+                        <h4>Standard Operating Procedure (Current Substrate)</h4>
+                        <div class="sop-checklist" id="sop-checklist">
+                            <!-- SOP items will be populated by JavaScript -->
+                        </div>
+                        <div class="sop-actions">
+                            <button class="btn" id="reset-sop">Reset SOP</button>
+                            <button class="btn primary" id="generate-report">Generate PDF Report</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
@@ -373,6 +658,16 @@
     <script src="src/js/pantone-colors.js"></script>
     <script src="src/js/storage.js"></script>
     <script src="src/js/export.js"></script>
+    
+    <!-- HD Color Engine Scripts -->
+    <script src="src/js/hd-color-engine.js"></script>
+    <script src="src/js/csv-enhanced.js"></script>
+    <script src="src/js/heatmap-visualization.js"></script>
+    <script src="src/js/client-profiles.js"></script>
+    <script src="src/js/icc-profile-manager.js"></script>
+    <script src="src/js/hd-integration.js"></script>
+    
+    <!-- Main Calculator (loads after all modules) -->
     <script src="src/js/calculator.js"></script>
     
     <!-- PWA Service Worker Registration -->
