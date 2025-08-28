@@ -2,9 +2,9 @@
 // Enhanced with ChatGPT-5 UI integration and HD features
 // Requirements: 10.1, 10.2, 10.3 - PWA offline functionality
 
-const CACHE_NAME = 'hd-cmyk-studio-v13';
-const STATIC_CACHE_NAME = 'hd-cmyk-studio-static-v13';
-const HD_MODULES_CACHE = 'hd-modules-v13';
+const CACHE_NAME = 'hd-cmyk-studio-v14';
+const STATIC_CACHE_NAME = 'hd-cmyk-studio-static-v14';
+const HD_MODULES_CACHE = 'hd-modules-v14';
 
 // Core files needed for offline functionality
 const CORE_FILES = [
@@ -512,8 +512,8 @@ async function preloadHDModules() {
 // Initialize performance tracking
 PERFORMANCE_METRICS.installStart = Date.now();
 
-console.log('Service Worker: HD CMYK Studio Service Worker v13 loaded');
-console.log('Service Worker: Features - HD Color Engine, ChatGPT-5 UI, Extended Gamut');
+console.log('Service Worker: HD CMYK Studio Service Worker v14 loaded');
+console.log('Service Worker: Features - HD Color Engine, ChatGPT-5 UI, Extended Gamut, Test-Free Production');
 
 // Start preloading HD modules if idle
 if (self.registration && self.registration.active) {

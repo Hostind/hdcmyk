@@ -1,678 +1,821 @@
-// ICC Profile Manager
-// Professional ICC profile loading, parsing, and color space conversion
-// Supports RGB matrix/TRC profiles and DeviceLink tables
+// ICC Profile Manager - Professional Color Management
+// Requirements: 6.1, 6.2, 6.3, 6.4, 6.5 - ICC profile support and soft proofing
 
-console.log('ICC Profile Manager module loading...');
-
-// ICC Profile State Management
-let ICC_STATE = {
-    currentProfile: null,
-    deviceLinkData: null,
-    profileCache: new Map(),
-    supportedTypes: ['RGB', 'CMYK', 'LAB', 'XYZ'],
-    maxCacheSize: 10,
-    settings: {
-        renderingIntent: 'relative_colorimetric',
-        blackPointCompensation: true,
-        adaptationMethod: 'bradford'
-    }
-};
+console.log('ICC Profile Manager loading...');
 
 /**
- * ICC Profile Parser and Manager
- * Handles ICC profile loading, parsing, and color space conversions
+ * ICC Profile Manager Class
+ * Handles ICC profile loading, parsing, and color transformations
  */
 class ICCProfileManager {
     constructor() {
-        this.whitePoint = { x: 95.047, y: 100.000, z: 108.883 }; // D65
-        this.adaptationMatrix = {
-            bradford: [
-                [0.8951, 0.2664, -0.1614],
-                [-0.7502, 1.7135, 0.0367],
-                [0.0389, -0.0685, 1.0296]
-            ]
+        this.loadedProfile = null;
+        this.profileData = null;
+        this.deviceLinkTable = null;
+        this.substrateSettings = {
+            dotGain: 0,
+            paperTintA: 0,
+            paperTintB: 0
         };
+        this.isInitialized = false;
+        this.init();
     }
-    
+
+    init() {
+        console.log('Initializing ICC Profile Manager...');
+        this.setupFileInputHandlers();
+        this.setupSubstrateControls();
+        this.isInitialized = true;
+        console.log('ICC Profile Manager initialized');
+    }
+
     /**
-     * Load and parse ICC profile from file
+     * Set up file input handlers for ICC profiles and DeviceLink CSV
+     * Requirements: 6.1 - ICC profile file input and parsing
      */
-    async loadProfile(file) {
+    setupFileInputHandlers() {
+        // ICC Profile file input
+        const iccFileInput = document.getElementById('icc-profile-input');
+        if (iccFileInput) {
+            iccFileInput.addEventListener('change', (e) => this.handleICCProfileLoad(e));
+        }
+
+        // DeviceLink CSV file input
+        const deviceLinkInput = document.getElementById('devicelink-csv-input');
+        if (deviceLinkInput) {
+            deviceLinkInput.addEventListener('change', (e) => this.handleDeviceLinkLoad(e));
+        }
+
+        // Create file inputs if they don't exist
+        this.createFileInputsIfNeeded();
+    }
+
+    /**
+     * Create file input elements if they don't exist in the DOM
+     */
+    createFileInputsIfNeeded() {
+        // Check if ICC profile section exists
+        let iccSection = document.getElementById('icc-profile-section');
+        if (!iccSection) {
+            iccSection = this.createICCProfileSection();
+        }
+
+        // Add file inputs to the section
+        this.addFileInputsToSection(iccSection);
+    }
+}    
+/**
+     * Create ICC profile section in the UI
+     */
+    createICCProfileSection() {
+        const container = document.querySelector('.container') || document.body;
+        
+        const section = document.createElement('div');
+        section.id = 'icc-profile-section';
+        section.className = 'feature-card icc-profile-card';
+        section.innerHTML = `
+            <h3>🎨 ICC Profile & Soft Proofing</h3>
+            <div class="icc-controls">
+                <div class="control-grid">
+                    <div class="control-group">
+                        <label for="icc-profile-input">ICC Profile (.icc/.icm)</label>
+                        <input type="file" id="icc-profile-input" accept=".icc,.icm" class="file-input">
+                        <div class="file-status" id="icc-profile-status">No profile loaded</div>
+                    </div>
+                    <div class="control-group">
+                        <label for="devicelink-csv-input">DeviceLink CSV</label>
+                        <input type="file" id="devicelink-csv-input" accept=".csv" class="file-input">
+                        <div class="file-status" id="devicelink-status">No DeviceLink loaded</div>
+                    </div>
+                </div>
+                <div class="substrate-controls">
+                    <h4>Substrate Simulation</h4>
+                    <div class="control-grid">
+                        <div class="control-group">
+                            <label for="dot-gain-slider">Dot Gain (%)</label>
+                            <input type="range" id="dot-gain-slider" min="-10" max="30" value="0" step="0.5">
+                            <span class="slider-value" id="dot-gain-value">0%</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="paper-tint-a-slider">Paper Tint a*</label>
+                            <input type="range" id="paper-tint-a-slider" min="-5" max="5" value="0" step="0.1">
+                            <span class="slider-value" id="paper-tint-a-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="paper-tint-b-slider">Paper Tint b*</label>
+                            <input type="range" id="paper-tint-b-slider" min="-10" max="10" value="0" step="0.1">
+                            <span class="slider-value" id="paper-tint-b-value">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="soft-proof-preview">
+                    <h4>Soft Proof Preview</h4>
+                    <div class="preview-swatches">
+                        <div class="preview-swatch" id="target-soft-proof">
+                            <div class="swatch-color"></div>
+                            <div class="swatch-label">Target</div>
+                        </div>
+                        <div class="preview-swatch" id="sample-soft-proof">
+                            <div class="swatch-color"></div>
+                            <div class="swatch-label">Sample</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Insert before results section or at the end
+        const resultsSection = document.querySelector('.results-section');
+        if (resultsSection) {
+            container.insertBefore(section, resultsSection);
+        } else {
+            container.appendChild(section);
+        }
+
+        return section;
+    }
+
+    /**
+     * Add file input event listeners to the section
+     */
+    addFileInputsToSection(section) {
+        const iccInput = section.querySelector('#icc-profile-input');
+        const deviceLinkInput = section.querySelector('#devicelink-csv-input');
+
+        if (iccInput) {
+            iccInput.addEventListener('change', (e) => this.handleICCProfileLoad(e));
+        }
+
+        if (deviceLinkInput) {
+            deviceLinkInput.addEventListener('change', (e) => this.handleDeviceLinkLoad(e));
+        }
+    }
+
+    /**
+     * Set up substrate control sliders
+     * Requirements: 6.5 - Dot gain and paper tint adjustments
+     */
+    setupSubstrateControls() {
+        // Dot gain slider
+        const dotGainSlider = document.getElementById('dot-gain-slider');
+        const dotGainValue = document.getElementById('dot-gain-value');
+        if (dotGainSlider && dotGainValue) {
+            dotGainSlider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                this.substrateSettings.dotGain = value;
+                dotGainValue.textContent = `${value}%`;
+                this.updateSoftProofPreview();
+            });
+        }
+
+        // Paper tint a* slider
+        const paperTintASlider = document.getElementById('paper-tint-a-slider');
+        const paperTintAValue = document.getElementById('paper-tint-a-value');
+        if (paperTintASlider && paperTintAValue) {
+            paperTintASlider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                this.substrateSettings.paperTintA = value;
+                paperTintAValue.textContent = value.toFixed(1);
+                this.updateSoftProofPreview();
+            });
+        }
+
+        // Paper tint b* slider
+        const paperTintBSlider = document.getElementById('paper-tint-b-slider');
+        const paperTintBValue = document.getElementById('paper-tint-b-value');
+        if (paperTintBSlider && paperTintBValue) {
+            paperTintBSlider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                this.substrateSettings.paperTintB = value;
+                paperTintBValue.textContent = value.toFixed(1);
+                this.updateSoftProofPreview();
+            });
+        }
+    }    
+/**
+     * Handle ICC profile file loading
+     * Requirements: 6.1 - Implement ICC profile file input and parsing for RGB matrix/TRC v2 profiles
+     */
+    async handleICCProfileLoad(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
         try {
-            if (!file) {
-                throw new Error('No file provided');
-            }
-            
-            const arrayBuffer = await this.readFileAsArrayBuffer(file);
-            const profile = this.parseICCProfile(arrayBuffer);
-            
-            if (profile) {
-                ICC_STATE.currentProfile = profile;
-                this.cacheProfile(file.name, profile);
-                
-                // Dispatch event for UI updates
-                window.dispatchEvent(new CustomEvent('iccProfileLoaded', {
-                    detail: { profile, filename: file.name }
-                }));
-                
-                return {
-                    success: true,
-                    profile: profile,
-                    filename: file.name,
-                    message: `ICC profile "${file.name}" loaded successfully`
-                };
+            console.log('Loading ICC profile:', file.name);
+            this.updateProfileStatus('Loading profile...', 'loading');
+
+            const arrayBuffer = await file.arrayBuffer();
+            const profileData = await this.parseICCProfile(arrayBuffer);
+
+            if (profileData) {
+                this.loadedProfile = file.name;
+                this.profileData = profileData;
+                this.updateProfileStatus(`Loaded: ${file.name}`, 'success');
+                this.updateSoftProofPreview();
+                console.log('ICC profile loaded successfully:', profileData);
             } else {
                 throw new Error('Failed to parse ICC profile');
             }
-            
+
         } catch (error) {
             console.error('Error loading ICC profile:', error);
-            return {
-                success: false,
-                error: error.message
-            };
+            this.updateProfileStatus(`Error: ${error.message}`, 'error');
+            this.loadedProfile = null;
+            this.profileData = null;
         }
     }
-    
+
     /**
-     * Read file as ArrayBuffer
+     * Parse ICC profile data
+     * Requirements: 6.2 - Add LAB to RGB conversion using ICC transformation matrices
      */
-    readFileAsArrayBuffer(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (event) => resolve(event.target.result);
-            reader.onerror = () => reject(new Error('Failed to read file'));
-            reader.readAsArrayBuffer(file);
-        });
-    }
-    
-    /**
-     * Parse ICC profile from binary data
-     */
-    parseICCProfile(arrayBuffer) {
+    async parseICCProfile(arrayBuffer) {
         try {
             const dataView = new DataView(arrayBuffer);
             
             // Read ICC profile header
-            const header = this.parseProfileHeader(dataView);
-            if (!header.isValid) {
-                throw new Error('Invalid ICC profile header');
+            const profileSize = dataView.getUint32(0, false); // Big-endian
+            const cmmType = this.readString(dataView, 4, 4);
+            const version = dataView.getUint32(8, false);
+            const deviceClass = this.readString(dataView, 12, 4);
+            const colorSpace = this.readString(dataView, 16, 4);
+            const pcs = this.readString(dataView, 20, 4); // Profile Connection Space
+
+            console.log('ICC Profile Info:', {
+                size: profileSize,
+                cmm: cmmType,
+                version: version.toString(16),
+                deviceClass,
+                colorSpace,
+                pcs
+            });
+
+            // Validate profile type (RGB matrix/TRC v2)
+            if (colorSpace !== 'RGB ' || pcs !== 'XYZ ') {
+                throw new Error('Only RGB matrix/TRC profiles with XYZ PCS are supported');
             }
-            
+
             // Read tag table
-            const tags = this.parseTagTable(dataView, header);
-            
-            // Build profile object based on color space
-            const profile = {
-                header: header,
-                tags: tags,
-                colorSpace: header.colorSpace,
-                filename: null,
-                loadedAt: new Date().toISOString()
-            };
-            
-            // Parse specific profile type
-            switch (header.colorSpace) {
-                case 'RGB ':
-                    return this.parseRGBProfile(profile, dataView);
-                case 'CMYK':
-                    return this.parseCMYKProfile(profile, dataView);
-                default:
-                    console.warn(`Unsupported color space: ${header.colorSpace}`);
-                    return profile;
-            }
-            
-        } catch (error) {
-            console.error('Error parsing ICC profile:', error);
-            return null;
-        }
-    }
-    
-    /**
-     * Parse ICC profile header
-     */
-    parseProfileHeader(dataView) {
-        try {
-            const signature = this.getString(dataView, 36, 4);
-            if (signature !== 'acsp') {
-                return { isValid: false };
-            }
-            
-            return {
-                isValid: true,
-                size: dataView.getUint32(0),
-                cmmType: this.getString(dataView, 4, 4),
-                version: dataView.getUint32(8),
-                deviceClass: this.getString(dataView, 12, 4),
-                colorSpace: this.getString(dataView, 16, 4),
-                pcs: this.getString(dataView, 20, 4), // Profile Connection Space
-                creationDate: this.parseDateTime(dataView, 24),
-                signature: signature,
-                platform: this.getString(dataView, 40, 4),
-                flags: dataView.getUint32(44),
-                manufacturer: this.getString(dataView, 48, 4),
-                model: this.getString(dataView, 52, 4),
-                attributes: dataView.getUint32(56, false) + dataView.getUint32(60, false),
-                renderingIntent: dataView.getUint32(64),
-                illuminant: {
-                    x: this.parseS15Fixed16(dataView, 68),
-                    y: this.parseS15Fixed16(dataView, 72),
-                    z: this.parseS15Fixed16(dataView, 76)
-                }
-            };
-        } catch (error) {
-            console.error('Error parsing ICC header:', error);
-            return { isValid: false };
-        }
-    }
-    
-    /**
-     * Parse tag table
-     */
-    parseTagTable(dataView, header) {
-        try {
-            const tagCount = dataView.getUint32(128);
+            const tagCount = dataView.getUint32(128, false);
             const tags = {};
-            
+
             for (let i = 0; i < tagCount; i++) {
-                const offset = 128 + 4 + i * 12;
-                const signature = this.getString(dataView, offset, 4);
-                const tagOffset = dataView.getUint32(offset + 4);
-                const tagSize = dataView.getUint32(offset + 8);
-                
-                tags[signature] = {
-                    offset: tagOffset,
-                    size: tagSize
-                };
+                const offset = 132 + (i * 12);
+                const signature = this.readString(dataView, offset, 4);
+                const tagOffset = dataView.getUint32(offset + 4, false);
+                const tagSize = dataView.getUint32(offset + 8, false);
+
+                tags[signature] = { offset: tagOffset, size: tagSize };
             }
-            
-            return tags;
-        } catch (error) {
-            console.error('Error parsing tag table:', error);
-            return {};
-        }
-    }
-    
-    /**
-     * Parse RGB matrix/TRC profile
-     */
-    parseRGBProfile(profile, dataView) {
-        try {
-            const tags = profile.tags;
-            
-            // Parse colorant matrices (rXYZ, gXYZ, bXYZ)
-            const rXYZ = tags['rXYZ'] ? this.parseXYZTag(dataView, tags['rXYZ']) : null;
-            const gXYZ = tags['gXYZ'] ? this.parseXYZTag(dataView, tags['gXYZ']) : null;
-            const bXYZ = tags['bXYZ'] ? this.parseXYZTag(dataView, tags['bXYZ']) : null;
-            
-            // Parse tone reproduction curves (rTRC, gTRC, bTRC)
-            const rTRC = tags['rTRC'] ? this.parseTRCTag(dataView, tags['rTRC']) : null;
-            const gTRC = tags['gTRC'] ? this.parseTRCTag(dataView, tags['gTRC']) : null;
-            const bTRC = tags['bTRC'] ? this.parseTRCTag(dataView, tags['bTRC']) : null;
-            
-            if (rXYZ && gXYZ && bXYZ) {
-                // Build transformation matrix
-                const matrix = [
-                    [rXYZ.x, gXYZ.x, bXYZ.x],
-                    [rXYZ.y, gXYZ.y, bXYZ.y],
-                    [rXYZ.z, gXYZ.z, bXYZ.z]
-                ];
-                
-                const inverseMatrix = this.invertMatrix3x3(matrix);
-                
-                profile.colorConversion = {
-                    type: 'matrix_trc',
-                    matrix: matrix,
-                    inverseMatrix: inverseMatrix,
-                    trc: { r: rTRC, g: gTRC, b: bTRC }
-                };
-                
-                // Add conversion functions
-                profile.rgbToXYZ = this.createRGBToXYZFunction(matrix, { r: rTRC, g: gTRC, b: bTRC });
-                profile.xyzToRGB = this.createXYZToRGBFunction(inverseMatrix, { r: rTRC, g: gTRC, b: bTRC });
-                profile.labToRGB = this.createLABToRGBFunction(profile);
+
+            // Parse required tags for RGB matrix/TRC profile
+            const profileData = {
+                header: {
+                    size: profileSize,
+                    version,
+                    deviceClass,
+                    colorSpace,
+                    pcs
+                },
+                tags: tags,
+                matrix: null,
+                redTRC: null,
+                greenTRC: null,
+                blueTRC: null,
+                whitePoint: null
+            };
+
+            // Parse colorant matrix (rXYZ, gXYZ, bXYZ tags)
+            if (tags.rXYZ && tags.gXYZ && tags.bXYZ) {
+                profileData.matrix = this.parseColorantMatrix(dataView, tags);
             }
-            
-            return profile;
-            
-        } catch (error) {
-            console.error('Error parsing RGB profile:', error);
-            return profile;
-        }
-    }
-    
-    /**
-     * Parse CMYK profile (basic support)
-     */
-    parseCMYKProfile(profile, dataView) {
-        try {
-            // CMYK profiles typically use LUT tables which are complex
-            // For now, we'll add basic support and suggest DeviceLink CSV import
-            profile.colorConversion = {
-                type: 'lut_based',
-                requiresDeviceLink: true
-            };
-            
-            profile.cmykToLAB = (c, m, y, k) => {
-                // Use device link data if available
-                if (ICC_STATE.deviceLinkData) {
-                    return this.lookupDeviceLink(c, m, y, k);
-                }
-                
-                // Fallback to basic CMYK to LAB conversion
-                console.warn('CMYK profile requires DeviceLink data for accurate conversion');
-                return window.colorScience?.cmykToLab?.(c, m, y, k) || { l: 50, a: 0, b: 0 };
-            };
-            
-            return profile;
-            
-        } catch (error) {
-            console.error('Error parsing CMYK profile:', error);
-            return profile;
-        }
-    }
-    
-    /**
-     * Parse XYZ tag
-     */
-    parseXYZTag(dataView, tag) {
-        try {
-            const offset = tag.offset + 8; // Skip tag signature and reserved bytes
-            return {
-                x: this.parseS15Fixed16(dataView, offset),
-                y: this.parseS15Fixed16(dataView, offset + 4),
-                z: this.parseS15Fixed16(dataView, offset + 8)
-            };
-        } catch (error) {
-            console.error('Error parsing XYZ tag:', error);
-            return null;
-        }
-    }
-    
-    /**
-     * Parse TRC (Tone Reproduction Curve) tag
-     */
-    parseTRCTag(dataView, tag) {
-        try {
-            const offset = tag.offset;
-            const signature = this.getString(dataView, offset, 4);
-            
-            if (signature === 'curv') {
-                const count = dataView.getUint32(offset + 8);
-                
-                if (count === 0) {
-                    // Linear gamma
-                    return { type: 'gamma', gamma: 1.0 };
-                } else if (count === 1) {
-                    // Simple gamma
-                    const gamma = dataView.getUint16(offset + 12) / 256;
-                    return { type: 'gamma', gamma: gamma };
-                } else {
-                    // Curve table
-                    const table = [];
-                    for (let i = 0; i < count; i++) {
-                        table.push(dataView.getUint16(offset + 12 + i * 2) / 65535);
-                    }
-                    return { type: 'table', table: table };
-                }
-            } else if (signature === 'para') {
-                // Parametric curve - simplified support
-                const functionType = dataView.getUint16(offset + 8);
-                const gamma = this.parseS15Fixed16(dataView, offset + 12);
-                return { type: 'gamma', gamma: gamma };
+
+            // Parse TRC curves
+            if (tags.rTRC) profileData.redTRC = this.parseTRCCurve(dataView, tags.rTRC);
+            if (tags.gTRC) profileData.greenTRC = this.parseTRCCurve(dataView, tags.gTRC);
+            if (tags.bTRC) profileData.blueTRC = this.parseTRCCurve(dataView, tags.bTRC);
+
+            // Parse white point
+            if (tags.wtpt) {
+                profileData.whitePoint = this.parseXYZType(dataView, tags.wtpt.offset);
             }
-            
-            // Default to sRGB gamma
-            return { type: 'gamma', gamma: 2.2 };
-            
+
+            return profileData;
+
         } catch (error) {
-            console.error('Error parsing TRC tag:', error);
-            return { type: 'gamma', gamma: 2.2 };
+            console.error('ICC profile parsing error:', error);
+            throw error;
         }
-    }
-    
-    /**
-     * Create RGB to XYZ conversion function
+    }    /**
+
+     * Parse colorant matrix from rXYZ, gXYZ, bXYZ tags
      */
-    createRGBToXYZFunction(matrix, trc) {
-        return (r, g, b) => {
-            // Normalize RGB to 0-1
-            const rNorm = r / 255;
-            const gNorm = g / 255;
-            const bNorm = b / 255;
-            
-            // Apply TRC (gamma correction)
-            const rLinear = this.applyTRC(rNorm, trc.r, false);
-            const gLinear = this.applyTRC(gNorm, trc.g, false);
-            const bLinear = this.applyTRC(bNorm, trc.b, false);
-            
-            // Apply matrix transformation
-            const x = matrix[0][0] * rLinear + matrix[0][1] * gLinear + matrix[0][2] * bLinear;
-            const y = matrix[1][0] * rLinear + matrix[1][1] * gLinear + matrix[1][2] * bLinear;
-            const z = matrix[2][0] * rLinear + matrix[2][1] * gLinear + matrix[2][2] * bLinear;
-            
-            return { x: x * 100, y: y * 100, z: z * 100 };
-        };
+    parseColorantMatrix(dataView, tags) {
+        const rXYZ = this.parseXYZType(dataView, tags.rXYZ.offset);
+        const gXYZ = this.parseXYZType(dataView, tags.gXYZ.offset);
+        const bXYZ = this.parseXYZType(dataView, tags.bXYZ.offset);
+
+        return [
+            [rXYZ.x, gXYZ.x, bXYZ.x],
+            [rXYZ.y, gXYZ.y, bXYZ.y],
+            [rXYZ.z, gXYZ.z, bXYZ.z]
+        ];
     }
-    
+
     /**
-     * Create XYZ to RGB conversion function
+     * Parse XYZ type data
      */
-    createXYZToRGBFunction(inverseMatrix, trc) {
-        return (x, y, z) => {
-            // Normalize XYZ
-            const xNorm = x / 100;
-            const yNorm = y / 100;
-            const zNorm = z / 100;
-            
-            // Apply inverse matrix transformation
-            const rLinear = inverseMatrix[0][0] * xNorm + inverseMatrix[0][1] * yNorm + inverseMatrix[0][2] * zNorm;
-            const gLinear = inverseMatrix[1][0] * xNorm + inverseMatrix[1][1] * yNorm + inverseMatrix[1][2] * zNorm;
-            const bLinear = inverseMatrix[2][0] * xNorm + inverseMatrix[2][1] * yNorm + inverseMatrix[2][2] * zNorm;
-            
-            // Apply inverse TRC (gamma correction)
-            const rNorm = this.applyTRC(Math.max(0, Math.min(1, rLinear)), trc.r, true);
-            const gNorm = this.applyTRC(Math.max(0, Math.min(1, gLinear)), trc.g, true);
-            const bNorm = this.applyTRC(Math.max(0, Math.min(1, bLinear)), trc.b, true);
-            
-            return {
-                r: Math.round(Math.max(0, Math.min(255, rNorm * 255))),
-                g: Math.round(Math.max(0, Math.min(255, gNorm * 255))),
-                b: Math.round(Math.max(0, Math.min(255, bNorm * 255)))
-            };
-        };
+    parseXYZType(dataView, offset) {
+        const signature = this.readString(dataView, offset, 4);
+        if (signature !== 'XYZ ') {
+            throw new Error('Invalid XYZ tag signature');
+        }
+
+        // Skip reserved bytes (4 bytes)
+        const x = this.readS15Fixed16(dataView, offset + 8);
+        const y = this.readS15Fixed16(dataView, offset + 12);
+        const z = this.readS15Fixed16(dataView, offset + 16);
+
+        return { x, y, z };
     }
-    
+
     /**
-     * Create LAB to RGB conversion function
+     * Parse TRC (Tone Reproduction Curve) data
      */
-    createLABToRGBFunction(profile) {
-        return (l, a, b) => {
-            // Convert LAB to XYZ
-            const xyz = this.labToXYZ(l, a, b);
-            
-            // Convert XYZ to RGB using profile
-            return profile.xyzToRGB(xyz.x, xyz.y, xyz.z);
-        };
-    }
-    
-    /**
-     * Apply Tone Reproduction Curve
-     */
-    applyTRC(value, trc, inverse = false) {
-        if (!trc || value < 0 || value > 1) return value;
+    parseTRCCurve(dataView, tagInfo) {
+        const signature = this.readString(dataView, tagInfo.offset, 4);
         
-        switch (trc.type) {
-            case 'gamma':
-                const gamma = trc.gamma || 2.2;
-                return inverse ? Math.pow(value, gamma) : Math.pow(value, 1 / gamma);
-                
-            case 'table':
-                if (trc.table && trc.table.length > 0) {
-                    const index = value * (trc.table.length - 1);
-                    const lowerIndex = Math.floor(index);
-                    const upperIndex = Math.ceil(index);
-                    const fraction = index - lowerIndex;
-                    
-                    if (lowerIndex === upperIndex) {
-                        return trc.table[lowerIndex];
-                    }
-                    
-                    // Linear interpolation
-                    const lowerValue = trc.table[lowerIndex];
-                    const upperValue = trc.table[upperIndex];
-                    return lowerValue + (upperValue - lowerValue) * fraction;
+        if (signature === 'curv') {
+            // Curve type
+            const count = dataView.getUint32(tagInfo.offset + 8, false);
+            
+            if (count === 0) {
+                // Linear gamma
+                return { type: 'linear', gamma: 1.0 };
+            } else if (count === 1) {
+                // Simple gamma
+                const gamma = dataView.getUint16(tagInfo.offset + 12, false) / 256.0;
+                return { type: 'gamma', gamma };
+            } else {
+                // Curve table
+                const curve = [];
+                for (let i = 0; i < count; i++) {
+                    const value = dataView.getUint16(tagInfo.offset + 12 + (i * 2), false) / 65535.0;
+                    curve.push(value);
                 }
+                return { type: 'curve', curve };
+            }
+        } else if (signature === 'para') {
+            // Parametric curve type
+            return this.parseParametricCurve(dataView, tagInfo.offset);
+        }
+
+        throw new Error('Unsupported TRC curve type: ' + signature);
+    }
+
+    /**
+     * Parse parametric curve
+     */
+    parseParametricCurve(dataView, offset) {
+        const functionType = dataView.getUint16(offset + 8, false);
+        
+        // For simplicity, treat as sRGB gamma for now
+        return { type: 'srgb', gamma: 2.4 };
+    }
+
+    /**
+     * Read S15Fixed16 number (ICC fixed-point format)
+     */
+    readS15Fixed16(dataView, offset) {
+        const value = dataView.getInt32(offset, false);
+        return value / 65536.0;
+    }
+
+    /**
+     * Read string from DataView
+     */
+    readString(dataView, offset, length) {
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += String.fromCharCode(dataView.getUint8(offset + i));
+        }
+        return result;
+    }    /
+**
+     * Handle DeviceLink CSV loading
+     * Requirements: 6.4 - Add DeviceLink CSV support for CMYK→LAB conversion tables
+     */
+    async handleDeviceLinkLoad(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+            console.log('Loading DeviceLink CSV:', file.name);
+            this.updateDeviceLinkStatus('Loading DeviceLink...', 'loading');
+
+            const text = await file.text();
+            const deviceLinkTable = this.parseDeviceLinkCSV(text);
+
+            if (deviceLinkTable && deviceLinkTable.length > 0) {
+                this.deviceLinkTable = deviceLinkTable;
+                this.updateDeviceLinkStatus(`Loaded: ${file.name} (${deviceLinkTable.length} entries)`, 'success');
+                console.log('DeviceLink CSV loaded successfully:', deviceLinkTable.length, 'entries');
+            } else {
+                throw new Error('No valid DeviceLink data found');
+            }
+
+        } catch (error) {
+            console.error('Error loading DeviceLink CSV:', error);
+            this.updateDeviceLinkStatus(`Error: ${error.message}`, 'error');
+            this.deviceLinkTable = null;
+        }
+    }
+
+    /**
+     * Parse DeviceLink CSV data
+     * Expected format: C,M,Y,K,L,a,b
+     */
+    parseDeviceLinkCSV(csvText) {
+        const lines = csvText.split('\n').filter(line => line.trim());
+        const deviceLinkTable = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line || line.startsWith('#')) continue; // Skip comments
+
+            const values = line.split(',').map(v => parseFloat(v.trim()));
+            
+            if (values.length >= 7 && values.every(v => !isNaN(v))) {
+                deviceLinkTable.push({
+                    cmyk: { c: values[0], m: values[1], y: values[2], k: values[3] },
+                    lab: { l: values[4], a: values[5], b: values[6] }
+                });
+            }
+        }
+
+        return deviceLinkTable;
+    }
+
+    /**
+     * Convert LAB to RGB using ICC profile
+     * Requirements: 6.2 - Add LAB to RGB conversion using ICC transformation matrices
+     */
+    labToRgbICC(l, a, b) {
+        if (!this.profileData || !this.profileData.matrix) {
+            // Fallback to standard conversion
+            return this.labToRgbFallback(l, a, b);
+        }
+
+        try {
+            // Convert LAB to XYZ
+            const xyz = this.labToXyz(l, a, b);
+
+            // Apply ICC matrix transformation
+            const rgb = this.xyzToRgbICC(xyz.x, xyz.y, xyz.z);
+
+            // Apply substrate adjustments
+            return this.applySubstrateAdjustments(rgb);
+
+        } catch (error) {
+            console.error('ICC LAB to RGB conversion error:', error);
+            return this.labToRgbFallback(l, a, b);
+        }
+    }
+
+    /**
+     * Convert XYZ to RGB using ICC profile matrix
+     */
+    xyzToRgbICC(x, y, z) {
+        const matrix = this.profileData.matrix;
+        
+        // Normalize XYZ values
+        const xNorm = x / 100;
+        const yNorm = y / 100;
+        const zNorm = z / 100;
+
+        // Apply matrix transformation
+        let r = xNorm * matrix[0][0] + yNorm * matrix[0][1] + zNorm * matrix[0][2];
+        let g = xNorm * matrix[1][0] + yNorm * matrix[1][1] + zNorm * matrix[1][2];
+        let b = xNorm * matrix[2][0] + yNorm * matrix[2][1] + zNorm * matrix[2][2];
+
+        // Apply TRC curves
+        r = this.applyTRCCurve(r, this.profileData.redTRC);
+        g = this.applyTRCCurve(g, this.profileData.greenTRC);
+        b = this.applyTRCCurve(b, this.profileData.blueTRC);
+
+        return {
+            r: Math.round(Math.max(0, Math.min(255, r * 255))),
+            g: Math.round(Math.max(0, Math.min(255, g * 255))),
+            b: Math.round(Math.max(0, Math.min(255, b * 255)))
+        };
+    }    /
+**
+     * Apply TRC curve to linear RGB value
+     */
+    applyTRCCurve(value, trc) {
+        if (!trc) return value;
+
+        switch (trc.type) {
+            case 'linear':
                 return value;
+            
+            case 'gamma':
+                return Math.pow(Math.max(0, value), 1.0 / trc.gamma);
+            
+            case 'srgb':
+                // sRGB gamma correction
+                return value > 0.0031308 
+                    ? 1.055 * Math.pow(value, 1.0 / 2.4) - 0.055
+                    : 12.92 * value;
+            
+            case 'curve':
+                // Interpolate in curve table
+                const index = value * (trc.curve.length - 1);
+                const lower = Math.floor(index);
+                const upper = Math.ceil(index);
+                const fraction = index - lower;
                 
+                if (lower === upper) {
+                    return trc.curve[lower];
+                } else {
+                    return trc.curve[lower] * (1 - fraction) + trc.curve[upper] * fraction;
+                }
+            
             default:
                 return value;
         }
     }
-    
+
     /**
-     * LAB to XYZ conversion
+     * Apply substrate adjustments for soft proofing
+     * Requirements: 6.3, 6.5 - Create soft proofing preview swatches with substrate simulation
      */
-    labToXYZ(l, a, b) {
+    applySubstrateAdjustments(rgb) {
+        // Apply dot gain simulation (affects darker colors more)
+        const dotGainFactor = 1 + (this.substrateSettings.dotGain / 100);
+        const luminance = (rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114) / 255;
+        const darknessFactor = 1 - luminance; // More effect on darker colors
+
+        let adjustedR = rgb.r * (1 - (dotGainFactor - 1) * darknessFactor);
+        let adjustedG = rgb.g * (1 - (dotGainFactor - 1) * darknessFactor);
+        let adjustedB = rgb.b * (1 - (dotGainFactor - 1) * darknessFactor);
+
+        // Apply paper tint (affects lighter colors more)
+        const lightnessFactor = luminance; // More effect on lighter colors
+        const paperTintStrength = 0.3; // Adjust strength of paper tint effect
+
+        adjustedR += this.substrateSettings.paperTintA * paperTintStrength * lightnessFactor;
+        adjustedG += this.substrateSettings.paperTintB * paperTintStrength * lightnessFactor;
+        adjustedB += this.substrateSettings.paperTintB * paperTintStrength * lightnessFactor;
+
+        return {
+            r: Math.round(Math.max(0, Math.min(255, adjustedR))),
+            g: Math.round(Math.max(0, Math.min(255, adjustedG))),
+            b: Math.round(Math.max(0, Math.min(255, adjustedB)))
+        };
+    }
+
+    /**
+     * Convert CMYK to LAB using DeviceLink table
+     */
+    cmykToLabDeviceLink(c, m, y, k) {
+        if (!this.deviceLinkTable) {
+            return null; // No DeviceLink table loaded
+        }
+
+        // Find closest match in DeviceLink table
+        let closestMatch = null;
+        let minDistance = Infinity;
+
+        for (const entry of this.deviceLinkTable) {
+            const distance = Math.sqrt(
+                Math.pow(c - entry.cmyk.c, 2) +
+                Math.pow(m - entry.cmyk.m, 2) +
+                Math.pow(y - entry.cmyk.y, 2) +
+                Math.pow(k - entry.cmyk.k, 2)
+            );
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestMatch = entry;
+            }
+        }
+
+        return closestMatch ? closestMatch.lab : null;
+    }
+
+    /**
+     * Fallback LAB to RGB conversion (standard method)
+     */
+    labToRgbFallback(l, a, b) {
+        // Use the standard color science conversion
+        if (window.labToRgb) {
+            return window.labToRgb(l, a, b);
+        }
+        
+        // Basic fallback if color science module not available
+        return { r: 128, g: 128, b: 128 };
+    }   
+ /**
+     * LAB to XYZ conversion (standard CIE method)
+     */
+    labToXyz(l, a, b) {
         const fy = (l + 16) / 116;
         const fx = a / 500 + fy;
         const fz = fy - b / 200;
-        
+
         const epsilon = 0.008856;
         const kappa = 903.3;
-        
-        const xr = fx * fx * fx > epsilon ? fx * fx * fx : (116 * fx - 16) / kappa;
-        const yr = l > kappa * epsilon ? fy * fy * fy : l / kappa;
-        const zr = fz * fz * fz > epsilon ? fz * fz * fz : (116 * fz - 16) / kappa;
-        
+
+        const xn = fx * fx * fx > epsilon ? fx * fx * fx : (116 * fx - 16) / kappa;
+        const yn = l > kappa * epsilon ? fy * fy * fy : l / kappa;
+        const zn = fz * fz * fz > epsilon ? fz * fz * fz : (116 * fz - 16) / kappa;
+
+        // D65 white point
         return {
-            x: xr * this.whitePoint.x,
-            y: yr * this.whitePoint.y,
-            z: zr * this.whitePoint.z
+            x: xn * 95.047,
+            y: yn * 100.000,
+            z: zn * 108.883
         };
     }
-    
+
     /**
-     * Load DeviceLink CSV data for CMYK profiles
+     * Update soft proof preview swatches
+     * Requirements: 6.3 - Create soft proofing preview swatches with substrate simulation
      */
-    async loadDeviceLink(file) {
-        try {
-            const text = await this.readFileAsText(file);
-            const deviceLinkData = this.parseDeviceLinkCSV(text);
-            
-            if (deviceLinkData) {
-                ICC_STATE.deviceLinkData = deviceLinkData;
-                
-                return {
-                    success: true,
-                    entries: Object.keys(deviceLinkData).length,
-                    message: `DeviceLink data loaded with ${Object.keys(deviceLinkData).length} entries`
-                };
-            } else {
-                throw new Error('Failed to parse DeviceLink CSV');
-            }
-            
-        } catch (error) {
-            console.error('Error loading DeviceLink:', error);
+    updateSoftProofPreview() {
+        // Get current color values from the calculator
+        const targetLab = this.getCurrentTargetLab();
+        const sampleLab = this.getCurrentSampleLab();
+
+        if (targetLab) {
+            this.updatePreviewSwatch('target-soft-proof', targetLab);
+        }
+
+        if (sampleLab) {
+            this.updatePreviewSwatch('sample-soft-proof', sampleLab);
+        }
+    }
+
+    /**
+     * Update individual preview swatch
+     */
+    updatePreviewSwatch(swatchId, lab) {
+        const swatch = document.querySelector(`#${swatchId} .swatch-color`);
+        if (!swatch) return;
+
+        // Convert LAB to RGB using ICC profile if available
+        const rgb = this.labToRgbICC(lab.l, lab.a, lab.b);
+        const cssColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+        
+        swatch.style.backgroundColor = cssColor;
+        swatch.setAttribute('title', `L*${lab.l.toFixed(1)} a*${lab.a.toFixed(1)} b*${lab.b.toFixed(1)}`);
+    }
+
+    /**
+     * Get current target LAB values from calculator
+     */
+    getCurrentTargetLab() {
+        const lInput = document.getElementById('target-l');
+        const aInput = document.getElementById('target-a');
+        const bInput = document.getElementById('target-b');
+
+        if (lInput && aInput && bInput) {
             return {
-                success: false,
-                error: error.message
+                l: parseFloat(lInput.value) || 50,
+                a: parseFloat(aInput.value) || 0,
+                b: parseFloat(bInput.value) || 0
             };
         }
+
+        return null;
     }
-    
+
     /**
-     * Read file as text
+     * Get current sample LAB values from calculator
      */
-    readFileAsText(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (event) => resolve(event.target.result);
-            reader.onerror = () => reject(new Error('Failed to read file'));
-            reader.readAsText(file);
-        });
-    }
-    
-    /**
-     * Parse DeviceLink CSV
+    getCurrentSampleLab() {
+        const lInput = document.getElementById('sample-l');
+        const aInput = document.getElementById('sample-a');
+        const bInput = document.getElementById('sample-b');
+
+        if (lInput && aInput && bInput) {
+            return {
+                l: parseFloat(lInput.value) || 50,
+                a: parseFloat(aInput.value) || 0,
+                b: parseFloat(bInput.value) || 0
+            };
+        }
+
+        return null;
+    }    /*
+*
+     * Update profile status display
      */
-    parseDeviceLinkCSV(text) {
-        try {
-            const lines = text.split(/\r?\n/).filter(line => line.trim());
-            if (lines.length < 2) return null;
-            
-            const header = lines[0].split(/,|;|\t/).map(h => h.trim().toLowerCase());
-            const cIndex = header.indexOf('c');
-            const mIndex = header.indexOf('m');
-            const yIndex = header.indexOf('y');
-            const kIndex = header.indexOf('k');
-            const lIndex = header.indexOf('l');
-            const aIndex = header.indexOf('a');
-            const bIndex = header.indexOf('b');
-            
-            if ([cIndex, mIndex, yIndex, kIndex, lIndex, aIndex, bIndex].some(i => i === -1)) {
-                throw new Error('DeviceLink CSV must contain C, M, Y, K, L, A, B columns');
-            }
-            
-            const deviceLinkMap = {};
-            
-            for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(/,|;|\t/);
-                const c = Math.round(parseFloat(cols[cIndex]) || 0);
-                const m = Math.round(parseFloat(cols[mIndex]) || 0);
-                const y = Math.round(parseFloat(cols[yIndex]) || 0);
-                const k = Math.round(parseFloat(cols[kIndex]) || 0);
-                const l = parseFloat(cols[lIndex]) || 0;
-                const a = parseFloat(cols[aIndex]) || 0;
-                const b = parseFloat(cols[bIndex]) || 0;
-                
-                const key = `${c},${m},${y},${k}`;
-                deviceLinkMap[key] = { l, a, b };
-            }
-            
-            return deviceLinkMap;
-            
-        } catch (error) {
-            console.error('Error parsing DeviceLink CSV:', error);
-            return null;
+    updateProfileStatus(message, type = 'info') {
+        const statusElement = document.getElementById('icc-profile-status');
+        if (statusElement) {
+            statusElement.textContent = message;
+            statusElement.className = `file-status ${type}`;
         }
     }
-    
+
     /**
-     * Lookup DeviceLink data
+     * Update DeviceLink status display
      */
-    lookupDeviceLink(c, m, y, k) {
-        if (!ICC_STATE.deviceLinkData) {
-            return null;
+    updateDeviceLinkStatus(message, type = 'info') {
+        const statusElement = document.getElementById('devicelink-status');
+        if (statusElement) {
+            statusElement.textContent = message;
+            statusElement.className = `file-status ${type}`;
         }
-        
-        const key = `${Math.round(c)},${Math.round(m)},${Math.round(y)},${Math.round(k)}`;
-        return ICC_STATE.deviceLinkData[key] || null;
     }
-    
+
     /**
-     * Cache profile for performance
+     * Check if ICC profile is loaded
      */
-    cacheProfile(key, profile) {
-        if (ICC_STATE.profileCache.size >= ICC_STATE.maxCacheSize) {
-            // Remove oldest entry
-            const firstKey = ICC_STATE.profileCache.keys().next().value;
-            ICC_STATE.profileCache.delete(firstKey);
-        }
-        
-        ICC_STATE.profileCache.set(key, profile);
+    hasICCProfile() {
+        return this.profileData !== null;
     }
-    
+
     /**
-     * Get current profile
+     * Check if DeviceLink table is loaded
      */
-    getCurrentProfile() {
-        return ICC_STATE.currentProfile;
+    hasDeviceLink() {
+        return this.deviceLinkTable !== null;
     }
-    
+
     /**
-     * Clear current profile
+     * Get profile information for display
      */
-    clearProfile() {
-        ICC_STATE.currentProfile = null;
-        ICC_STATE.deviceLinkData = null;
-        
-        window.dispatchEvent(new CustomEvent('iccProfileCleared'));
+    getProfileInfo() {
+        if (!this.profileData) return null;
+
+        return {
+            name: this.loadedProfile,
+            colorSpace: this.profileData.header.colorSpace,
+            deviceClass: this.profileData.header.deviceClass,
+            version: this.profileData.header.version,
+            hasMatrix: !!this.profileData.matrix,
+            hasTRC: !!(this.profileData.redTRC && this.profileData.greenTRC && this.profileData.blueTRC)
+        };
     }
-    
+
     /**
-     * Utility functions
+     * Reset ICC profile manager
      */
-    getString(dataView, offset, length) {
-        let str = '';
-        for (let i = 0; i < length; i++) {
-            const char = dataView.getUint8(offset + i);
-            if (char === 0) break;
-            str += String.fromCharCode(char);
-        }
-        return str;
-    }
-    
-    parseDateTime(dataView, offset) {
-        // ICC DateTime is a 12-byte structure
-        const year = dataView.getUint16(offset);
-        const month = dataView.getUint16(offset + 2);
-        const day = dataView.getUint16(offset + 4);
-        const hours = dataView.getUint16(offset + 6);
-        const minutes = dataView.getUint16(offset + 8);
-        const seconds = dataView.getUint16(offset + 10);
-        
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    }
-    
-    parseS15Fixed16(dataView, offset) {
-        const value = dataView.getInt32(offset);
-        return value / 65536;
-    }
-    
-    invertMatrix3x3(matrix) {
-        const [[a, b, c], [d, e, f], [g, h, i]] = matrix;
-        
-        const A = e * i - f * h;
-        const B = -(d * i - f * g);
-        const C = d * h - e * g;
-        const D = -(b * i - c * h);
-        const E = a * i - c * g;
-        const F = -(a * h - b * g);
-        const G = b * f - c * e;
-        const H = -(a * f - c * d);
-        const I = a * e - b * d;
-        
-        const det = a * A + b * B + c * C;
-        
-        if (Math.abs(det) < 1e-10) {
-            console.error('Matrix is not invertible');
-            return matrix; // Return original matrix as fallback
-        }
-        
-        return [
-            [A / det, D / det, G / det],
-            [B / det, E / det, H / det],
-            [C / det, F / det, I / det]
-        ];
+    reset() {
+        this.loadedProfile = null;
+        this.profileData = null;
+        this.deviceLinkTable = null;
+        this.substrateSettings = {
+            dotGain: 0,
+            paperTintA: 0,
+            paperTintB: 0
+        };
+
+        // Reset UI elements
+        this.updateProfileStatus('No profile loaded', 'info');
+        this.updateDeviceLinkStatus('No DeviceLink loaded', 'info');
+
+        // Reset sliders
+        const dotGainSlider = document.getElementById('dot-gain-slider');
+        const paperTintASlider = document.getElementById('paper-tint-a-slider');
+        const paperTintBSlider = document.getElementById('paper-tint-b-slider');
+
+        if (dotGainSlider) dotGainSlider.value = 0;
+        if (paperTintASlider) paperTintASlider.value = 0;
+        if (paperTintBSlider) paperTintBSlider.value = 0;
+
+        // Update value displays
+        const dotGainValue = document.getElementById('dot-gain-value');
+        const paperTintAValue = document.getElementById('paper-tint-a-value');
+        const paperTintBValue = document.getElementById('paper-tint-b-value');
+
+        if (dotGainValue) dotGainValue.textContent = '0%';
+        if (paperTintAValue) paperTintAValue.textContent = '0';
+        if (paperTintBValue) paperTintBValue.textContent = '0';
     }
 }
 
-// Initialize ICC Profile Manager
-const iccProfileManager = new ICCProfileManager();
+// Global ICC Profile Manager instance
+let iccProfileManager = null;
 
-// Export ICC profile functionality
-window.iccProfileManager = {
-    // Core functions
-    manager: iccProfileManager,
-    loadProfile: iccProfileManager.loadProfile.bind(iccProfileManager),
-    loadDeviceLink: iccProfileManager.loadDeviceLink.bind(iccProfileManager),
-    getCurrentProfile: iccProfileManager.getCurrentProfile.bind(iccProfileManager),
-    clearProfile: iccProfileManager.clearProfile.bind(iccProfileManager),
-    
-    // DeviceLink functions
-    lookupDeviceLink: iccProfileManager.lookupDeviceLink.bind(iccProfileManager),
-    
-    // State access
-    getState: () => ICC_STATE,
-    
-    // Utility functions
-    isProfileLoaded: () => ICC_STATE.currentProfile !== null,
-    getProfileInfo: () => {
-        const profile = ICC_STATE.currentProfile;
-        return profile ? {
-            colorSpace: profile.colorSpace,
-            filename: profile.filename,
-            loadedAt: profile.loadedAt,
-            type: profile.colorConversion?.type || 'unknown'
-        } : null;
+// Initialize ICC Profile Manager when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    if (!iccProfileManager) {
+        iccProfileManager = new ICCProfileManager();
+        
+        // Make it globally accessible
+        window.iccProfileManager = iccProfileManager;
+        
+        console.log('ICC Profile Manager initialized and available globally');
     }
-};
+});
 
-// Integrate with existing HD Color Engine
-if (window.hdColorEngine) {
-    window.hdColorEngine.icc = window.iccProfileManager;
-    console.log('ICC Profile Manager integrated with HD Color Engine');
+// Export for module usage
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ICCProfileManager;
 }
 
-console.log('ICC Profile Manager module loaded successfully');
+console.log('ICC Profile Manager module loaded');

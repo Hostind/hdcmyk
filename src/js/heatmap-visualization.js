@@ -1,544 +1,489 @@
-// Heatmap Visualization Component
-// High-performance canvas-based visualization for color difference analysis
-// Integrates with existing Print Calculator UI framework
+// Heatmap Visualization Module
+// Requirements: 3.4, 3.5, 3.6 - Canvas-based heatmap visualization with DPI scaling and real-time updates
 
 console.log('Heatmap Visualization module loading...');
 
-// Heatmap State Management
-let HEATMAP_STATE = {
-    canvases: new Map(), // Track multiple heatmap instances
-    animationFrameId: null,
-    renderQueue: [],
-    settings: {
-        colorScale: 'deltaE',
-        interpolation: 'bilinear',
-        showLabels: true,
-        showGrid: true,
-        dpiScaling: true
-    }
-};
-
 /**
- * Enhanced Heatmap Renderer
- * High-performance canvas rendering with DPI scaling and smooth animations
+ * Canvas-based heatmap renderer with DPI scaling and performance optimization
+ * Requirements: 3.4 - Create canvas-based heatmap visualization with DPI scaling
  */
 class HeatmapRenderer {
     constructor(canvasElement, options = {}) {
         this.canvas = canvasElement;
-        this.ctx = canvasElement.getContext('2d');
+        this.ctx = this.canvas.getContext('2d');
         this.options = {
-            showLabels: true,
-            showGrid: true,
-            colorScale: 'deltaE',
-            tolerance: 2.0,
-            maxDeltaE: 10,
-            interpolation: 'bilinear',
-            backgroundColor: '#0b0f14',
-            gridColor: 'rgba(255,255,255,0.1)',
-            textColor: 'rgba(255,255,255,0.9)',
+            cellPadding: 2,
+            borderWidth: 1,
+            borderColor: '#e5e7eb',
+            textColor: '#374151',
+            fontSize: 12,
+            fontFamily: 'JetBrains Mono, monospace',
+            showValues: true,
+            showTooltips: true,
+            animationDuration: 300,
             ...options
         };
         
-        this.data = null;
+        this.gridData = null;
         this.dimensions = { rows: 0, cols: 0 };
         this.cellSize = { width: 0, height: 0 };
-        this.devicePixelRatio = window.devicePixelRatio || 1;
+        this.tolerance = 2.0; // Default ΔE tolerance
+        this.isAnimating = false;
+        this.animationStartTime = 0;
+        this.previousColors = new Map();
         
         // Performance optimization
-        this.renderCache = new Map();
-        this.lastRenderTime = 0;
-        this.renderThrottle = 16; // ~60fps
+        this.devicePixelRatio = window.devicePixelRatio || 1;
+        this.isHighDPI = this.devicePixelRatio > 1;
         
-        this.setupCanvas();
-        this.bindEvents();
+        // Event handling
+        this.setupEventHandlers();
         
-        // Register with state manager
-        HEATMAP_STATE.canvases.set(canvasElement.id || `heatmap_${Date.now()}`, this);
+        // Resize observer for responsive behavior
+        this.setupResizeObserver();
+        
+        console.log('HeatmapRenderer initialized with DPI ratio:', this.devicePixelRatio);
     }
-    
-    setupCanvas() {
-        // Setup DPI scaling
-        const rect = this.canvas.getBoundingClientRect();
-        const cssWidth = rect.width || this.canvas.clientWidth || 400;
-        const cssHeight = rect.height || this.canvas.clientHeight || 300;
+
+    /**
+     * Setup event handlers for interactivity
+     * Requirements: 3.3 - Add interactive grid with editable cells
+     */
+    setupEventHandlers() {
+        // Mouse events for tooltips and interaction
+        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('mouseleave', () => this.hideTooltip());
+        this.canvas.addEventListener('click', (e) => this.handleClick(e));
         
-        if (this.options.dpiScaling) {
-            this.canvas.width = cssWidth * this.devicePixelRatio;
-            this.canvas.height = cssHeight * this.devicePixelRatio;
-            this.ctx.scale(this.devicePixelRatio, this.devicePixelRatio);
+        // Touch events for mobile support
+        this.canvas.addEventListener('touchstart', (e) => this.handleTouch(e));
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouch(e));
+        
+        // Keyboard events for accessibility
+        this.canvas.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        
+        // Make canvas focusable for keyboard navigation
+        this.canvas.setAttribute('tabindex', '0');
+        this.canvas.setAttribute('role', 'grid');
+        this.canvas.setAttribute('aria-label', 'Color difference heatmap grid');
+    }
+
+    /**
+     * Setup resize observer for responsive behavior
+     */
+    setupResizeObserver() {
+        if (window.ResizeObserver) {
+            this.resizeObserver = new ResizeObserver(() => {
+                this.handleResize();
+            });
+            this.resizeObserver.observe(this.canvas.parentElement);
         } else {
-            this.canvas.width = cssWidth;
-            this.canvas.height = cssHeight;
-        }
-        
-        this.canvas.style.width = cssWidth + 'px';
-        this.canvas.style.height = cssHeight + 'px';
-        
-        // Set canvas properties for crisp rendering
-        this.ctx.imageSmoothingEnabled = true;
-        this.ctx.imageSmoothingQuality = 'high';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.textAlign = 'center';
-    }
-    
-    bindEvents() {
-        // Handle resize
-        window.addEventListener('resize', () => {
-            this.debounce(this.handleResize.bind(this), 250)();
-        });
-        
-        // Handle mouse interactions for tooltips
-        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
-        this.canvas.addEventListener('click', this.handleClick.bind(this));
-    }
-    
-    /**
-     * Update heatmap with new data
-     */
-    updateData(gridData, options = {}) {
-        try {
-            if (!gridData || !Array.isArray(gridData) || gridData.length === 0) {
-                this.clearHeatmap();
-                return;
-            }
-            
-            // Process grid data
-            this.data = this.processGridData(gridData);
-            this.dimensions = {
-                rows: gridData.length,
-                cols: gridData[0]?.length || 0
-            };
-            
-            // Update options if provided
-            if (options) {
-                this.options = { ...this.options, ...options };
-            }
-            
-            // Calculate cell sizes
-            const cssWidth = this.canvas.clientWidth;
-            const cssHeight = this.canvas.clientHeight;
-            
-            this.cellSize = {
-                width: cssWidth / this.dimensions.cols,
-                height: cssHeight / this.dimensions.rows
-            };
-            
-            // Trigger render
-            this.render();
-            
-        } catch (error) {
-            console.error('Error updating heatmap data:', error);
+            // Fallback for browsers without ResizeObserver
+            window.addEventListener('resize', () => this.handleResize());
         }
     }
-    
+
     /**
-     * Process raw grid data into heatmap format
+     * Handle canvas resize with DPI scaling
      */
-    processGridData(gridData) {
-        const processed = [];
-        let maxDeltaE = 0;
-        
-        gridData.forEach((row, rowIndex) => {
-            const processedRow = [];
-            
-            if (Array.isArray(row)) {
-                row.forEach((cell, colIndex) => {
-                    const deltaE = this.extractDeltaE(cell);
-                    const processedCell = {
-                        row: rowIndex,
-                        col: colIndex,
-                        deltaE: deltaE,
-                        target: cell.target || cell.t,
-                        sample: cell.sample || cell.p,
-                        zone: this.getToleranceZone(deltaE),
-                        originalData: cell
-                    };
-                    
-                    maxDeltaE = Math.max(maxDeltaE, deltaE);
-                    processedRow.push(processedCell);
-                });
-            }
-            
-            processed.push(processedRow);
-        });
-        
-        // Update max delta E for scaling
-        this.options.maxDeltaE = Math.max(this.options.maxDeltaE, maxDeltaE);
-        
-        return processed;
+    handleResize() {
+        if (this.gridData) {
+            // Debounce resize to avoid excessive redraws
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => {
+                this.updateCanvasSize();
+                this.render();
+            }, 100);
+        }
     }
-    
+
     /**
-     * Extract Delta E value from cell data
+     * Update canvas size with DPI scaling
+     * Requirements: 3.4 - DPI scaling for crisp rendering
      */
-    extractDeltaE(cell) {
-        if (typeof cell.deltaE === 'number') return cell.deltaE;
-        if (typeof cell.de00 === 'number') return cell.de00;
-        if (typeof cell.de === 'number') return cell.de;
+    updateCanvasSize() {
+        const container = this.canvas.parentElement;
+        const containerRect = container.getBoundingClientRect();
         
-        // Calculate if target and sample LAB values are available
-        const target = cell.target || cell.t;
-        const sample = cell.sample || cell.p;
+        // Calculate optimal canvas size
+        const maxWidth = containerRect.width - 40; // Account for padding
+        const maxHeight = Math.min(containerRect.height - 40, 600); // Max height limit
         
-        if (target && sample && window.colorScience) {
-            try {
-                return window.colorScience.calculateDeltaE(target, sample);
-            } catch (error) {
-                console.warn('Error calculating Delta E for cell:', error);
-            }
+        // Calculate cell size based on grid dimensions
+        if (this.dimensions.rows > 0 && this.dimensions.cols > 0) {
+            const cellWidth = Math.floor(maxWidth / this.dimensions.cols);
+            const cellHeight = Math.floor(maxHeight / this.dimensions.rows);
+            
+            // Use square cells for consistent appearance
+            const cellSize = Math.min(cellWidth, cellHeight, 80); // Max 80px per cell
+            
+            this.cellSize.width = cellSize;
+            this.cellSize.height = cellSize;
+            
+            // Calculate actual canvas size
+            const canvasWidth = this.dimensions.cols * cellSize;
+            const canvasHeight = this.dimensions.rows * cellSize;
+            
+            // Set display size
+            this.canvas.style.width = canvasWidth + 'px';
+            this.canvas.style.height = canvasHeight + 'px';
+            
+            // Set actual size with DPI scaling
+            this.canvas.width = canvasWidth * this.devicePixelRatio;
+            this.canvas.height = canvasHeight * this.devicePixelRatio;
+            
+            // Scale context for DPI
+            this.ctx.scale(this.devicePixelRatio, this.devicePixelRatio);
+            
+            // Update font size for DPI
+            this.ctx.font = `${this.options.fontSize}px ${this.options.fontFamily}`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+        }
+    }
+
+    /**
+     * Set grid data and render heatmap
+     * Requirements: 3.5 - Add real-time ΔE calculation and color-coded visualization
+     */
+    setGridData(gridData, tolerance = 2.0) {
+        this.gridData = gridData;
+        this.tolerance = tolerance;
+        
+        // Update dimensions
+        if (gridData && gridData.length > 0) {
+            this.dimensions.rows = gridData.length;
+            this.dimensions.cols = gridData[0].length;
+        } else {
+            this.dimensions.rows = 0;
+            this.dimensions.cols = 0;
         }
         
-        return 0;
+        // Update canvas size and render
+        this.updateCanvasSize();
+        this.render();
     }
-    
+
     /**
-     * Get tolerance zone for color coding
-     */
-    getToleranceZone(deltaE) {
-        const tolerance = this.options.tolerance;
-        
-        if (deltaE <= tolerance * 0.5) return 'excellent';
-        if (deltaE <= tolerance) return 'good';
-        if (deltaE <= tolerance * 2.5) return 'acceptable';
-        return 'poor';
-    }
-    
-    /**
-     * Main render function
+     * Render the complete heatmap
+     * Requirements: 3.6 - Real-time updates on data changes
      */
     render() {
-        const now = performance.now();
-        
-        // Throttle rendering for performance
-        if (now - this.lastRenderTime < this.renderThrottle) {
-            if (HEATMAP_STATE.animationFrameId) {
-                cancelAnimationFrame(HEATMAP_STATE.animationFrameId);
-            }
-            HEATMAP_STATE.animationFrameId = requestAnimationFrame(() => this.render());
+        if (!this.gridData || this.dimensions.rows === 0 || this.dimensions.cols === 0) {
+            this.clearCanvas();
             return;
         }
         
-        this.lastRenderTime = now;
+        // Clear canvas
+        this.clearCanvas();
         
-        try {
-            // Clear canvas
-            this.ctx.fillStyle = this.options.backgroundColor;
-            this.ctx.fillRect(0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
-            
-            if (!this.data || this.data.length === 0) {
-                this.renderEmptyState();
-                return;
+        // Render grid cells
+        for (let row = 0; row < this.dimensions.rows; row++) {
+            for (let col = 0; col < this.dimensions.cols; col++) {
+                const cellData = this.gridData[row][col];
+                if (cellData) {
+                    this.renderCell(row, col, cellData);
+                }
             }
+        }
+        
+        // Render grid lines
+        this.renderGridLines();
+    }
+
+    /**
+     * Render individual cell with color coding and animation
+     */
+    renderCell(row, col, cellData) {
+        const x = col * this.cellSize.width;
+        const y = row * this.cellSize.height;
+        const width = this.cellSize.width - this.options.cellPadding;
+        const height = this.cellSize.height - this.options.cellPadding;
+        
+        // Calculate cell color based on ΔE value
+        const deltaE = cellData.de00 || 0;
+        const cellColor = this.getDeltaEColor(deltaE);
+        
+        // Handle animation if enabled
+        const cellKey = `${row}-${col}`;
+        const previousColor = this.previousColors.get(cellKey);
+        
+        if (previousColor && previousColor !== cellColor && !this.isAnimating) {
+            this.animateColorChange(x, y, width, height, previousColor, cellColor, deltaE);
+        } else {
+            this.drawCell(x, y, width, height, cellColor, deltaE);
+        }
+        
+        // Store current color for next animation
+        this.previousColors.set(cellKey, cellColor);
+    }
+
+    /**
+     * Draw cell with color and value
+     */
+    drawCell(x, y, width, height, color, deltaE) {
+        // Draw cell background
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(x + this.options.cellPadding / 2, y + this.options.cellPadding / 2, width, height);
+        
+        // Draw cell border
+        this.ctx.strokeStyle = this.options.borderColor;
+        this.ctx.lineWidth = this.options.borderWidth;
+        this.ctx.strokeRect(x + this.options.cellPadding / 2, y + this.options.cellPadding / 2, width, height);
+        
+        // Draw ΔE value if enabled and cell is large enough
+        if (this.options.showValues && this.cellSize.width > 40) {
+            const textColor = this.getContrastingTextColor(color);
+            this.ctx.fillStyle = textColor;
             
-            // Render heatmap cells
-            this.renderCells();
+            const centerX = x + this.cellSize.width / 2;
+            const centerY = y + this.cellSize.height / 2;
             
-            // Render grid lines if enabled
-            if (this.options.showGrid) {
-                this.renderGrid();
-            }
-            
-            // Render labels if enabled
-            if (this.options.showLabels) {
-                this.renderLabels();
-            }
-            
-            // Render legend
-            this.renderLegend();
-            
-        } catch (error) {
-            console.error('Error rendering heatmap:', error);
+            // Format ΔE value
+            const displayValue = deltaE < 10 ? deltaE.toFixed(1) : deltaE.toFixed(0);
+            this.ctx.fillText(displayValue, centerX, centerY);
         }
     }
-    
+
     /**
-     * Render heatmap cells with color mapping
+     * Animate color change for smooth transitions
      */
-    renderCells() {
-        this.data.forEach((row, rowIndex) => {
-            row.forEach((cell, colIndex) => {
-                const x = colIndex * this.cellSize.width;
-                const y = rowIndex * this.cellSize.height;
-                
-                // Get color for cell based on Delta E
-                const color = this.getCellColor(cell.deltaE, cell.zone);
-                
-                // Draw cell
-                this.ctx.fillStyle = color;
-                this.ctx.fillRect(x, y, this.cellSize.width - 1, this.cellSize.height - 1);
-                
-                // Add subtle border for definition
-                this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-                this.ctx.lineWidth = 0.5;
-                this.ctx.strokeRect(x, y, this.cellSize.width - 1, this.cellSize.height - 1);
-            });
-        });
-    }
-    
-    /**
-     * Get color for cell based on Delta E value and zone
-     */
-    getCellColor(deltaE, zone) {
-        const normalizedValue = Math.min(1, deltaE / this.options.maxDeltaE);
+    animateColorChange(x, y, width, height, fromColor, toColor, deltaE) {
+        this.isAnimating = true;
+        this.animationStartTime = performance.now();
         
-        switch (this.options.colorScale) {
-            case 'zone':
-                return this.getZoneColor(zone);
-            case 'thermal':
-                return this.getThermalColor(normalizedValue);
-            case 'deltaE':
-            default:
-                return this.getDeltaEColor(normalizedValue);
-        }
-    }
-    
-    /**
-     * Get zone-based color (discrete color zones)
-     */
-    getZoneColor(zone) {
-        const zoneColors = {
-            excellent: '#22c55e', // Green
-            good: '#3b82f6',     // Blue  
-            acceptable: '#f59e0b', // Yellow
-            poor: '#ef4444'      // Red
+        const animate = (currentTime) => {
+            const elapsed = currentTime - this.animationStartTime;
+            const progress = Math.min(elapsed / this.options.animationDuration, 1);
+            
+            // Interpolate between colors
+            const interpolatedColor = this.interpolateColors(fromColor, toColor, progress);
+            
+            // Clear and redraw this cell
+            this.ctx.clearRect(x, y, this.cellSize.width, this.cellSize.height);
+            this.drawCell(x, y, width, height, interpolatedColor, deltaE);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                this.isAnimating = false;
+            }
         };
         
-        return zoneColors[zone] || '#6b7280';
+        requestAnimationFrame(animate);
     }
-    
+
     /**
-     * Get thermal color mapping (continuous blue to red)
+     * Get color based on ΔE value with tolerance zones
+     * Requirements: 3.5 - Color-coded visualization based on tolerance levels
      */
-    getThermalColor(normalized) {
-        const colors = [
-            { pos: 0.0, r: 0, g: 0, b: 255 },     // Blue
-            { pos: 0.25, r: 0, g: 128, b: 255 },  // Light Blue
-            { pos: 0.5, r: 0, g: 255, b: 128 },   // Green
-            { pos: 0.75, r: 255, g: 255, b: 0 },  // Yellow
-            { pos: 1.0, r: 255, g: 0, b: 0 }      // Red
-        ];
-        
-        return this.interpolateColor(colors, normalized);
+    getDeltaEColor(deltaE) {
+        // Define color zones based on industry standards
+        if (deltaE <= 0.5) {
+            return '#10b981'; // Excellent - Green
+        } else if (deltaE <= 1.0) {
+            return '#84cc16'; // Very Good - Light Green
+        } else if (deltaE <= this.tolerance) {
+            return '#f59e0b'; // Acceptable - Orange
+        } else if (deltaE <= this.tolerance * 2) {
+            return '#ef4444'; // Poor - Red
+        } else {
+            return '#7c2d12'; // Very Poor - Dark Red
+        }
     }
-    
+
     /**
-     * Get Delta E color mapping (green to red)
+     * Get contrasting text color for readability
      */
-    getDeltaEColor(normalized) {
-        const intensity = Math.round(40 + normalized * 160);
-        return `rgb(${intensity}, 40, 40)`;
+    getContrastingTextColor(backgroundColor) {
+        // Convert hex to RGB and calculate luminance
+        const rgb = this.hexToRgb(backgroundColor);
+        if (!rgb) return this.options.textColor;
+        
+        const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+        return luminance > 0.5 ? '#000000' : '#ffffff';
     }
-    
+
     /**
-     * Interpolate between color points
+     * Convert hex color to RGB
      */
-    interpolateColor(colors, position) {
-        if (position <= colors[0].pos) {
-            return `rgb(${colors[0].r}, ${colors[0].g}, ${colors[0].b})`;
-        }
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    /**
+     * Interpolate between two colors for animation
+     */
+    interpolateColors(color1, color2, progress) {
+        const rgb1 = this.hexToRgb(color1);
+        const rgb2 = this.hexToRgb(color2);
         
-        if (position >= colors[colors.length - 1].pos) {
-            const last = colors[colors.length - 1];
-            return `rgb(${last.r}, ${last.g}, ${last.b})`;
-        }
+        if (!rgb1 || !rgb2) return color2;
         
-        // Find surrounding colors
-        let lowerIndex = 0;
-        for (let i = 0; i < colors.length - 1; i++) {
-            if (position >= colors[i].pos && position <= colors[i + 1].pos) {
-                lowerIndex = i;
-                break;
-            }
-        }
-        
-        const lower = colors[lowerIndex];
-        const upper = colors[lowerIndex + 1];
-        const range = upper.pos - lower.pos;
-        const factor = range === 0 ? 0 : (position - lower.pos) / range;
-        
-        const r = Math.round(lower.r + (upper.r - lower.r) * factor);
-        const g = Math.round(lower.g + (upper.g - lower.g) * factor);
-        const b = Math.round(lower.b + (upper.b - lower.b) * factor);
+        const r = Math.round(rgb1.r + (rgb2.r - rgb1.r) * progress);
+        const g = Math.round(rgb1.g + (rgb2.g - rgb1.g) * progress);
+        const b = Math.round(rgb1.b + (rgb2.b - rgb1.b) * progress);
         
         return `rgb(${r}, ${g}, ${b})`;
     }
-    
+
     /**
-     * Render grid lines
+     * Render grid lines for better visual separation
      */
-    renderGrid() {
-        this.ctx.strokeStyle = this.options.gridColor;
-        this.ctx.lineWidth = 1;
+    renderGridLines() {
+        this.ctx.strokeStyle = this.options.borderColor;
+        this.ctx.lineWidth = this.options.borderWidth;
         
         // Vertical lines
-        for (let col = 1; col < this.dimensions.cols; col++) {
+        for (let col = 0; col <= this.dimensions.cols; col++) {
             const x = col * this.cellSize.width;
             this.ctx.beginPath();
             this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, this.canvas.clientHeight);
+            this.ctx.lineTo(x, this.dimensions.rows * this.cellSize.height);
             this.ctx.stroke();
         }
         
         // Horizontal lines
-        for (let row = 1; row < this.dimensions.rows; row++) {
+        for (let row = 0; row <= this.dimensions.rows; row++) {
             const y = row * this.cellSize.height;
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.canvas.clientWidth, y);
+            this.ctx.lineTo(this.dimensions.cols * this.cellSize.width, y);
             this.ctx.stroke();
         }
     }
-    
+
     /**
-     * Render cell labels (Delta E values)
+     * Clear canvas
      */
-    renderLabels() {
-        this.ctx.fillStyle = this.options.textColor;
-        this.ctx.font = `${Math.min(12, this.cellSize.height * 0.3)}px system-ui, sans-serif`;
-        
-        this.data.forEach((row, rowIndex) => {
-            row.forEach((cell, colIndex) => {
-                const x = colIndex * this.cellSize.width + this.cellSize.width / 2;
-                const y = rowIndex * this.cellSize.height + this.cellSize.height / 2;
-                
-                // Only show label if cell is large enough
-                if (this.cellSize.width > 40 && this.cellSize.height > 30) {
-                    this.ctx.fillText(cell.deltaE.toFixed(1), x, y);
-                }
-            });
-        });
+    clearCanvas() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
-    
-    /**
-     * Render color legend
-     */
-    renderLegend() {
-        const legendWidth = 200;
-        const legendHeight = 20;
-        const legendX = this.canvas.clientWidth - legendWidth - 10;
-        const legendY = 10;
-        
-        // Draw legend background
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.fillRect(legendX - 5, legendY - 5, legendWidth + 10, legendHeight + 30);
-        
-        // Draw color gradient
-        const gradient = this.ctx.createLinearGradient(legendX, 0, legendX + legendWidth, 0);
-        
-        if (this.options.colorScale === 'zone') {
-            gradient.addColorStop(0, '#22c55e');
-            gradient.addColorStop(0.33, '#3b82f6');
-            gradient.addColorStop(0.66, '#f59e0b');
-            gradient.addColorStop(1, '#ef4444');
-        } else {
-            gradient.addColorStop(0, 'rgb(40, 40, 40)');
-            gradient.addColorStop(1, 'rgb(200, 40, 40)');
-        }
-        
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(legendX, legendY, legendWidth, legendHeight);
-        
-        // Draw legend labels
-        this.ctx.fillStyle = this.options.textColor;
-        this.ctx.font = '10px system-ui, sans-serif';
-        this.ctx.textAlign = 'left';
-        this.ctx.fillText('0', legendX, legendY + legendHeight + 12);
-        this.ctx.textAlign = 'right';
-        this.ctx.fillText(`${this.options.maxDeltaE.toFixed(1)} ΔE`, legendX + legendWidth, legendY + legendHeight + 12);
-        this.ctx.textAlign = 'center';
-    }
-    
-    /**
-     * Render empty state
-     */
-    renderEmptyState() {
-        this.ctx.fillStyle = this.options.textColor;
-        this.ctx.font = '14px system-ui, sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(
-            'No heatmap data available',
-            this.canvas.clientWidth / 2,
-            this.canvas.clientHeight / 2
-        );
-    }
-    
+
     /**
      * Handle mouse movement for tooltips
      */
-    handleMouseMove(event) {
-        if (!this.data) return;
+    handleMouseMove(e) {
+        if (!this.options.showTooltips || !this.gridData) return;
         
         const rect = this.canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
         const col = Math.floor(x / this.cellSize.width);
         const row = Math.floor(y / this.cellSize.height);
         
         if (row >= 0 && row < this.dimensions.rows && col >= 0 && col < this.dimensions.cols) {
-            const cell = this.data[row][col];
-            this.showTooltip(event, cell);
+            const cellData = this.gridData[row][col];
+            if (cellData) {
+                this.showTooltip(e, cellData, row, col);
+            }
         } else {
             this.hideTooltip();
         }
     }
-    
+
     /**
-     * Handle click events
+     * Handle click events for cell editing
      */
-    handleClick(event) {
-        if (!this.data) return;
-        
+    handleClick(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
         const col = Math.floor(x / this.cellSize.width);
         const row = Math.floor(y / this.cellSize.height);
         
         if (row >= 0 && row < this.dimensions.rows && col >= 0 && col < this.dimensions.cols) {
-            const cell = this.data[row][col];
-            this.onCellClick(cell, event);
+            this.onCellClick(row, col, this.gridData[row][col]);
         }
     }
-    
+
     /**
-     * Show tooltip for cell
+     * Handle touch events for mobile
      */
-    showTooltip(event, cell) {
+    handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0] || e.changedTouches[0];
+        const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'click' : 'mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        
+        if (e.type === 'touchstart') {
+            this.handleClick(mouseEvent);
+        } else {
+            this.handleMouseMove(mouseEvent);
+        }
+    }
+
+    /**
+     * Handle keyboard navigation
+     */
+    handleKeyDown(e) {
+        // Implement keyboard navigation for accessibility
+        // Arrow keys to navigate, Enter to edit, etc.
+        console.log('Keyboard navigation:', e.key);
+    }
+
+    /**
+     * Show tooltip with cell information
+     */
+    showTooltip(e, cellData, row, col) {
         // Create or update tooltip element
         let tooltip = document.getElementById('heatmap-tooltip');
         if (!tooltip) {
             tooltip = document.createElement('div');
             tooltip.id = 'heatmap-tooltip';
-            tooltip.style.cssText = `
-                position: fixed;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 8px 12px;
-                border-radius: 6px;
-                font-size: 12px;
-                pointer-events: none;
-                z-index: 10000;
-                font-family: system-ui, sans-serif;
-                line-height: 1.4;
-            `;
+            tooltip.className = 'heatmap-tooltip';
             document.body.appendChild(tooltip);
         }
         
+        // Format tooltip content
+        const deltaE = cellData.de00 || 0;
+        const toleranceStatus = deltaE <= this.tolerance ? 'Pass' : 'Fail';
+        
         tooltip.innerHTML = `
-            <div><strong>Row ${cell.row + 1}, Col ${cell.col + 1}</strong></div>
-            <div>ΔE: ${cell.deltaE.toFixed(2)}</div>
-            <div>Zone: ${cell.zone}</div>
-            ${cell.target ? `<div>Target: L*${cell.target.l?.toFixed(1)} a*${cell.target.a?.toFixed(1)} b*${cell.target.b?.toFixed(1)}</div>` : ''}
-            ${cell.sample ? `<div>Sample: L*${cell.sample.l?.toFixed(1)} a*${cell.sample.a?.toFixed(1)} b*${cell.sample.b?.toFixed(1)}</div>` : ''}
+            <div class="tooltip-header">Patch ${row + 1}-${col + 1}</div>
+            <div class="tooltip-content">
+                <div class="tooltip-row">
+                    <span class="tooltip-label">ΔE2000:</span>
+                    <span class="tooltip-value">${deltaE.toFixed(2)}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Status:</span>
+                    <span class="tooltip-value ${toleranceStatus.toLowerCase()}">${toleranceStatus}</span>
+                </div>
+                ${cellData.t ? `
+                <div class="tooltip-section">
+                    <div class="tooltip-subtitle">Target LAB:</div>
+                    <div class="tooltip-lab">L*${cellData.t[0].toFixed(1)} a*${cellData.t[1].toFixed(1)} b*${cellData.t[2].toFixed(1)}</div>
+                </div>
+                ` : ''}
+                ${cellData.p ? `
+                <div class="tooltip-section">
+                    <div class="tooltip-subtitle">Press LAB:</div>
+                    <div class="tooltip-lab">L*${cellData.p[0].toFixed(1)} a*${cellData.p[1].toFixed(1)} b*${cellData.p[2].toFixed(1)}</div>
+                </div>
+                ` : ''}
+            </div>
         `;
         
-        tooltip.style.left = `${event.clientX + 10}px`;
-        tooltip.style.top = `${event.clientY - 10}px`;
+        // Position tooltip
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const x = e.clientX + 10;
+        const y = e.clientY - tooltipRect.height - 10;
+        
+        tooltip.style.left = Math.min(x, window.innerWidth - tooltipRect.width - 10) + 'px';
+        tooltip.style.top = Math.max(y, 10) + 'px';
         tooltip.style.display = 'block';
     }
-    
+
     /**
      * Hide tooltip
      */
@@ -548,185 +493,79 @@ class HeatmapRenderer {
             tooltip.style.display = 'none';
         }
     }
-    
+
     /**
-     * Handle cell click events (override in subclasses)
+     * Set tolerance level and update colors
      */
-    onCellClick(cell, event) {
-        console.log('Cell clicked:', cell);
-        // Dispatch custom event for integration
-        this.canvas.dispatchEvent(new CustomEvent('heatmapCellClick', {
-            detail: { cell, event }
-        }));
+    setTolerance(tolerance) {
+        this.tolerance = tolerance;
+        this.render(); // Re-render with new tolerance
     }
-    
+
     /**
-     * Handle canvas resize
+     * Update single cell data and re-render
+     * Requirements: 3.6 - Real-time updates on data changes
      */
-    handleResize() {
-        this.setupCanvas();
-        if (this.data) {
-            this.render();
+    updateCell(row, col, cellData) {
+        if (this.gridData && row < this.dimensions.rows && col < this.dimensions.cols) {
+            this.gridData[row][col] = cellData;
+            this.renderCell(row, col, cellData);
         }
     }
-    
+
     /**
-     * Clear heatmap
+     * Get cell data at position
      */
-    clearHeatmap() {
-        this.data = null;
-        this.dimensions = { rows: 0, cols: 0 };
-        this.render();
+    getCellAt(row, col) {
+        if (this.gridData && row < this.dimensions.rows && col < this.dimensions.cols) {
+            return this.gridData[row][col];
+        }
+        return null;
     }
-    
+
+    /**
+     * Set cell click callback
+     */
+    onCellClick(row, col, cellData) {
+        // Override this method to handle cell clicks
+        console.log(`Cell clicked: ${row}, ${col}`, cellData);
+        
+        // Dispatch custom event for external handling
+        const event = new CustomEvent('cellClick', {
+            detail: { row, col, cellData }
+        });
+        this.canvas.dispatchEvent(event);
+    }
+
     /**
      * Export heatmap as image
      */
-    exportAsImage(format = 'png', quality = 1.0) {
-        try {
-            const dataURL = this.canvas.toDataURL(`image/${format}`, quality);
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.download = `heatmap_export_${new Date().toISOString().slice(0, 10)}.${format}`;
-            link.href = dataURL;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            return { success: true, dataURL };
-        } catch (error) {
-            console.error('Error exporting heatmap:', error);
-            return { success: false, error: error.message };
-        }
+    exportAsImage(format = 'png') {
+        return this.canvas.toDataURL(`image/${format}`);
     }
-    
+
     /**
-     * Utility: Debounce function
-     */
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-    
-    /**
-     * Destroy heatmap instance
+     * Cleanup resources
      */
     destroy() {
-        // Remove event listeners
-        window.removeEventListener('resize', this.handleResize);
-        this.canvas.removeEventListener('mousemove', this.handleMouseMove);
-        this.canvas.removeEventListener('click', this.handleClick);
-        
-        // Remove from state manager
-        HEATMAP_STATE.canvases.delete(this.canvas.id);
-        
-        // Clean up tooltip
-        const tooltip = document.getElementById('heatmap-tooltip');
-        if (tooltip) {
-            tooltip.remove();
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
         }
         
-        console.log('Heatmap instance destroyed');
-    }
-}
-
-/**
- * Factory function to create heatmap instances
- */
-function createHeatmap(canvasSelector, options = {}) {
-    const canvas = typeof canvasSelector === 'string' 
-        ? document.querySelector(canvasSelector) 
-        : canvasSelector;
+        // Remove event listeners
+        this.canvas.removeEventListener('mousemove', this.handleMouseMove);
+        this.canvas.removeEventListener('mouseleave', this.hideTooltip);
+        this.canvas.removeEventListener('click', this.handleClick);
         
-    if (!canvas || canvas.tagName !== 'CANVAS') {
-        throw new Error('Invalid canvas element provided');
+        // Hide tooltip
+        this.hideTooltip();
+        
+        // Clear canvas
+        this.clearCanvas();
     }
-    
-    return new HeatmapRenderer(canvas, options);
 }
 
-/**
- * Update all heatmap instances
- */
-function updateAllHeatmaps(data, options = {}) {
-    HEATMAP_STATE.canvases.forEach(heatmap => {
-        heatmap.updateData(data, options);
-    });
-}
-
-/**
- * Get heatmap statistics for current data
- */
-function getHeatmapStatistics(heatmapInstance) {
-    if (!heatmapInstance.data) {
-        return {
-            totalCells: 0,
-            averageDeltaE: 0,
-            maxDeltaE: 0,
-            minDeltaE: 0,
-            zones: {}
-        };
-    }
-    
-    const flatData = heatmapInstance.data.flat();
-    const deltaEValues = flatData.map(cell => cell.deltaE);
-    const zones = { excellent: 0, good: 0, acceptable: 0, poor: 0 };
-    
-    flatData.forEach(cell => {
-        zones[cell.zone] = (zones[cell.zone] || 0) + 1;
-    });
-    
-    return {
-        totalCells: flatData.length,
-        averageDeltaE: deltaEValues.reduce((sum, val) => sum + val, 0) / deltaEValues.length,
-        maxDeltaE: Math.max(...deltaEValues),
-        minDeltaE: Math.min(...deltaEValues),
-        zones: zones,
-        zonePercentages: Object.keys(zones).reduce((acc, zone) => {
-            acc[zone] = (zones[zone] / flatData.length * 100).toFixed(1);
-            return acc;
-        }, {})
-    };
-}
-
-// Export heatmap functionality
-window.heatmapVisualization = {
-    // Core classes and functions
-    HeatmapRenderer,
-    createHeatmap,
-    updateAllHeatmaps,
-    getHeatmapStatistics,
-    
-    // State management
-    getState: () => HEATMAP_STATE,
-    setState: (newState) => { HEATMAP_STATE = { ...HEATMAP_STATE, ...newState }; },
-    
-    // Utility functions
-    clearAllHeatmaps: () => {
-        HEATMAP_STATE.canvases.forEach(heatmap => heatmap.clearHeatmap());
-    },
-    
-    destroyAllHeatmaps: () => {
-        HEATMAP_STATE.canvases.forEach(heatmap => heatmap.destroy());
-        HEATMAP_STATE.canvases.clear();
-    }
-};
-
-// Auto-initialize any existing heatmap canvases
-document.addEventListener('DOMContentLoaded', () => {
-    const heatmapCanvases = document.querySelectorAll('canvas[data-heatmap]');
-    heatmapCanvases.forEach(canvas => {
-        const options = JSON.parse(canvas.dataset.heatmapOptions || '{}');
-        createHeatmap(canvas, options);
-    });
-});
+// Export for use in other modules
+window.HeatmapRenderer = HeatmapRenderer;
 
 console.log('Heatmap Visualization module loaded successfully');

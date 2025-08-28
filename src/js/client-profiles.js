@@ -90,17 +90,32 @@ class ClientProfileManager {
                     substrate: 'hpw',
                     illuminant: 'D50/2°',
                     deltaEMethod: 'de2000',
+                    autoApply: true,
                     ...profileData.settings
+                },
+                preferences: {
+                    approvedSubstrates: ['hpw'],
+                    workflow: {
+                        requireApproval: false,
+                        autoGenerateReports: true,
+                        enableNotifications: false
+                    },
+                    ...profileData.preferences
                 },
                 colorTargets: profileData.colorTargets || {},
                 approvedColors: profileData.approvedColors || [],
                 notes: profileData.notes || '',
-                contact: profileData.contact || {},
-                workflow: profileData.workflow || {
-                    requireApproval: false,
-                    autoGenerateReports: true,
-                    notificationEmail: ''
-                }
+                contact: {
+                    name: '',
+                    email: '',
+                    phone: '',
+                    company: '',
+                    address: '',
+                    notes: '',
+                    ...profileData.contact
+                },
+                customSOPs: profileData.customSOPs || {},
+                sopCompletionHistory: profileData.sopCompletionHistory || []
             };
             
             PROFILE_STATE.profiles[name] = profile;
@@ -598,8 +613,10 @@ class SOPManager {
     /**
      * Get checklist state for current session
      */
-    getChecklistState(substrate) {
-        const sessionKey = `sop_checklist_${substrate}_${Date.now()}`;
+    getChecklistState(substrate, profileName = null) {
+        const sessionKey = profileName ? 
+            `sop_checklist_${profileName}_${substrate}` : 
+            `sop_checklist_${substrate}`;
         const stored = sessionStorage.getItem(sessionKey);
         return stored ? JSON.parse(stored) : {};
     }
@@ -607,15 +624,121 @@ class SOPManager {
     /**
      * Save checklist state for current session
      */
-    saveChecklistState(substrate, checklistState) {
+    saveChecklistState(substrate, checklistState, profileName = null) {
         try {
-            const sessionKey = `sop_checklist_${substrate}`;
+            const sessionKey = profileName ? 
+                `sop_checklist_${profileName}_${substrate}` : 
+                `sop_checklist_${substrate}`;
             sessionStorage.setItem(sessionKey, JSON.stringify({
                 state: checklistState,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                substrate: substrate,
+                profile: profileName
             }));
         } catch (error) {
             console.error('Error saving checklist state:', error);
+        }
+    }
+
+    /**
+     * Get completion percentage for checklist
+     */
+    getCompletionPercentage(checklistState, totalItems) {
+        const completedCount = Object.values(checklistState).filter(Boolean).length;
+        return totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
+    }
+
+    /**
+     * Reset checklist state
+     */
+    resetChecklistState(substrate, profileName = null) {
+        const sessionKey = profileName ? 
+            `sop_checklist_${profileName}_${substrate}` : 
+            `sop_checklist_${substrate}`;
+        sessionStorage.removeItem(sessionKey);
+    }
+
+    /**
+     * Add custom SOP item
+     */
+    addSOPItem(substrate, newItem) {
+        try {
+            if (!PROFILE_STATE.sops[substrate]) {
+                this.initializeDefaultSOPs();
+            }
+            
+            PROFILE_STATE.sops[substrate].items.push(newItem);
+            PROFILE_STATE.sops[substrate].modified = new Date().toISOString();
+            PROFILE_STATE.sops[substrate].isDefault = false;
+            
+            this.saveSOPs();
+            
+            return {
+                success: true,
+                message: 'SOP item added successfully'
+            };
+        } catch (error) {
+            console.error('Error adding SOP item:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Remove SOP item
+     */
+    removeSOPItem(substrate, itemIndex) {
+        try {
+            if (!PROFILE_STATE.sops[substrate] || !PROFILE_STATE.sops[substrate].items[itemIndex]) {
+                throw new Error('SOP item not found');
+            }
+            
+            PROFILE_STATE.sops[substrate].items.splice(itemIndex, 1);
+            PROFILE_STATE.sops[substrate].modified = new Date().toISOString();
+            PROFILE_STATE.sops[substrate].isDefault = false;
+            
+            this.saveSOPs();
+            
+            return {
+                success: true,
+                message: 'SOP item removed successfully'
+            };
+        } catch (error) {
+            console.error('Error removing SOP item:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Edit SOP item
+     */
+    editSOPItem(substrate, itemIndex, newText) {
+        try {
+            if (!PROFILE_STATE.sops[substrate] || !PROFILE_STATE.sops[substrate].items[itemIndex]) {
+                throw new Error('SOP item not found');
+            }
+            
+            PROFILE_STATE.sops[substrate].items[itemIndex] = newText;
+            PROFILE_STATE.sops[substrate].modified = new Date().toISOString();
+            PROFILE_STATE.sops[substrate].isDefault = false;
+            
+            this.saveSOPs();
+            
+            return {
+                success: true,
+                message: 'SOP item updated successfully'
+            };
+        } catch (error) {
+            console.error('Error editing SOP item:', error);
+            return {
+                success: false,
+                error: error.message
+            };
         }
     }
     
@@ -692,6 +815,11 @@ window.clientProfiles = {
     updateSOP: sopManager.updateSOP.bind(sopManager),
     getChecklistState: sopManager.getChecklistState.bind(sopManager),
     saveChecklistState: sopManager.saveChecklistState.bind(sopManager),
+    resetChecklistState: sopManager.resetChecklistState.bind(sopManager),
+    getCompletionPercentage: sopManager.getCompletionPercentage.bind(sopManager),
+    addSOPItem: sopManager.addSOPItem.bind(sopManager),
+    removeSOPItem: sopManager.removeSOPItem.bind(sopManager),
+    editSOPItem: sopManager.editSOPItem.bind(sopManager),
     generateCompletionReport: sopManager.generateCompletionReport.bind(sopManager),
     
     // State access

@@ -346,7 +346,418 @@ const PRESET_COLORS = {
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
+    
+    // Initialize enhancement systems
+    initializeEnhancementSystems();
+    
+    // Initialize integration systems
+    initializeIntegrationSystems();
 });
+
+// Initialize all enhancement systems
+function initializeEnhancementSystems() {
+    console.log('Initializing enhancement systems...');
+    
+    // Show initialization toast
+    if (window.toastSystem) {
+        window.toastSystem.info('System Ready', 'HD CMYK Calculator with advanced features loaded');
+    }
+    
+    // Set up integration between systems
+    setupSystemIntegration();
+    
+    // Show keyboard shortcuts hint
+    setTimeout(() => {
+        if (window.toastSystem) {
+            window.toastSystem.info('Tip', 'Press F1 or Ctrl+/ to view keyboard shortcuts', { duration: 6000 });
+        }
+    }, 3000);
+    
+    console.log('Enhancement systems initialized');
+}
+
+// Initialize integration systems
+function initializeIntegrationSystems() {
+    console.log('Initializing integration systems...');
+    
+    // Wait for all systems to be available
+    setTimeout(() => {
+        // Validate integration
+        if (window.integrationManager) {
+            const status = window.integrationManager.getIntegrationStatus();
+            console.log('Integration status:', status);
+            
+            if (status.initialized) {
+                if (window.toastSystem) {
+                    window.toastSystem.success('Integration Complete', 'All HD systems integrated successfully');
+                }
+            }
+        }
+        
+        // Set up global error handling
+        setupGlobalErrorHandling();
+        
+        // Validate state synchronization
+        if (window.stateSynchronizer) {
+            const stats = window.stateSynchronizer.getStats();
+            console.log('State synchronizer stats:', stats);
+        }
+        
+        // Make global app state available
+        if (!window.appState) {
+            window.appState = appState;
+        }
+        
+    }, 2000); // Wait 2 seconds for all systems to initialize
+    
+    console.log('Integration systems initialized');
+}
+
+// Set up global error handling for the application
+function setupGlobalErrorHandling() {
+    // Enhanced error handling with integration manager
+    window.addEventListener('error', (event) => {
+        console.error('Global error:', event.error);
+        
+        if (window.integrationManager) {
+            window.integrationManager.handleGlobalError(event.error, event.filename, event.lineno);
+        } else {
+            // Fallback error handling
+            if (window.toastSystem) {
+                window.toastSystem.error('System Error', 'An unexpected error occurred. Please refresh if issues persist.');
+            }
+        }
+    });
+    
+    // Handle promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+        console.error('Unhandled promise rejection:', event.reason);
+        
+        if (window.integrationManager) {
+            window.integrationManager.handlePromiseRejection(event.reason);
+        }
+        
+        event.preventDefault();
+    });
+}
+
+// Set up integration between different systems
+function setupSystemIntegration() {
+    // Integrate toast notifications with calculation events
+    document.addEventListener('calculationStart', () => {
+        if (window.toastSystem) {
+            window.toastSystem.info('Calculating', 'Processing color difference...', { id: 'calculation', duration: 0 });
+        }
+    });
+    
+    document.addEventListener('calculationComplete', (event) => {
+        if (window.toastSystem) {
+            window.toastSystem.hide('calculation');
+            const result = event.detail;
+            const tolerance = result.deltaE <= 1 ? 'excellent' : result.deltaE <= 3 ? 'good' : 'acceptable';
+            window.toastSystem.success('Complete', `ΔE: ${result.deltaE.toFixed(2)} (${tolerance} match)`);
+        }
+    });
+    
+    document.addEventListener('calculationError', (event) => {
+        if (window.toastSystem) {
+            window.toastSystem.hide('calculation');
+            window.toastSystem.error('Calculation Error', event.detail.message || 'Failed to calculate color difference');
+        }
+    });
+    
+    // Integrate accessibility announcements with calculations
+    document.addEventListener('calculationComplete', (event) => {
+        if (window.accessibilityManager) {
+            const result = event.detail;
+            const message = `Color difference calculated. Delta E is ${result.deltaE.toFixed(2)}`;
+            window.accessibilityManager.announceMessage(message);
+        }
+    });
+    
+    // Integrate performance monitoring with file operations
+    document.addEventListener('fileProcessingStart', (event) => {
+        if (window.performanceManager) {
+            window.performanceManager.measureAsyncPerformance('fileProcessing', async () => {
+                // File processing will be measured
+            });
+        }
+    });
+}
+
+// Enhanced performColorDifferenceCalculation with event emission
+function performColorDifferenceCalculation() {
+    try {
+        // Emit calculation start event
+        document.dispatchEvent(new CustomEvent('calculationStart'));
+        
+        // Set calculating status for status bar
+        if (window.setCalculatingStatus) {
+            window.setCalculatingStatus();
+        }
+        
+        // Get current color values
+        const colorValues = getCurrentColorValues();
+        
+        // Validate inputs
+        if (!validateColorInputs(colorValues)) {
+            throw new Error('Invalid color input values');
+        }
+        
+        // Perform calculation (existing logic would go here)
+        const results = calculateColorDifference(colorValues);
+        
+        // Update application state
+        window.appState.results = results;
+        
+        // Update UI
+        updateResultsDisplay(results);
+        
+        // Set complete status
+        if (window.setCompleteStatus) {
+            window.setCompleteStatus();
+        }
+        
+        // Emit calculation complete event
+        document.dispatchEvent(new CustomEvent('calculationComplete', { 
+            detail: results 
+        }));
+        
+        // Update correction suggestions
+        updateCorrectionSuggestions();
+        
+    } catch (error) {
+        console.error('Calculation error:', error);
+        
+        // Set error status
+        if (window.setErrorStatus) {
+            window.setErrorStatus();
+        }
+        
+        // Emit calculation error event
+        document.dispatchEvent(new CustomEvent('calculationError', { 
+            detail: { message: error.message } 
+        }));
+    }
+}
+
+// Global function to update correction suggestions
+function updateCorrectionSuggestions() {
+    if (window.correctionSuggestionsUI && window.appState && window.appState.results) {
+        window.correctionSuggestionsUI.updateSuggestions(window.appState.results);
+    }
+}
+
+// Global function to update target values from color converter
+function updateTargetFromConverter(colorData) {
+    try {
+        // Update CMYK inputs
+        if (colorData.cmyk) {
+            const cmykInputs = ['c', 'm', 'y', 'k'];
+            cmykInputs.forEach(channel => {
+                const input = document.getElementById(`target-${channel}`);
+                if (input && colorData.cmyk[channel] !== undefined) {
+                    input.value = colorData.cmyk[channel].toFixed(1);
+                    input.classList.add('updated-from-converter');
+                    // Remove highlight after animation
+                    setTimeout(() => {
+                        input.classList.remove('updated-from-converter');
+                    }, 2000);
+                }
+            });
+        }
+
+        // Update LAB inputs
+        if (colorData.lab) {
+            const labInputs = ['l', 'a', 'b'];
+            labInputs.forEach(channel => {
+                const input = document.getElementById(`target-${channel}`);
+                if (input && colorData.lab[channel] !== undefined) {
+                    input.value = colorData.lab[channel].toFixed(1);
+                    input.classList.add('updated-from-converter');
+                    // Remove highlight after animation
+                    setTimeout(() => {
+                        input.classList.remove('updated-from-converter');
+                    }, 2000);
+                }
+            });
+        }
+
+        // Update color swatches
+        updateColorSwatches();
+
+        // Show success message
+        showStatusMessage('Color values imported from converter', 'success');
+
+        // Auto-calculate if sample values are present
+        const sampleInputs = document.querySelectorAll('[id^="sample-"]');
+        const hasSampleValues = Array.from(sampleInputs).some(input => input.value && input.value.trim() !== '');
+        
+        if (hasSampleValues) {
+            setTimeout(() => {
+                performColorDifferenceCalculation();
+            }, 500);
+        }
+
+    } catch (error) {
+        console.error('Error updating target from converter:', error);
+        showStatusMessage('Failed to import color values', 'error');
+    }
+}
+
+// Helper functions for enhanced calculation system
+function getCurrentColorValues() {
+    const target = {
+        cmyk: {
+            c: parseFloat(document.getElementById('target-c')?.value || 0),
+            m: parseFloat(document.getElementById('target-m')?.value || 0),
+            y: parseFloat(document.getElementById('target-y')?.value || 0),
+            k: parseFloat(document.getElementById('target-k')?.value || 0)
+        },
+        lab: {
+            l: parseFloat(document.getElementById('target-l')?.value || 50),
+            a: parseFloat(document.getElementById('target-a')?.value || 0),
+            b: parseFloat(document.getElementById('target-b')?.value || 0)
+        }
+    };
+    
+    const sample = {
+        cmyk: {
+            c: parseFloat(document.getElementById('sample-c')?.value || 0),
+            m: parseFloat(document.getElementById('sample-m')?.value || 0),
+            y: parseFloat(document.getElementById('sample-y')?.value || 0),
+            k: parseFloat(document.getElementById('sample-k')?.value || 0)
+        },
+        lab: {
+            l: parseFloat(document.getElementById('sample-l')?.value || 50),
+            a: parseFloat(document.getElementById('sample-a')?.value || 0),
+            b: parseFloat(document.getElementById('sample-b')?.value || 0)
+        }
+    };
+    
+    return { target, sample };
+}
+
+function validateColorInputs(colorValues) {
+    const { target, sample } = colorValues;
+    
+    // Validate LAB ranges
+    if (target.lab.l < 0 || target.lab.l > 100 || 
+        sample.lab.l < 0 || sample.lab.l > 100) {
+        return false;
+    }
+    
+    if (target.lab.a < -128 || target.lab.a > 127 || 
+        target.lab.b < -128 || target.lab.b > 127 ||
+        sample.lab.a < -128 || sample.lab.a > 127 || 
+        sample.lab.b < -128 || sample.lab.b > 127) {
+        return false;
+    }
+    
+    // Validate CMYK ranges
+    const cmykChannels = ['c', 'm', 'y', 'k'];
+    for (const channel of cmykChannels) {
+        if (target.cmyk[channel] < 0 || target.cmyk[channel] > 100 ||
+            sample.cmyk[channel] < 0 || sample.cmyk[channel] > 100) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+function calculateColorDifference(colorValues) {
+    const { target, sample } = colorValues;
+    
+    // Calculate Delta E using color science module
+    let deltaE = 0;
+    if (window.colorScience && window.colorScience.calculateDeltaE) {
+        deltaE = window.colorScience.calculateDeltaE(target.lab, sample.lab, 'DE2000');
+    } else {
+        // Fallback calculation
+        const dL = target.lab.l - sample.lab.l;
+        const da = target.lab.a - sample.lab.a;
+        const db = target.lab.b - sample.lab.b;
+        deltaE = Math.sqrt(dL * dL + da * da + db * db);
+    }
+    
+    // Determine tolerance zone
+    let toleranceZone = 'poor';
+    if (deltaE <= 0.5) toleranceZone = 'excellent';
+    else if (deltaE <= 1.0) toleranceZone = 'good';
+    else if (deltaE <= 3.0) toleranceZone = 'acceptable';
+    
+    return {
+        deltaE,
+        toleranceZone,
+        target: target,
+        sample: sample,
+        timestamp: Date.now()
+    };
+}
+
+function updateResultsDisplay(results) {
+    // Update Delta E display
+    const deltaDisplay = document.querySelector('.delta-e-number');
+    if (deltaDisplay) {
+        deltaDisplay.textContent = results.deltaE.toFixed(2);
+    }
+    
+    // Update tolerance indicator
+    const toleranceIndicator = document.querySelector('.tolerance-indicator');
+    if (toleranceIndicator) {
+        toleranceIndicator.className = `tolerance-indicator ${results.toleranceZone}`;
+        toleranceIndicator.textContent = results.toleranceZone.toUpperCase();
+    }
+    
+    // Show results section
+    const resultsSection = document.querySelector('.results-section');
+    if (resultsSection) {
+        resultsSection.classList.add('visible');
+        resultsSection.style.display = 'block';
+    }
+}
+
+// Status message utility function
+function showStatusMessage(message, type = 'info', duration = 3000) {
+    // Remove any existing status messages
+    const existingMessages = document.querySelectorAll('.status-message');
+    existingMessages.forEach(msg => msg.remove());
+
+    // Create new status message
+    const statusMessage = document.createElement('div');
+    statusMessage.className = `status-message ${type}`;
+    statusMessage.textContent = message;
+    statusMessage.setAttribute('role', 'alert');
+    statusMessage.setAttribute('aria-live', 'polite');
+
+    // Add to document
+    document.body.appendChild(statusMessage);
+
+    // Auto-remove after duration
+    setTimeout(() => {
+        if (statusMessage.parentNode) {
+            statusMessage.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (statusMessage.parentNode) {
+                    statusMessage.remove();
+                }
+            }, 300);
+        }
+    }, duration);
+
+    // Allow manual dismissal by clicking
+    statusMessage.addEventListener('click', () => {
+        if (statusMessage.parentNode) {
+            statusMessage.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (statusMessage.parentNode) {
+                    statusMessage.remove();
+                }
+            }, 300);
+        }
+    });
+}
 
 // Enhanced Sticky Status Bar Functionality
 function initializeStickyStatusBar() {
@@ -866,6 +1277,9 @@ function initializeApp() {
 
     // Initialize enhanced tooltip system
     tooltipManager = new TooltipManager();
+
+    // Initialize Grid System
+    initializeGridSystem();
 
     console.log('Application initialized successfully');
 }
@@ -1511,20 +1925,34 @@ Generated: ${new Date().toISOString()}`;
 }
 
 function cacheDOMElements() {
-    // Target color inputs
+    // Target color inputs - CMYK
     domElements.targetC = document.getElementById('target-c');
     domElements.targetM = document.getElementById('target-m');
     domElements.targetY = document.getElementById('target-y');
     domElements.targetK = document.getElementById('target-k');
+    
+    // Target color inputs - Extended Gamut (OGV)
+    domElements.targetO = document.getElementById('target-o');
+    domElements.targetG = document.getElementById('target-g');
+    domElements.targetV = document.getElementById('target-v');
+    
+    // Target color inputs - LAB
     domElements.targetL = document.getElementById('target-l');
     domElements.targetA = document.getElementById('target-a');
     domElements.targetB = document.getElementById('target-b');
 
-    // Sample color inputs
+    // Sample color inputs - CMYK
     domElements.sampleC = document.getElementById('sample-c');
     domElements.sampleM = document.getElementById('sample-m');
     domElements.sampleY = document.getElementById('sample-y');
     domElements.sampleK = document.getElementById('sample-k');
+    
+    // Sample color inputs - Extended Gamut (OGV)
+    domElements.sampleO = document.getElementById('sample-o');
+    domElements.sampleG = document.getElementById('sample-g');
+    domElements.sampleV = document.getElementById('sample-v');
+    
+    // Sample color inputs - LAB
     domElements.sampleL = document.getElementById('sample-l');
     domElements.sampleA = document.getElementById('sample-a');
     domElements.sampleB = document.getElementById('sample-b');
@@ -1569,6 +1997,11 @@ function setupInputValidation() {
     setupCMYKValidation('target', 'y', domElements.targetY);
     setupCMYKValidation('target', 'k', domElements.targetK);
 
+    // Target Extended Gamut (OGV) inputs - Requirements: 2.1
+    setupCMYKValidation('target', 'o', domElements.targetO);
+    setupCMYKValidation('target', 'g', domElements.targetG);
+    setupCMYKValidation('target', 'v', domElements.targetV);
+
     // Target LAB inputs
     setupLABValidation('target', 'l', domElements.targetL);
     setupLABValidation('target', 'a', domElements.targetA);
@@ -1580,12 +2013,17 @@ function setupInputValidation() {
     setupCMYKValidation('sample', 'y', domElements.sampleY);
     setupCMYKValidation('sample', 'k', domElements.sampleK);
 
+    // Sample Extended Gamut (OGV) inputs - Requirements: 2.1
+    setupCMYKValidation('sample', 'o', domElements.sampleO);
+    setupCMYKValidation('sample', 'g', domElements.sampleG);
+    setupCMYKValidation('sample', 'v', domElements.sampleV);
+
     // Sample LAB inputs
     setupLABValidation('sample', 'l', domElements.sampleL);
     setupLABValidation('sample', 'a', domElements.sampleA);
     setupLABValidation('sample', 'b', domElements.sampleB);
 
-    console.log('Input validation event listeners set up');
+    console.log('Input validation event listeners set up (including CMYKOGV extended gamut)');
 }
 
 /**
@@ -1895,21 +2333,37 @@ function updateColorSwatch(colorType, immediate = false) {
 
                     // Determine which color space has more complete data
                     const cmykComplete = hasCompleteColorData(colorData.cmyk, 'cmyk');
+                    const cmykogvComplete = hasCompleteColorData(colorData.cmykogv, 'cmykogv');
                     const labComplete = hasCompleteColorData(colorData.lab, 'lab');
 
                     let cssColor;
                     let colorInfo;
 
-                    if (cmykComplete && labComplete) {
-                        // Both complete - prioritize LAB for accuracy
-                        cssColor = window.colorScience.labToCssString(colorData.lab.l, colorData.lab.a, colorData.lab.b);
-                        colorInfo = `LAB(${colorData.lab.l.toFixed(1)}, ${colorData.lab.a.toFixed(1)}, ${colorData.lab.b.toFixed(1)})`;
-                    } else if (labComplete) {
-                        // LAB data available
-                        cssColor = window.colorScience.labToCssString(colorData.lab.l, colorData.lab.a, colorData.lab.b);
-                        colorInfo = `LAB(${colorData.lab.l.toFixed(1)}, ${colorData.lab.a.toFixed(1)}, ${colorData.lab.b.toFixed(1)})`;
+                    if (labComplete) {
+                        // LAB data available - prioritize for accuracy
+                        // Use ICC profile if available, otherwise fallback to standard conversion
+                        if (window.iccProfileManager && window.iccProfileManager.hasICCProfile()) {
+                            const rgb = window.iccProfileManager.labToRgbICC(colorData.lab.l, colorData.lab.a, colorData.lab.b);
+                            cssColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                            colorInfo = `LAB(${colorData.lab.l.toFixed(1)}, ${colorData.lab.a.toFixed(1)}, ${colorData.lab.b.toFixed(1)}) [ICC]`;
+                        } else {
+                            cssColor = window.colorScience.labToCssString(colorData.lab.l, colorData.lab.a, colorData.lab.b);
+                            colorInfo = `LAB(${colorData.lab.l.toFixed(1)}, ${colorData.lab.a.toFixed(1)}, ${colorData.lab.b.toFixed(1)})`;
+                        }
+                    } else if (cmykogvComplete) {
+                        // CMYKOGV data available - use extended gamut conversion
+                        cssColor = window.colorScience.cmykogvToCssString(
+                            colorData.cmykogv.c, colorData.cmykogv.m, colorData.cmykogv.y, colorData.cmykogv.k,
+                            colorData.cmykogv.o, colorData.cmykogv.g, colorData.cmykogv.v
+                        );
+                        const hasExtended = colorData.cmykogv.o > 0 || colorData.cmykogv.g > 0 || colorData.cmykogv.v > 0;
+                        if (hasExtended) {
+                            colorInfo = `CMYKOGV(${colorData.cmykogv.c.toFixed(1)}, ${colorData.cmykogv.m.toFixed(1)}, ${colorData.cmykogv.y.toFixed(1)}, ${colorData.cmykogv.k.toFixed(1)}, ${colorData.cmykogv.o.toFixed(1)}, ${colorData.cmykogv.g.toFixed(1)}, ${colorData.cmykogv.v.toFixed(1)})`;
+                        } else {
+                            colorInfo = `CMYK(${colorData.cmykogv.c.toFixed(1)}, ${colorData.cmykogv.m.toFixed(1)}, ${colorData.cmykogv.y.toFixed(1)}, ${colorData.cmykogv.k.toFixed(1)})`;
+                        }
                     } else if (cmykComplete) {
-                        // CMYK data available
+                        // Basic CMYK data available
                         cssColor = window.colorScience.cmykToCssString(colorData.cmyk.c, colorData.cmyk.m, colorData.cmyk.y, colorData.cmyk.k);
                         colorInfo = `CMYK(${colorData.cmyk.c.toFixed(1)}, ${colorData.cmyk.m.toFixed(1)}, ${colorData.cmyk.y.toFixed(1)}, ${colorData.cmyk.k.toFixed(1)})`;
                     } else {
@@ -1941,6 +2395,11 @@ function updateColorSwatch(colorType, immediate = false) {
                         updateG7Analysis();
                     }
 
+                    // Update ICC soft proof preview if available
+                    if (window.iccProfileManager && window.iccProfileManager.isInitialized) {
+                        window.iccProfileManager.updateSoftProofPreview();
+                    }
+
                 } catch (error) {
                     console.error(`Error updating ${colorType} swatch:`, error);
                     // Fallback to white on error
@@ -1970,6 +2429,7 @@ function updateColorSwatch(colorType, immediate = false) {
 
 /**
  * Check if color data is complete enough for conversion
+ * Requirements: 2.1 - Support CMYKOGV extended gamut input
  */
 function hasCompleteColorData(colorData, colorSpace) {
     if (colorSpace === 'cmyk') {
@@ -1977,6 +2437,17 @@ function hasCompleteColorData(colorData, colorSpace) {
         return colorData.c !== undefined && colorData.m !== undefined &&
             colorData.y !== undefined && colorData.k !== undefined &&
             (colorData.c !== 0 || colorData.m !== 0 || colorData.y !== 0 || colorData.k !== 0);
+    } else if (colorSpace === 'cmykogv') {
+        // CMYKOGV is complete if we have CMYK data or any extended gamut values
+        const hasCMYK = colorData.c !== undefined && colorData.m !== undefined &&
+            colorData.y !== undefined && colorData.k !== undefined;
+        const hasExtended = (colorData.o !== undefined && colorData.o > 0) ||
+            (colorData.g !== undefined && colorData.g > 0) ||
+            (colorData.v !== undefined && colorData.v > 0);
+        const hasMeaningfulCMYK = colorData.c !== 0 || colorData.m !== 0 || 
+            colorData.y !== 0 || colorData.k !== 0;
+        
+        return hasCMYK && (hasMeaningfulCMYK || hasExtended);
     } else if (colorSpace === 'lab') {
         // LAB is complete if L* is not default (50) or a*/b* have values
         return colorData.l !== 50 || colorData.a !== 0 || colorData.b !== 0;
@@ -2053,6 +2524,15 @@ function getCurrentColorValues() {
                 y: parseInputValue(domElements.targetY, 0),
                 k: parseInputValue(domElements.targetK, 0)
             },
+            cmykogv: {
+                c: parseInputValue(domElements.targetC, 0),
+                m: parseInputValue(domElements.targetM, 0),
+                y: parseInputValue(domElements.targetY, 0),
+                k: parseInputValue(domElements.targetK, 0),
+                o: parseInputValue(domElements.targetO, 0),
+                g: parseInputValue(domElements.targetG, 0),
+                v: parseInputValue(domElements.targetV, 0)
+            },
             lab: {
                 l: parseInputValue(domElements.targetL, 50),
                 a: parseInputValue(domElements.targetA, 0),
@@ -2065,6 +2545,15 @@ function getCurrentColorValues() {
                 m: parseInputValue(domElements.sampleM, 0),
                 y: parseInputValue(domElements.sampleY, 0),
                 k: parseInputValue(domElements.sampleK, 0)
+            },
+            cmykogv: {
+                c: parseInputValue(domElements.sampleC, 0),
+                m: parseInputValue(domElements.sampleM, 0),
+                y: parseInputValue(domElements.sampleY, 0),
+                k: parseInputValue(domElements.sampleK, 0),
+                o: parseInputValue(domElements.sampleO, 0),
+                g: parseInputValue(domElements.sampleG, 0),
+                v: parseInputValue(domElements.sampleV, 0)
             },
             lab: {
                 l: parseInputValue(domElements.sampleL, 50),
@@ -2601,6 +3090,12 @@ function performCalculationCore() {
             }, 300);
         }
 
+        // Add CMYK values to analysis for substrate profile system
+        analysis.targetLab = colorValues.target.lab;
+        analysis.sampleLab = colorValues.sample.lab;
+        analysis.sampleCmyk = colorValues.sample.cmyk;
+        analysis.targetCmyk = colorValues.target.cmyk;
+
         // Cache the result for future use
         cacheCalculationResult(cacheKey, analysis);
 
@@ -2855,6 +3350,35 @@ function displayCalculationResults(analysis) {
 
     // Generate and display CMYK adjustment suggestions
     displayCMYKSuggestions(analysis);
+
+    // Store results in global state for substrate profile system
+    if (window.appState) {
+        window.appState.results = {
+            targetLab: analysis.targetLab,
+            pressLab: analysis.sampleLab,
+            pressCmyk: analysis.sampleCmyk,
+            deltaE: analysis.deltaE,
+            componentDeltas: analysis.componentDeltas,
+            tolerance: analysis.tolerance
+        };
+    }
+
+    // Trigger substrate profile correction suggestions
+    if (window.correctionSuggestionsUI && analysis.targetLab && analysis.sampleLab && analysis.sampleCmyk) {
+        const results = {
+            targetLab: analysis.targetLab,
+            pressLab: analysis.sampleLab,
+            pressCmyk: analysis.sampleCmyk,
+            deltaE: analysis.deltaE,
+            componentDeltas: analysis.componentDeltas,
+            tolerance: analysis.tolerance
+        };
+        
+        // Dispatch custom event for correction suggestions
+        document.dispatchEvent(new CustomEvent('calculationComplete', {
+            detail: { results: results }
+        }));
+    }
 
     // Show results section
     showResultsSection();
@@ -3351,9 +3875,66 @@ function saveCalculationToHistory(colorValues, analysis) {
             console.warn('Failed to save calculation to history');
         }
 
+        // Also log to measurement history system if available
+        // Requirements: 9.1 - Automatic calculation logging with timestamps and metadata
+        if (typeof window.measurementHistory !== 'undefined') {
+            const measurementData = {
+                target: {
+                    lab: { ...colorValues.target.lab },
+                    cmyk: { ...colorValues.target.cmyk }
+                },
+                sample: {
+                    lab: { ...colorValues.sample.lab },
+                    cmyk: { ...colorValues.sample.cmyk }
+                },
+                results: analysis,
+                deltaE: analysis.deltaE,
+                componentDeltas: analysis.componentDeltas,
+                tolerance: analysis.tolerance,
+                substrate: getCurrentSubstrate(),
+                operator: getCurrentOperator(),
+                jobId: getCurrentJobId(),
+                notes: getCurrentNotes(),
+                method: 'DE2000'
+            };
+
+            const measurement = window.measurementHistory.logMeasurement(measurementData);
+            
+            if (measurement) {
+                console.log('Measurement logged to history system:', measurement.id);
+                
+                // Dispatch event for other components
+                const event = new CustomEvent('calculationComplete', {
+                    detail: measurementData
+                });
+                document.dispatchEvent(event);
+            }
+        }
+
     } catch (error) {
         console.error('Error saving calculation to history:', error);
     }
+}
+
+// Helper functions to get current context information
+function getCurrentSubstrate() {
+    const substrateSelect = document.getElementById('substrate-select');
+    return substrateSelect ? substrateSelect.value : 'Unknown';
+}
+
+function getCurrentOperator() {
+    const operatorInput = document.getElementById('operator-input');
+    return operatorInput ? operatorInput.value : 'System';
+}
+
+function getCurrentJobId() {
+    const jobIdInput = document.getElementById('job-id-input');
+    return jobIdInput ? jobIdInput.value : null;
+}
+
+function getCurrentNotes() {
+    const notesInput = document.getElementById('calculation-notes');
+    return notesInput ? notesInput.value : '';
 }
 
 // Export functions for use by other modules (simple approach without ES6 modules)
@@ -5215,3 +5796,506 @@ function trapFocusInModal(modal) {
         }
     });
 }
+
+// Grid System Initialization
+// Requirements: 5. Build patch grid system with CSV import and heatmap visualization
+function initializeGridSystem() {
+    console.log('Initializing Grid System...');
+    
+    // Wait for required modules to load
+    if (typeof window.GridManager === 'undefined' || 
+        typeof window.CSVParser === 'undefined' || 
+        typeof window.HeatmapRenderer === 'undefined') {
+        console.log('Grid system modules not ready, retrying...');
+        setTimeout(initializeGridSystem, 100);
+        return;
+    }
+    
+    try {
+        // Get grid container
+        const gridContainer = document.getElementById('grid-system-container');
+        if (!gridContainer) {
+            console.error('Grid container not found');
+            return;
+        }
+        
+        // Initialize grid manager
+        const gridManager = new window.GridManager(gridContainer, {
+            defaultLayout: '6x8',
+            enableEditing: true,
+            enableHeatmap: true,
+            tolerance: 2.0,
+            autoCalculate: true
+        });
+        
+        // Set up callbacks for integration with main calculator
+        gridManager.setCallbacks({
+            onDataChange: (row, col, cellData) => {
+                console.log(`Grid cell ${row},${col} updated:`, cellData);
+                // Update main calculator statistics if needed
+                updateMainCalculatorFromGrid(gridManager.getStatistics());
+            },
+            
+            onCellEdit: (row, col, cellData) => {
+                console.log(`Grid cell ${row},${col} edited:`, cellData);
+                // Trigger any necessary recalculations
+            },
+            
+            onStatisticsUpdate: (statistics) => {
+                console.log('Grid statistics updated:', statistics);
+                // Update main UI with grid statistics
+                updateMainUIWithGridStats(statistics);
+            }
+        });
+        
+        // Store reference globally for access from other parts of the application
+        window.gridManager = gridManager;
+        
+        // Initialize Spectrophotometer Integration
+        if (window.SpectrophotometerIntegration) {
+            const spectroIntegration = new window.SpectrophotometerIntegration(gridManager, {
+                monitorInterval: 2000,
+                autoIngest: true,
+                showNotifications: true
+            });
+            
+            // Set up callbacks for spectrophotometer integration
+            spectroIntegration.setCallbacks({
+                onConnectionChange: (connected, folderName) => {
+                    console.log(`Spectrophotometer ${connected ? 'connected to' : 'disconnected from'} ${folderName || 'folder'}`);
+                },
+                
+                onFileDetected: (filenames) => {
+                    console.log('New files detected:', filenames);
+                },
+                
+                onFileProcessed: (filename, dataPoints) => {
+                    console.log(`Processed ${filename}: ${dataPoints} data points`);
+                    // Update main UI to reflect new data
+                    updateMainUIWithGridStats(gridManager.getStatistics());
+                },
+                
+                onError: (error) => {
+                    console.error('Spectrophotometer integration error:', error);
+                }
+            });
+            
+            // Store reference globally
+            window.spectroIntegration = spectroIntegration;
+            
+            console.log('Spectrophotometer Integration initialized successfully');
+        } else {
+            console.warn('SpectrophotometerIntegration class not available');
+        }
+        
+        console.log('Grid System initialized successfully');
+        
+    } catch (error) {
+        console.error('Error initializing Grid System:', error);
+    }
+}
+
+// Update main calculator with grid statistics
+function updateMainCalculatorFromGrid(statistics) {
+    try {
+        // Update status bar if visible
+        if (uiEnhancementState.statusBar.visible && statistics.validPatches > 0) {
+            const statusValue = document.getElementById('status-value');
+            const deltaValue = document.getElementById('status-delta-value');
+            
+            if (statusValue) {
+                statusValue.textContent = `Grid: ${statistics.passCount}/${statistics.validPatches}`;
+            }
+            
+            if (deltaValue && statistics.averageDeltaE > 0) {
+                deltaValue.textContent = statistics.averageDeltaE.toFixed(2);
+                
+                // Apply tolerance zone styling
+                const toleranceZone = getToleranceZone(statistics.averageDeltaE);
+                deltaValue.className = `delta-value ${toleranceZone}`;
+            }
+        }
+        
+        // Update main results section if no individual calculation is active
+        if (!appState.results && statistics.validPatches > 0) {
+            updateMainResultsWithGridData(statistics);
+        }
+        
+    } catch (error) {
+        console.error('Error updating main calculator from grid:', error);
+    }
+}
+
+// Update main UI with grid statistics
+function updateMainUIWithGridStats(statistics) {
+    try {
+        // Update any main UI elements that should reflect grid statistics
+        // This could include updating the main results panel, status indicators, etc.
+        
+        // Example: Update a grid summary in the main interface
+        const gridSummaryElement = document.getElementById('grid-summary');
+        if (gridSummaryElement && statistics.validPatches > 0) {
+            gridSummaryElement.innerHTML = `
+                <div class="grid-summary-content">
+                    <h4>Batch Analysis Summary</h4>
+                    <div class="summary-stats">
+                        <span class="stat">Total: ${statistics.totalPatches}</span>
+                        <span class="stat">Valid: ${statistics.validPatches}</span>
+                        <span class="stat pass">Pass: ${statistics.passCount}</span>
+                        <span class="stat fail">Fail: ${statistics.failCount}</span>
+                        <span class="stat">Avg ΔE: ${statistics.averageDeltaE.toFixed(2)}</span>
+                        <span class="stat">Max ΔE: ${statistics.maxDeltaE.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Error updating main UI with grid stats:', error);
+    }
+}
+
+// Update main results section with grid data
+function updateMainResultsWithGridData(statistics) {
+    try {
+        // Create a summary result object that mimics individual calculation results
+        const gridResults = {
+            deltaE: statistics.averageDeltaE,
+            tolerance: {
+                zone: getToleranceZone(statistics.averageDeltaE),
+                pass: statistics.averageDeltaE <= 2.0 // Default tolerance
+            },
+            statistics: statistics,
+            isGridSummary: true
+        };
+        
+        // Update the results display
+        displayCalculationResults(gridResults);
+        
+    } catch (error) {
+        console.error('Error updating main results with grid data:', error);
+    }
+}
+
+// Enhanced results display to handle both individual and grid results
+function displayCalculationResults(results) {
+    try {
+        const resultsSection = document.querySelector('.results-section');
+        if (!resultsSection) return;
+        
+        // Show results section
+        resultsSection.style.display = 'block';
+        
+        // Update primary delta display
+        const deltaValue = document.querySelector('.delta-e-value');
+        const deltaLabel = document.querySelector('.delta-e-label');
+        
+        if (deltaValue && deltaLabel) {
+            deltaValue.textContent = results.deltaE.toFixed(2);
+            
+            if (results.isGridSummary) {
+                deltaLabel.textContent = 'Average ΔE2000';
+            } else {
+                deltaLabel.textContent = 'ΔE2000';
+            }
+        }
+        
+        // Update tolerance indicator
+        const toleranceIndicator = document.querySelector('.tolerance-indicator');
+        if (toleranceIndicator) {
+            toleranceIndicator.textContent = results.tolerance.zone;
+            toleranceIndicator.className = `tolerance-indicator ${results.tolerance.zone.toLowerCase()}`;
+        }
+        
+        // Update component analysis if available
+        if (results.componentDeltas) {
+            updateComponentAnalysis(results.componentDeltas);
+        }
+        
+        // Update correction suggestions if available
+        if (results.suggestions && window.correctionSuggestionsUI) {
+            window.correctionSuggestionsUI.updateSuggestions(results);
+        }
+        
+        // Add grid-specific information if this is a grid summary
+        if (results.isGridSummary && results.statistics) {
+            addGridSummaryToResults(results.statistics);
+        }
+        
+    } catch (error) {
+        console.error('Error displaying calculation results:', error);
+    }
+}
+
+// Add grid summary information to results section
+function addGridSummaryToResults(statistics) {
+    try {
+        // Find or create grid summary section
+        let gridSummarySection = document.querySelector('.grid-results-summary');
+        
+        if (!gridSummarySection) {
+            gridSummarySection = document.createElement('div');
+            gridSummarySection.className = 'grid-results-summary';
+            
+            // Insert after component analysis
+            const componentAnalysis = document.querySelector('.component-analysis');
+            if (componentAnalysis) {
+                componentAnalysis.parentNode.insertBefore(gridSummarySection, componentAnalysis.nextSibling);
+            } else {
+                // Insert at end of results section
+                const resultsSection = document.querySelector('.results-section');
+                if (resultsSection) {
+                    resultsSection.appendChild(gridSummarySection);
+                }
+            }
+        }
+        
+        // Update grid summary content
+        gridSummarySection.innerHTML = `
+            <h4>Batch Analysis Details</h4>
+            <div class="grid-summary-stats">
+                <div class="summary-stat-group">
+                    <div class="summary-stat">
+                        <span class="stat-label">Total Patches</span>
+                        <span class="stat-value">${statistics.totalPatches}</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="stat-label">Valid Measurements</span>
+                        <span class="stat-value">${statistics.validPatches}</span>
+                    </div>
+                </div>
+                <div class="summary-stat-group">
+                    <div class="summary-stat pass">
+                        <span class="stat-label">Pass Count</span>
+                        <span class="stat-value">${statistics.passCount}</span>
+                    </div>
+                    <div class="summary-stat fail">
+                        <span class="stat-label">Fail Count</span>
+                        <span class="stat-value">${statistics.failCount}</span>
+                    </div>
+                </div>
+                <div class="summary-stat-group">
+                    <div class="summary-stat">
+                        <span class="stat-label">Median ΔE</span>
+                        <span class="stat-value">${statistics.medianDeltaE.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="stat-label">95th Percentile</span>
+                        <span class="stat-value">${statistics.percentile95.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error adding grid summary to results:', error);
+    }
+}
+
+// ICC Profile Integration Functions
+// Requirements: 6.1, 6.2, 6.3, 6.4, 6.5 - ICC profile support and soft proofing
+
+/**
+ * Initialize ICC profile integration with the calculator
+ */
+function initializeICCProfileIntegration() {
+    console.log('Initializing ICC Profile integration...');
+
+    // Wait for ICC profile manager to be available
+    const checkICCManager = () => {
+        if (window.iccProfileManager && window.iccProfileManager.isInitialized) {
+            setupICCEventListeners();
+            console.log('ICC Profile integration initialized');
+        } else {
+            setTimeout(checkICCManager, 100);
+        }
+    };
+
+    checkICCManager();
+}
+
+/**
+ * Set up event listeners for ICC profile integration
+ */
+function setupICCEventListeners() {
+    // Listen for input changes to update soft proof previews
+    const labInputs = document.querySelectorAll('input[id*="target-"], input[id*="sample-"]');
+    labInputs.forEach(input => {
+        if (input.id.includes('-l') || input.id.includes('-a') || input.id.includes('-b')) {
+            input.addEventListener('input', debounce(() => {
+                if (window.iccProfileManager) {
+                    window.iccProfileManager.updateSoftProofPreview();
+                }
+            }, 300));
+        }
+    });
+
+    // Add ICC profile button functionality to header
+    const iccProfileBtn = document.getElementById('icc-profile-btn');
+    if (iccProfileBtn) {
+        iccProfileBtn.addEventListener('click', () => {
+            toggleICCProfileSection();
+        });
+    }
+}
+
+/**
+ * Toggle ICC profile section visibility
+ */
+function toggleICCProfileSection() {
+    const iccSection = document.getElementById('icc-profile-section');
+    if (iccSection) {
+        const isVisible = iccSection.style.display !== 'none';
+        iccSection.style.display = isVisible ? 'none' : 'block';
+        
+        // Smooth scroll to section if showing
+        if (!isVisible) {
+            iccSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+}
+
+/**
+ * Get enhanced color conversion using ICC profile if available
+ * Requirements: 6.2 - LAB to RGB conversion using ICC transformation matrices
+ */
+function getEnhancedColorConversion(lab) {
+    if (window.iccProfileManager && window.iccProfileManager.hasICCProfile()) {
+        return window.iccProfileManager.labToRgbICC(lab.l, lab.a, lab.b);
+    } else if (window.labToRgb) {
+        return window.labToRgb(lab.l, lab.a, lab.b);
+    } else {
+        // Fallback
+        return { r: 128, g: 128, b: 128 };
+    }
+}
+
+/**
+ * Get CMYK to LAB conversion using DeviceLink if available
+ * Requirements: 6.4 - DeviceLink CSV support for CMYK→LAB conversion tables
+ */
+function getDeviceLinkConversion(cmyk) {
+    if (window.iccProfileManager && window.iccProfileManager.hasDeviceLink()) {
+        return window.iccProfileManager.cmykToLabDeviceLink(cmyk.c, cmyk.m, cmyk.y, cmyk.k);
+    }
+    return null;
+}
+
+/**
+ * Update calculation results with ICC profile information
+ */
+function addICCProfileInfoToResults() {
+    if (!window.iccProfileManager) return;
+
+    const resultsSection = document.querySelector('.results-section');
+    if (!resultsSection) return;
+
+    // Remove existing ICC info
+    const existingInfo = resultsSection.querySelector('.icc-profile-info');
+    if (existingInfo) {
+        existingInfo.remove();
+    }
+
+    // Add ICC profile information if available
+    const profileInfo = window.iccProfileManager.getProfileInfo();
+    if (profileInfo) {
+        const infoElement = document.createElement('div');
+        infoElement.className = 'icc-profile-info';
+        infoElement.innerHTML = `
+            <div class="profile-info-header">
+                <h4>🎨 ICC Profile Active</h4>
+            </div>
+            <div class="profile-details">
+                <div class="profile-detail">
+                    <span class="detail-label">Profile:</span>
+                    <span class="detail-value">${profileInfo.name}</span>
+                </div>
+                <div class="profile-detail">
+                    <span class="detail-label">Color Space:</span>
+                    <span class="detail-value">${profileInfo.colorSpace.trim()}</span>
+                </div>
+                <div class="profile-detail">
+                    <span class="detail-label">Device Class:</span>
+                    <span class="detail-value">${profileInfo.deviceClass.trim()}</span>
+                </div>
+                <div class="profile-features">
+                    ${profileInfo.hasMatrix ? '<span class="feature-badge">Matrix</span>' : ''}
+                    ${profileInfo.hasTRC ? '<span class="feature-badge">TRC</span>' : ''}
+                    ${window.iccProfileManager.hasDeviceLink() ? '<span class="feature-badge">DeviceLink</span>' : ''}
+                </div>
+            </div>
+        `;
+
+        // Insert after results header
+        const resultsHeader = resultsSection.querySelector('.results-header');
+        if (resultsHeader) {
+            resultsHeader.insertAdjacentElement('afterend', infoElement);
+        } else {
+            resultsSection.insertBefore(infoElement, resultsSection.firstChild);
+        }
+    }
+}
+
+/**
+ * Enhanced color difference calculation with ICC profile support
+ */
+function performEnhancedColorCalculation() {
+    try {
+        // Get current color values
+        const colorValues = getCurrentColorValues();
+        
+        // Use DeviceLink for CMYK to LAB conversion if available
+        const targetDeviceLink = getDeviceLinkConversion(colorValues.target.cmyk);
+        const sampleDeviceLink = getDeviceLinkConversion(colorValues.sample.cmyk);
+        
+        // Use DeviceLink LAB values if available, otherwise use input LAB values
+        const targetLab = targetDeviceLink || colorValues.target.lab;
+        const sampleLab = sampleDeviceLink || colorValues.sample.lab;
+        
+        // Perform standard calculation with potentially enhanced LAB values
+        const results = calculateColorDifference(targetLab, sampleLab);
+        
+        // Add ICC profile information to results
+        addICCProfileInfoToResults();
+        
+        return results;
+        
+    } catch (error) {
+        console.error('Error in enhanced color calculation:', error);
+        // Fallback to standard calculation
+        return performColorDifferenceCalculation();
+    }
+}
+
+/**
+ * Debounce utility function
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Initialize ICC profile integration when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit for other modules to load
+    setTimeout(() => {
+        initializeICCProfileIntegration();
+    }, 500);
+});
+
+// Export ICC integration functions for global access
+window.iccIntegration = {
+    getEnhancedColorConversion,
+    getDeviceLinkConversion,
+    performEnhancedColorCalculation,
+    toggleICCProfileSection
+};
+
+console.log('ICC Profile integration functions loaded');

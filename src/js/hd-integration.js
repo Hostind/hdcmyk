@@ -570,6 +570,12 @@ function populateClientProfiles() {
             profileSelect.appendChild(option);
         });
     }
+    
+    // Update current profile display if there's an active profile
+    const currentProfile = window.clientProfiles.getCurrentProfile();
+    if (currentProfile && profileSelect) {
+        profileSelect.value = currentProfile.name;
+    }
 }
 
 function showProfileEditor() {
@@ -594,6 +600,13 @@ function loadProfileIntoEditor(profileName) {
 }
 
 function saveCurrentProfile() {
+    // Delegate to the enhanced UI handler if available
+    if (window.CLIENT_PROFILE_UI_STATE) {
+        // The enhanced UI will handle this
+        return;
+    }
+    
+    // Fallback for basic functionality
     if (!window.clientProfiles) return;
     
     const name = document.getElementById('profile-name').value;

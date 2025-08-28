@@ -1,678 +1,515 @@
-// Enhanced CSV Import/Export Module
-// Extends existing export.js functionality with advanced HD features
-// Supports batch color analysis, grid import/export, and heatmap data
+// Enhanced CSV Import and Processing Module
+// Requirements: 3.1, 3.2 - CSV import functionality with robust parsing for L*a*b* data
 
 console.log('Enhanced CSV module loading...');
 
-// CSV Processing State
-let CSV_STATE = {
-    importBuffer: [],
-    exportQueue: [],
-    processingStatus: 'idle',
-    lastImport: null,
-    batchSize: 1000
-};
-
 /**
- * Enhanced CSV Import with Streaming for Large Files
- * Supports LAB data import with validation and error handling
+ * CSV Parser with robust error handling and multiple format support
+ * Supports various CSV formats commonly used in color measurement
  */
-async function importCSVWithStreaming(file, options = {}) {
-    const {
-        maxRows = 10000,
-        validateData = true,
-        onProgress = null,
-        chunkSize = 1024 * 1024 // 1MB chunks
-    } = options;
-    
-    try {
-        CSV_STATE.processingStatus = 'importing';
-        let processedRows = 0;
-        let validRows = 0;
-        const results = [];
+class CSVParser {
+    constructor() {
+        this.supportedFormats = [
+            'lab', // L*, a*, b* columns
+            'xyz', // X, Y, Z columns  
+            'rgb', // R, G, B columns
+            'cmyk', // C, M, Y, K columns
+            'mixed' // Mixed format detection
+        ];
         
-        // For small files, use direct processing
-        if (file.size < chunkSize) {
-            const text = await file.text();
-            return parseCSVText(text, { maxRows, validateData });
+        this.commonDelimiters = [',', ';', '\t', '|'];
+        this.parseStats = {
+            totalRows: 0,
+            validRows: 0,
+            errors: []
+        };
+    }
+
+    /**
+     * Parse CSV file with automatic format detection
+     * Requirements: 3.1 - Implement CSV import functionality with robust parsing
+     */
+    async parseFile(file, options = {}) {
+        try {
+            console.log(`Parsing CSV file: ${file.name} (${file.size} bytes)`);
+            
+            // Reset parse statistics
+            this.resetParseStats();
+            
+            // Read file content
+            const content = await this.readFileContent(file);
+            
+            // Detect format and delimiter
+            const formatInfo = this.detectFormat(content);
+            console.log('Detected format:', formatInfo);
+            
+            // Parse content based on detected format
+            const parsedData = this.parseContent(content, formatInfo, options);
+            
+            // Validate and clean data
+            const cleanedData = this.validateAndCleanData(parsedData, formatInfo);
+            
+            console.log(`CSV parsing complete: ${this.parseStats.validRows}/${this.parseStats.totalRows} valid rows`);
+            
+            return {
+                success: true,
+                data: cleanedData,
+                format: formatInfo,
+                stats: { ...this.parseStats },
+                metadata: {
+                    filename: file.name,
+                    fileSize: file.size,
+                    parseTime: Date.now()
+                }
+            };
+            
+        } catch (error) {
+            console.error('CSV parsing error:', error);
+            return {
+                success: false,
+                error: error.message,
+                data: [],
+                stats: { ...this.parseStats }
+            };
         }
-        
-        // Stream processing for large files
-        let offset = 0;
-        let leftoverText = '';
-        let headerParsed = false;
-        let columnIndices = null;
-        
-        while (offset < file.size && validRows < maxRows) {
-            const slice = file.slice(offset, Math.min(file.size, offset + chunkSize));
-            const chunk = await slice.text();
+    }
+
+    /**
+     * Read file content with encoding detection
+     */
+    async readFileContent(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
             
-            const textToProcess = leftoverText + chunk;
-            const lines = textToProcess.split(/\r?\n/);
-            
-            // Keep the last incomplete line for next iteration
-            leftoverText = lines.pop() || '';
-            
-            for (const line of lines) {
-                if (!line.trim()) continue;
-                
-                processedRows++;
-                
-                if (!headerParsed) {
-                    columnIndices = parseCSVHeader(line);
-                    if (!columnIndices) {
-                        throw new Error('Invalid CSV header - must contain L*, a*, b* columns');
+            reader.onload = (e) => {
+                try {
+                    let content = e.target.result;
+                    
+                    // Handle different encodings and line endings
+                    content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                    
+                    // Remove BOM if present
+                    if (content.charCodeAt(0) === 0xFEFF) {
+                        content = content.slice(1);
                     }
-                    headerParsed = true;
-                    continue;
+                    
+                    resolve(content);
+                } catch (error) {
+                    reject(new Error(`Failed to read file content: ${error.message}`));
                 }
-                
-                const rowData = parseCSVRow(line, columnIndices, validateData);
-                if (rowData) {
-                    results.push(rowData);
-                    validRows++;
-                }
-                
-                // Report progress
-                if (onProgress && processedRows % 100 === 0) {
-                    onProgress({
-                        processed: processedRows,
-                        valid: validRows,
-                        progress: Math.min(1, offset / file.size)
-                    });
-                }
-                
-                if (validRows >= maxRows) break;
-            }
+            };
             
-            offset += chunkSize;
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsText(file, 'UTF-8');
+        });
+    }
+
+    /**
+     * Detect CSV format and delimiter
+     */
+    detectFormat(content) {
+        const lines = content.split('\n').filter(line => line.trim());
+        if (lines.length === 0) {
+            throw new Error('Empty CSV file');
         }
+
+        // Detect delimiter
+        const delimiter = this.detectDelimiter(lines[0]);
         
-        // Process any remaining text
-        if (leftoverText.trim() && validRows < maxRows) {
-            const rowData = parseCSVRow(leftoverText, columnIndices, validateData);
-            if (rowData) {
-                results.push(rowData);
-                validRows++;
-            }
-        }
+        // Parse header row
+        const headers = this.parseRow(lines[0], delimiter)
+            .map(h => h.toLowerCase().trim());
         
-        CSV_STATE.processingStatus = 'idle';
-        CSV_STATE.lastImport = {
-            timestamp: new Date().toISOString(),
-            filename: file.name,
-            totalRows: processedRows,
-            validRows: validRows
-        };
+        // Detect format based on headers
+        const format = this.detectFormatFromHeaders(headers);
         
         return {
-            success: true,
-            data: results,
-            totalRows: processedRows,
-            validRows: validRows,
-            message: `Imported ${validRows} valid rows from ${processedRows} total rows`
-        };
-        
-    } catch (error) {
-        CSV_STATE.processingStatus = 'error';
-        console.error('Error in CSV streaming import:', error);
-        return {
-            success: false,
-            error: error.message,
-            data: []
+            delimiter,
+            headers,
+            format,
+            hasHeader: this.hasHeaderRow(headers),
+            totalLines: lines.length
         };
     }
-}
 
-/**
- * Parse CSV Text (for smaller files)
- */
-function parseCSVText(text, options = {}) {
-    const { maxRows = 10000, validateData = true } = options;
-    
-    try {
-        const lines = text.split(/\r?\n/).filter(line => line.trim());
-        if (lines.length < 2) {
-            throw new Error('CSV must contain at least a header and one data row');
-        }
+    /**
+     * Detect CSV delimiter
+     */
+    detectDelimiter(firstLine) {
+        const delimiterCounts = {};
         
-        const columnIndices = parseCSVHeader(lines[0]);
-        if (!columnIndices) {
-            throw new Error('Invalid CSV header - must contain L*, a*, b* columns');
-        }
-        
-        const results = [];
-        let validRows = 0;
-        
-        for (let i = 1; i < lines.length && validRows < maxRows; i++) {
-            const rowData = parseCSVRow(lines[i], columnIndices, validateData);
-            if (rowData) {
-                results.push(rowData);
-                validRows++;
-            }
-        }
-        
-        return {
-            success: true,
-            data: results,
-            totalRows: lines.length - 1,
-            validRows: validRows,
-            message: `Parsed ${validRows} valid LAB color values`
-        };
-        
-    } catch (error) {
-        console.error('Error parsing CSV text:', error);
-        return {
-            success: false,
-            error: error.message,
-            data: []
-        };
-    }
-}
-
-/**
- * Parse CSV Header to Find Column Indices
- */
-function parseCSVHeader(headerLine) {
-    try {
-        const columns = headerLine.split(/,|;|\t/).map(h => h.trim().toLowerCase());
-        
-        const lIndex = columns.findIndex(h => /^l\*?$/i.test(h));
-        const aIndex = columns.findIndex(h => /^a\*?$/i.test(h));
-        const bIndex = columns.findIndex(h => /^b\*?$/i.test(h));
-        
-        // Optional CMYK columns
-        const cIndex = columns.findIndex(h => /^c(yan)?$/i.test(h));
-        const mIndex = columns.findIndex(h => /^m(agenta)?$/i.test(h));
-        const yIndex = columns.findIndex(h => /^y(ellow)?$/i.test(h));
-        const kIndex = columns.findIndex(h => /^k|black$/i.test(h));
-        
-        if (lIndex === -1 || aIndex === -1 || bIndex === -1) {
-            return null;
-        }
-        
-        return {
-            l: lIndex,
-            a: aIndex,
-            b: bIndex,
-            c: cIndex >= 0 ? cIndex : null,
-            m: mIndex >= 0 ? mIndex : null,
-            y: yIndex >= 0 ? yIndex : null,
-            k: kIndex >= 0 ? kIndex : null
-        };
-        
-    } catch (error) {
-        console.error('Error parsing CSV header:', error);
-        return null;
-    }
-}
-
-/**
- * Parse Individual CSV Row
- */
-function parseCSVRow(line, columnIndices, validateData = true) {
-    try {
-        const columns = line.split(/,|;|\t/);
-        
-        const L = parseFloat(columns[columnIndices.l]);
-        const a = parseFloat(columns[columnIndices.a]);
-        const b = parseFloat(columns[columnIndices.b]);
-        
-        if (isNaN(L) || isNaN(a) || isNaN(b)) {
-            return null; // Skip invalid rows
-        }
-        
-        const rowData = {
-            lab: {
-                l: validateData ? Math.max(0, Math.min(100, L)) : L,
-                a: validateData ? Math.max(-128, Math.min(127, a)) : a,
-                b: validateData ? Math.max(-128, Math.min(127, b)) : b
-            }
-        };
-        
-        // Add CMYK data if available
-        if (columnIndices.c !== null) {
-            const C = parseFloat(columns[columnIndices.c]);
-            const M = parseFloat(columns[columnIndices.m]);
-            const Y = parseFloat(columns[columnIndices.y]);
-            const K = parseFloat(columns[columnIndices.k]);
-            
-            if (!isNaN(C) && !isNaN(M) && !isNaN(Y) && !isNaN(K)) {
-                rowData.cmyk = {
-                    c: validateData ? Math.max(0, Math.min(100, C)) : C,
-                    m: validateData ? Math.max(0, Math.min(100, M)) : M,
-                    y: validateData ? Math.max(0, Math.min(100, Y)) : Y,
-                    k: validateData ? Math.max(0, Math.min(100, K)) : K
-                };
-            }
-        }
-        
-        return rowData;
-        
-    } catch (error) {
-        return null; // Skip rows with parsing errors
-    }
-}
-
-/**
- * Export Grid Data to CSV
- * Supports both basic and extended formats
- */
-function exportGridToCSV(gridData, options = {}) {
-    const {
-        includeDeltas = true,
-        includeCMYK = true,
-        includeHeatmapData = false,
-        filename = 'color_grid_export.csv'
-    } = options;
-    
-    try {
-        if (!gridData || !Array.isArray(gridData) || gridData.length === 0) {
-            throw new Error('No grid data to export');
-        }
-        
-        // Build CSV header
-        const headers = ['Row', 'Column', 'Target_L', 'Target_A', 'Target_B', 'Sample_L', 'Sample_A', 'Sample_B'];
-        
-        if (includeDeltas) {
-            headers.push('Delta_E', 'Delta_E2000', 'Delta_L', 'Delta_A', 'Delta_B');
-        }
-        
-        if (includeCMYK) {
-            headers.push('C', 'M', 'Y', 'K');
-        }
-        
-        if (includeHeatmapData) {
-            headers.push('Heatmap_Value', 'Zone_Classification');
-        }
-        
-        // Build CSV rows
-        const csvRows = [headers.join(',')];
-        
-        gridData.forEach((row, rowIndex) => {
-            if (Array.isArray(row)) {
-                row.forEach((cell, colIndex) => {
-                    const csvRow = buildGridRowCSV(cell, rowIndex, colIndex, {
-                        includeDeltas,
-                        includeCMYK,
-                        includeHeatmapData
-                    });
-                    csvRows.push(csvRow);
-                });
-            }
+        this.commonDelimiters.forEach(delimiter => {
+            delimiterCounts[delimiter] = (firstLine.match(new RegExp(`\\${delimiter}`, 'g')) || []).length;
         });
         
-        const csvContent = csvRows.join('\n');
-        downloadCSV(csvContent, filename);
-        
-        return {
-            success: true,
-            rows: csvRows.length - 1, // Excluding header
-            message: `Exported ${csvRows.length - 1} color measurements to ${filename}`
-        };
-        
-    } catch (error) {
-        console.error('Error exporting grid to CSV:', error);
-        return {
-            success: false,
-            error: error.message
-        };
+        // Return delimiter with highest count
+        return Object.keys(delimiterCounts).reduce((a, b) => 
+            delimiterCounts[a] > delimiterCounts[b] ? a : b
+        );
     }
-}
 
-/**
- * Build Individual Grid Row for CSV Export
- */
-function buildGridRowCSV(cell, rowIndex, colIndex, options) {
-    const { includeDeltas, includeCMYK, includeHeatmapData } = options;
-    
-    const row = [
-        rowIndex + 1,
-        colIndex + 1,
-        cell.target?.l?.toFixed(2) || '',
-        cell.target?.a?.toFixed(2) || '',
-        cell.target?.b?.toFixed(2) || '',
-        cell.sample?.l?.toFixed(2) || '',
-        cell.sample?.a?.toFixed(2) || '',
-        cell.sample?.b?.toFixed(2) || ''
-    ];
-    
-    if (includeDeltas) {
-        row.push(
-            cell.deltaE?.toFixed(2) || '',
-            cell.deltaE2000?.toFixed(2) || '',
-            cell.deltaL?.toFixed(2) || '',
-            cell.deltaA?.toFixed(2) || '',
-            cell.deltaB?.toFixed(2) || ''
-        );
+    /**
+     * Detect format from header row
+     */
+    detectFormatFromHeaders(headers) {
+        const headerStr = headers.join(' ').toLowerCase();
+        
+        // Check for LAB format
+        if (headerStr.includes('l*') || headerStr.includes('l_') || 
+            (headerStr.includes('l') && headerStr.includes('a') && headerStr.includes('b'))) {
+            return 'lab';
+        }
+        
+        // Check for XYZ format
+        if (headerStr.includes('x') && headerStr.includes('y') && headerStr.includes('z')) {
+            return 'xyz';
+        }
+        
+        // Check for RGB format
+        if (headerStr.includes('r') && headerStr.includes('g') && headerStr.includes('b')) {
+            return 'rgb';
+        }
+        
+        // Check for CMYK format
+        if (headerStr.includes('c') && headerStr.includes('m') && 
+            headerStr.includes('y') && headerStr.includes('k')) {
+            return 'cmyk';
+        }
+        
+        return 'mixed';
     }
-    
-    if (includeCMYK && cell.cmyk) {
-        row.push(
-            cell.cmyk.c?.toFixed(1) || '',
-            cell.cmyk.m?.toFixed(1) || '',
-            cell.cmyk.y?.toFixed(1) || '',
-            cell.cmyk.k?.toFixed(1) || ''
-        );
-    }
-    
-    if (includeHeatmapData) {
-        const zone = window.colorScience?.getToleranceZone(cell.deltaE || 0) || 'unknown';
-        row.push(
-            cell.deltaE?.toFixed(2) || '0',
-            zone
-        );
-    }
-    
-    return row.join(',');
-}
 
-/**
- * Export Color Analysis Report
- * Comprehensive analysis with statistics and recommendations
- */
-function exportColorAnalysisReport(analysisData, options = {}) {
-    const {
-        includeStatistics = true,
-        includeRecommendations = true,
-        includeHistory = false,
-        filename = 'color_analysis_report.csv'
-    } = options;
-    
-    try {
-        const csvRows = [];
+    /**
+     * Check if first row is header
+     */
+    hasHeaderRow(headers) {
+        // Check if any header contains non-numeric characters
+        return headers.some(header => 
+            isNaN(parseFloat(header)) || header.match(/[a-zA-Z*]/));
+    }
+
+    /**
+     * Parse CSV content into structured data
+     */
+    parseContent(content, formatInfo, options) {
+        const lines = content.split('\n').filter(line => line.trim());
+        const data = [];
         
-        // Report Header
-        csvRows.push('HD CMYK Color Analysis Report');
-        csvRows.push(`Generated: ${new Date().toLocaleString()}`);
-        csvRows.push('');
+        // Skip header row if present
+        const startIndex = formatInfo.hasHeader ? 1 : 0;
         
-        // Main Analysis Data
-        if (analysisData.target && analysisData.sample) {
-            csvRows.push('TARGET,L*,a*,b*');
-            csvRows.push(`Target Color,${analysisData.target.l},${analysisData.target.a},${analysisData.target.b}`);
-            csvRows.push('');
+        for (let i = startIndex; i < lines.length; i++) {
+            this.parseStats.totalRows++;
             
-            csvRows.push('SAMPLE,L*,a*,b*');
-            csvRows.push(`Sample Color,${analysisData.sample.l},${analysisData.sample.a},${analysisData.sample.b}`);
-            csvRows.push('');
-            
-            csvRows.push('COLOR DIFFERENCE');
-            csvRows.push(`Delta E (CIE76),${analysisData.deltaE?.toFixed(2) || 'N/A'}`);
-            csvRows.push(`Delta E2000,${analysisData.deltaE2000?.toFixed(2) || 'N/A'}`);
-            csvRows.push(`Tolerance Zone,${analysisData.toleranceZone || 'Unknown'}`);
-            csvRows.push('');
-        }
-        
-        // Statistics Section
-        if (includeStatistics && analysisData.statistics) {
-            csvRows.push('STATISTICAL ANALYSIS');
-            csvRows.push('Metric,Value');
-            Object.entries(analysisData.statistics).forEach(([key, value]) => {
-                csvRows.push(`${key},${typeof value === 'number' ? value.toFixed(2) : value}`);
-            });
-            csvRows.push('');
-        }
-        
-        // Recommendations Section
-        if (includeRecommendations && analysisData.recommendations) {
-            csvRows.push('RECOMMENDATIONS');
-            csvRows.push('Priority,Channel,Adjustment,Description');
-            analysisData.recommendations.forEach(rec => {
-                csvRows.push(`${rec.priority},${rec.channel || 'General'},${rec.adjustment || 'N/A'},${rec.description}`);
-            });
-            csvRows.push('');
-        }
-        
-        // History Section
-        if (includeHistory && analysisData.history) {
-            csvRows.push('CALCULATION HISTORY');
-            csvRows.push('Timestamp,Target_L,Target_A,Target_B,Sample_L,Sample_A,Sample_B,Delta_E');
-            analysisData.history.forEach(entry => {
-                csvRows.push(`${entry.timestamp},${entry.target.l},${entry.target.a},${entry.target.b},${entry.sample.l},${entry.sample.a},${entry.sample.b},${entry.deltaE}`);
-            });
-        }
-        
-        const csvContent = csvRows.join('\n');
-        downloadCSV(csvContent, filename);
-        
-        return {
-            success: true,
-            message: `Analysis report exported to ${filename}`
-        };
-        
-    } catch (error) {
-        console.error('Error exporting analysis report:', error);
-        return {
-            success: false,
-            error: error.message
-        };
-    }
-}
-
-/**
- * Import Color Library from CSV/JSON
- * Supports both Pantone-style libraries and custom color libraries
- */
-function importColorLibrary(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        
-        reader.onload = (event) => {
             try {
-                let libraryData = [];
-                const fileContent = event.target.result;
-                const isJSON = file.name.toLowerCase().endsWith('.json');
+                const row = this.parseRow(lines[i], formatInfo.delimiter);
+                const parsedRow = this.parseDataRow(row, formatInfo, i + 1);
                 
-                if (isJSON) {
-                    libraryData = JSON.parse(fileContent);
-                } else {
-                    // Parse CSV format
-                    const parseResult = parseCSVText(fileContent, { validateData: true, maxRows: 5000 });
-                    if (parseResult.success) {
-                        libraryData = parseResult.data.map((item, index) => ({
-                            id: `imported_${index}`,
-                            name: `Color ${index + 1}`,
-                            lab: item.lab,
-                            cmyk: item.cmyk,
-                            source: 'imported',
-                            timestamp: new Date().toISOString()
-                        }));
-                    } else {
-                        throw new Error(parseResult.error);
-                    }
+                if (parsedRow) {
+                    data.push(parsedRow);
+                    this.parseStats.validRows++;
                 }
-                
-                // Validate library format
-                if (!Array.isArray(libraryData)) {
-                    throw new Error('Library data must be an array of color objects');
-                }
-                
-                // Validate each color entry
-                const validatedLibrary = libraryData.filter(color => {
-                    return color.lab && 
-                           typeof color.lab.l === 'number' &&
-                           typeof color.lab.a === 'number' &&
-                           typeof color.lab.b === 'number';
-                });
-                
-                resolve({
-                    success: true,
-                    data: validatedLibrary,
-                    totalColors: libraryData.length,
-                    validColors: validatedLibrary.length,
-                    message: `Imported ${validatedLibrary.length} colors from ${file.name}`
-                });
-                
             } catch (error) {
-                resolve({
-                    success: false,
+                this.parseStats.errors.push({
+                    row: i + 1,
                     error: error.message,
-                    data: []
+                    data: lines[i]
                 });
             }
-        };
+        }
         
-        reader.onerror = () => {
-            resolve({
-                success: false,
-                error: 'Failed to read file',
-                data: []
-            });
-        };
-        
-        reader.readAsText(file);
-    });
-}
+        return data;
+    }
 
-/**
- * Download CSV Content
- * Universal CSV download function
- */
-function downloadCSV(content, filename) {
-    try {
-        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
+    /**
+     * Parse individual CSV row
+     */
+    parseRow(line, delimiter) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
         
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
             
-            // Clean up the URL object
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === delimiter && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        
+        result.push(current.trim());
+        return result;
+    }
+
+    /**
+     * Parse data row based on detected format
+     */
+    parseDataRow(row, formatInfo, rowNumber) {
+        try {
+            switch (formatInfo.format) {
+                case 'lab':
+                    return this.parseLabRow(row, formatInfo.headers, rowNumber);
+                case 'xyz':
+                    return this.parseXyzRow(row, formatInfo.headers, rowNumber);
+                case 'rgb':
+                    return this.parseRgbRow(row, formatInfo.headers, rowNumber);
+                case 'cmyk':
+                    return this.parseCmykRow(row, formatInfo.headers, rowNumber);
+                default:
+                    return this.parseMixedRow(row, formatInfo.headers, rowNumber);
+            }
+        } catch (error) {
+            throw new Error(`Row ${rowNumber}: ${error.message}`);
+        }
+    }
+
+    /**
+     * Parse LAB format row
+     */
+    parseLabRow(row, headers, rowNumber) {
+        const labData = { type: 'lab', row: rowNumber };
+        
+        // Find L*, a*, b* columns
+        const lIndex = this.findColumnIndex(headers, ['l*', 'l_', 'l', 'lightness']);
+        const aIndex = this.findColumnIndex(headers, ['a*', 'a_', 'a', 'green_red']);
+        const bIndex = this.findColumnIndex(headers, ['b*', 'b_', 'b', 'blue_yellow']);
+        
+        if (lIndex === -1 || aIndex === -1 || bIndex === -1) {
+            throw new Error('Missing required LAB columns');
+        }
+        
+        labData.l = this.parseNumericValue(row[lIndex], 'L*', 0, 100);
+        labData.a = this.parseNumericValue(row[aIndex], 'a*', -128, 127);
+        labData.b = this.parseNumericValue(row[bIndex], 'b*', -128, 127);
+        
+        // Look for optional patch ID or name
+        const idIndex = this.findColumnIndex(headers, ['id', 'patch', 'name', 'sample']);
+        if (idIndex !== -1 && row[idIndex]) {
+            labData.id = row[idIndex];
+        }
+        
+        return labData;
+    }
+
+    /**
+     * Parse XYZ format row and convert to LAB
+     */
+    parseXyzRow(row, headers, rowNumber) {
+        const xIndex = this.findColumnIndex(headers, ['x', 'x_value']);
+        const yIndex = this.findColumnIndex(headers, ['y', 'y_value']);
+        const zIndex = this.findColumnIndex(headers, ['z', 'z_value']);
+        
+        if (xIndex === -1 || yIndex === -1 || zIndex === -1) {
+            throw new Error('Missing required XYZ columns');
+        }
+        
+        const x = this.parseNumericValue(row[xIndex], 'X');
+        const y = this.parseNumericValue(row[yIndex], 'Y');
+        const z = this.parseNumericValue(row[zIndex], 'Z');
+        
+        // Convert XYZ to LAB using color science module
+        if (window.xyzToLab) {
+            const lab = window.xyzToLab(x, y, z);
+            return {
+                type: 'lab',
+                row: rowNumber,
+                l: lab.l,
+                a: lab.a,
+                b: lab.b,
+                originalXyz: { x, y, z }
+            };
         } else {
-            throw new Error('Browser does not support CSV download');
+            throw new Error('XYZ to LAB conversion not available');
+        }
+    }
+
+    /**
+     * Parse RGB format row and convert to LAB
+     */
+    parseRgbRow(row, headers, rowNumber) {
+        const rIndex = this.findColumnIndex(headers, ['r', 'red']);
+        const gIndex = this.findColumnIndex(headers, ['g', 'green']);
+        const bIndex = this.findColumnIndex(headers, ['b', 'blue']);
+        
+        if (rIndex === -1 || gIndex === -1 || bIndex === -1) {
+            throw new Error('Missing required RGB columns');
         }
         
-    } catch (error) {
-        console.error('Error downloading CSV:', error);
-        throw error;
-    }
-}
-
-/**
- * Batch Color Processing
- * Process multiple colors efficiently with progress reporting
- */
-async function batchProcessColors(colorData, processingFunction, options = {}) {
-    const {
-        batchSize = 100,
-        onProgress = null,
-        onComplete = null,
-        validateResults = true
-    } = options;
-    
-    try {
-        CSV_STATE.processingStatus = 'processing';
-        const results = [];
-        const total = colorData.length;
-        let processed = 0;
+        const r = this.parseNumericValue(row[rIndex], 'R', 0, 255);
+        const g = this.parseNumericValue(row[gIndex], 'G', 0, 255);
+        const b = this.parseNumericValue(row[bIndex], 'B', 0, 255);
         
-        for (let i = 0; i < colorData.length; i += batchSize) {
-            const batch = colorData.slice(i, i + batchSize);
-            
-            // Process batch
-            const batchResults = await Promise.all(
-                batch.map(async (colorItem) => {
-                    try {
-                        const result = await processingFunction(colorItem);
-                        return validateResults ? validateProcessingResult(result) : result;
-                    } catch (error) {
-                        return { error: error.message, originalData: colorItem };
-                    }
-                })
-            );
-            
-            results.push(...batchResults);
-            processed += batch.length;
-            
-            // Report progress
-            if (onProgress) {
-                onProgress({
-                    processed,
-                    total,
-                    progress: processed / total,
-                    currentBatch: Math.floor(i / batchSize) + 1,
-                    totalBatches: Math.ceil(total / batchSize)
-                });
+        // Convert RGB to LAB via XYZ
+        if (window.rgbToXyz && window.xyzToLab) {
+            const xyz = window.rgbToXyz(r, g, b);
+            const lab = window.xyzToLab(xyz.x, xyz.y, xyz.z);
+            return {
+                type: 'lab',
+                row: rowNumber,
+                l: lab.l,
+                a: lab.a,
+                b: lab.b,
+                originalRgb: { r, g, b }
+            };
+        } else {
+            throw new Error('RGB to LAB conversion not available');
+        }
+    }
+
+    /**
+     * Parse CMYK format row and convert to LAB
+     */
+    parseCmykRow(row, headers, rowNumber) {
+        const cIndex = this.findColumnIndex(headers, ['c', 'cyan']);
+        const mIndex = this.findColumnIndex(headers, ['m', 'magenta']);
+        const yIndex = this.findColumnIndex(headers, ['y', 'yellow']);
+        const kIndex = this.findColumnIndex(headers, ['k', 'black', 'key']);
+        
+        if (cIndex === -1 || mIndex === -1 || yIndex === -1 || kIndex === -1) {
+            throw new Error('Missing required CMYK columns');
+        }
+        
+        const c = this.parseNumericValue(row[cIndex], 'C', 0, 100);
+        const m = this.parseNumericValue(row[mIndex], 'M', 0, 100);
+        const y = this.parseNumericValue(row[yIndex], 'Y', 0, 100);
+        const k = this.parseNumericValue(row[kIndex], 'K', 0, 100);
+        
+        // Convert CMYK to LAB via RGB and XYZ
+        if (window.cmykToRgb && window.rgbToXyz && window.xyzToLab) {
+            const rgb = window.cmykToRgb(c, m, y, k);
+            const xyz = window.rgbToXyz(rgb.r, rgb.g, rgb.b);
+            const lab = window.xyzToLab(xyz.x, xyz.y, xyz.z);
+            return {
+                type: 'lab',
+                row: rowNumber,
+                l: lab.l,
+                a: lab.a,
+                b: lab.b,
+                originalCmyk: { c, m, y, k }
+            };
+        } else {
+            throw new Error('CMYK to LAB conversion not available');
+        }
+    }
+
+    /**
+     * Parse mixed format row (auto-detect columns)
+     */
+    parseMixedRow(row, headers, rowNumber) {
+        // Try to find any recognizable color data
+        const numericValues = row.map(val => parseFloat(val)).filter(val => !isNaN(val));
+        
+        if (numericValues.length >= 3) {
+            // Assume first three numeric values are L*, a*, b*
+            return {
+                type: 'lab',
+                row: rowNumber,
+                l: Math.max(0, Math.min(100, numericValues[0])),
+                a: Math.max(-128, Math.min(127, numericValues[1])),
+                b: Math.max(-128, Math.min(127, numericValues[2]))
+            };
+        }
+        
+        throw new Error('Unable to parse row - insufficient numeric data');
+    }
+
+    /**
+     * Find column index by name variations
+     */
+    findColumnIndex(headers, variations) {
+        for (const variation of variations) {
+            const index = headers.findIndex(header => 
+                header.toLowerCase().includes(variation.toLowerCase()));
+            if (index !== -1) return index;
+        }
+        return -1;
+    }
+
+    /**
+     * Parse and validate numeric value
+     */
+    parseNumericValue(value, fieldName, min = -Infinity, max = Infinity) {
+        if (!value || value.trim() === '') {
+            throw new Error(`Empty ${fieldName} value`);
+        }
+        
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) {
+            throw new Error(`Invalid ${fieldName} value: ${value}`);
+        }
+        
+        if (numValue < min || numValue > max) {
+            console.warn(`${fieldName} value ${numValue} outside range [${min}, ${max}], clamping`);
+            return Math.max(min, Math.min(max, numValue));
+        }
+        
+        return numValue;
+    }
+
+    /**
+     * Validate and clean parsed data
+     */
+    validateAndCleanData(data, formatInfo) {
+        return data.filter(row => {
+            // Validate LAB ranges
+            if (row.type === 'lab') {
+                const validL = row.l >= 0 && row.l <= 100;
+                const validA = row.a >= -128 && row.a <= 127;
+                const validB = row.b >= -128 && row.b <= 127;
+                
+                if (!validL || !validA || !validB) {
+                    this.parseStats.errors.push({
+                        row: row.row,
+                        error: 'LAB values outside valid range',
+                        data: `L:${row.l} a:${row.a} b:${row.b}`
+                    });
+                    return false;
+                }
             }
             
-            // Yield control to prevent blocking
-            await new Promise(resolve => setTimeout(resolve, 0));
-        }
-        
-        CSV_STATE.processingStatus = 'idle';
-        
-        if (onComplete) {
-            onComplete(results);
-        }
-        
-        return {
-            success: true,
-            results,
-            processed,
-            total
+            return true;
+        });
+    }
+
+    /**
+     * Reset parse statistics
+     */
+    resetParseStats() {
+        this.parseStats = {
+            totalRows: 0,
+            validRows: 0,
+            errors: []
+        };
+    }
+
+    /**
+     * Generate parsing report
+     */
+    generateParseReport(result) {
+        const report = {
+            success: result.success,
+            summary: {
+                totalRows: result.stats.totalRows,
+                validRows: result.stats.validRows,
+                errorRows: result.stats.errors.length,
+                successRate: result.stats.totalRows > 0 ? 
+                    (result.stats.validRows / result.stats.totalRows * 100).toFixed(1) + '%' : '0%'
+            },
+            format: result.format,
+            errors: result.stats.errors.slice(0, 10), // Show first 10 errors
+            hasMoreErrors: result.stats.errors.length > 10
         };
         
-    } catch (error) {
-        CSV_STATE.processingStatus = 'error';
-        console.error('Error in batch processing:', error);
-        return {
-            success: false,
-            error: error.message,
-            results: []
-        };
+        return report;
     }
 }
 
-/**
- * Validate Processing Result
- */
-function validateProcessingResult(result) {
-    if (!result || typeof result !== 'object') {
-        return { error: 'Invalid processing result' };
-    }
-    
-    // Add any specific validation logic here
-    return result;
-}
-
-// Export enhanced CSV functions
-window.csvEnhanced = {
-    // Import functions
-    importCSVWithStreaming,
-    parseCSVText,
-    importColorLibrary,
-    
-    // Export functions
-    exportGridToCSV,
-    exportColorAnalysisReport,
-    downloadCSV,
-    
-    // Processing functions
-    batchProcessColors,
-    
-    // State management
-    getState: () => CSV_STATE,
-    
-    // Utility functions
-    parseCSVHeader,
-    parseCSVRow,
-    buildGridRowCSV
-};
-
-// Integrate with existing export module if available
-if (window.colorExport) {
-    window.colorExport.enhanced = window.csvEnhanced;
-    console.log('Enhanced CSV functionality integrated with existing export module');
-} else {
-    // Create basic export namespace if it doesn't exist
-    window.colorExport = { enhanced: window.csvEnhanced };
-}
+// Export CSV parser for use in other modules
+window.CSVParser = CSVParser;
 
 console.log('Enhanced CSV module loaded successfully');

@@ -274,6 +274,121 @@ function labToCssString(l, a, b) {
 }
 
 /**
+ * CMYKOGV to RGB Conversion - Extended Gamut Support
+ * Supports Orange, Green, Violet extended gamut channels
+ * Requirements: 2.1, 2.2, 2.3 - Extended gamut input support
+ */
+function cmykogvToRgb(c, m, y, k, o = 0, g = 0, v = 0) {
+    // Generate cache key for performance optimization
+    const cacheKey = `cmykogv_${c.toFixed(1)}_${m.toFixed(1)}_${y.toFixed(1)}_${k.toFixed(1)}_${o.toFixed(1)}_${g.toFixed(1)}_${v.toFixed(1)}`;
+
+    // Check cache first
+    if (colorConversionCache.has(cacheKey)) {
+        return colorConversionCache.get(cacheKey);
+    }
+
+    try {
+        // Validate and clamp input values to 0-100% range
+        const cClamped = Math.max(0, Math.min(100, c));
+        const mClamped = Math.max(0, Math.min(100, m));
+        const yClamped = Math.max(0, Math.min(100, y));
+        const kClamped = Math.max(0, Math.min(100, k));
+        const oClamped = Math.max(0, Math.min(100, o));
+        const gClamped = Math.max(0, Math.min(100, g));
+        const vClamped = Math.max(0, Math.min(100, v));
+
+        // Start with basic CMYK to RGB conversion
+        const baseRgb = cmykToRgb(cClamped, mClamped, yClamped, kClamped);
+        
+        // Convert to normalized 0-1 range for extended gamut calculations
+        let R = baseRgb.r / 255;
+        let G = baseRgb.g / 255;
+        let B = baseRgb.b / 255;
+        
+        // Apply extended gamut adjustments
+        // Orange affects Red and Green channels (warm orange effect)
+        if (oClamped > 0) {
+            const orangeFactor = oClamped / 100;
+            R = Math.max(0, Math.min(1, R + orangeFactor * 0.25));
+            G = Math.max(0, Math.min(1, G + orangeFactor * 0.05));
+        }
+        
+        // Green affects Green channel primarily (clean green effect)
+        if (gClamped > 0) {
+            const greenFactor = gClamped / 100;
+            G = Math.max(0, Math.min(1, G + greenFactor * 0.25));
+            R = Math.max(0, Math.min(1, R + greenFactor * 0.05));
+        }
+        
+        // Violet affects Blue and Red channels (purple/violet effect)
+        if (vClamped > 0) {
+            const violetFactor = vClamped / 100;
+            B = Math.max(0, Math.min(1, B + violetFactor * 0.25));
+            R = Math.max(0, Math.min(1, R + violetFactor * 0.05));
+        }
+
+        const result = {
+            r: Math.round(R * 255),
+            g: Math.round(G * 255),
+            b: Math.round(B * 255)
+        };
+
+        // Cache the result for future use
+        cacheColorConversion(cacheKey, result);
+
+        return result;
+
+    } catch (error) {
+        console.error('Error in CMYKOGV to RGB conversion:', error);
+        // Return white as fallback
+        return { r: 255, g: 255, b: 255 };
+    }
+}
+
+/**
+ * Convert CMYKOGV values to CSS color string
+ * Convenience function for direct CMYKOGV to CSS conversion
+ */
+function cmykogvToCssString(c, m, y, k, o = 0, g = 0, v = 0) {
+    const rgb = cmykogvToRgb(c, m, y, k, o, g, v);
+    return rgbToCssString(rgb);
+}
+
+/**
+ * Validate CMYKOGV values
+ * Requirements: 2.1 - Add validation for extended gamut values (0-100% range)
+ */
+function validateCMYKOGVValues(cmykogv) {
+    const channels = ['c', 'm', 'y', 'k', 'o', 'g', 'v'];
+    const errors = [];
+
+    channels.forEach(channel => {
+        const value = cmykogv[channel];
+        if (value !== undefined && value !== null) {
+            if (isNaN(value)) {
+                errors.push(`${channel.toUpperCase()} must be a number`);
+            } else if (value < 0 || value > 100) {
+                errors.push(`${channel.toUpperCase()} must be between 0 and 100`);
+            }
+        }
+    });
+
+    // Check Total Area Coverage (TAC) - typical limit is 400%
+    const totalCoverage = channels.reduce((sum, channel) => 
+        sum + (cmykogv[channel] || 0), 0);
+    
+    if (totalCoverage > 400) {
+        errors.push(`Total Area Coverage (${totalCoverage.toFixed(1)}%) exceeds 400% limit`);
+    }
+
+    return {
+        isValid: errors.length === 0,
+        errors: errors,
+        totalCoverage: totalCoverage
+    };
+}
+
+/**
  * Performance Optimization: Color conversion caching utilities
  * Requirements: Optimize color conversion functions for real-time performance
  */
@@ -801,6 +916,11 @@ window.colorScience = {
     xyzToLab,
     labToXyz,
     xyzToRgb,
+
+    // Extended gamut conversion functions - NEW
+    cmykogvToRgb,
+    cmykogvToCssString,
+    validateCMYKOGVValues,
 
     // Delta E calculation functions
     calculateDeltaE,
