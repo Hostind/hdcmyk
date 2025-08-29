@@ -1,2887 +1,1097 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HD CMYK • Pro LAB/CMYK Match Studio — Ultra Stable</title>
-    <meta name="description" content="Professional HD CMYK color matching with LAB analysis, ICC profiles, heatmap visualization, and industry workflows">
-    <meta name="theme-color" content="#1f2937">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="HD CMYK Studio">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="src/assets/icons/icon.svg">
-    <link rel="apple-touch-icon" href="src/assets/icons/icon.svg">
-    <link rel="stylesheet" href="src/css/styles.css">
-    <link rel="stylesheet" href="src/css/grid-styles.css">
-    <link rel="stylesheet" href="src/css/spectrophotometer-styles.css">
-    <link rel="stylesheet" href="src/css/measurement-history-styles.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #1f2937;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Enhanced Status Bar */
-        .status-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            z-index: 1001;
-            transform: translateY(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
-
-        .status-bar.visible {
-            transform: translateY(0);
-        }
-
-        .status-bar-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            height: 100%;
-            gap: 20px;
-        }
-
-        .status-info,
-        .delta-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .status-label,
-        .delta-label {
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.75rem;
-        }
-
-        .status-value,
-        .delta-value {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            font-size: 0.75rem;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        .quick-actions-bar {
-            display: flex;
-            gap: 8px;
-        }
-
-        .status-action-btn {
-            padding: 6px 12px;
-            background: transparent;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            color: #6b7280;
-            font-size: 0.75rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-action-btn:hover:not(:disabled) {
-            background: rgba(102, 126, 234, 0.1);
-            border-color: #667eea;
-            color: #667eea;
-        }
-
-        .status-action-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Sticky Header Styles */
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            margin-bottom: 40px;
-            padding: 15px 0;
-        }
-
-        /* Adjust container top margin when status bar is visible */
-        .container {
-            margin-top: 0;
-            transition: margin-top 0.3s ease;
-        }
-
-        .status-bar.visible ~ .container {
-            margin-top: 50px;
-        }
-
-        .header {
-            color: white;
-        }
-
-        .sticky-header .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .sticky-header .header-text {
-            flex: 1;
-            text-align: left;
-        }
-
-        .sticky-header h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .sticky-header .subtitle {
-            font-size: 0.875rem;
-            color: #6b7280;
-            font-weight: 500;
-            margin: 0;
-            opacity: 0.8;
-        }
-
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .header-btn {
-            padding: 8px 16px;
-            background: rgba(103, 126, 234, 0.1);
-            border: 1px solid rgba(103, 126, 234, 0.2);
-            border-radius: 20px;
-            color: #667eea;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 13px;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-        }
-
-        .header-btn:hover {
-            background: rgba(103, 126, 234, 0.2);
-            border-color: rgba(103, 126, 234, 0.4);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(103, 126, 234, 0.2);
-        }
-
-        .theme-toggle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
-
-        .theme-icon {
-            font-size: 18px;
-            transition: transform 0.3s ease;
-        }
-
-        .theme-toggle:hover .theme-icon {
-            transform: rotate(20deg);
-        }
-
-        /* Three-Column HD CMYK Layout */
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 40px;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .color-panel {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 20px;
-            padding: 30px;
-            position: relative;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .color-panel:hover {
-            border-color: #667eea;
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .panel-header h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .panel-status {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 12px;
-            background: #f3f4f6;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .panel-status.ready {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .panel-status.calculating {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .panel-status.complete {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        /* Analysis Panel Specific Styles */
-        .analysis-panel {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border: 1px solid #e2e8f0;
-        }
-
-        .quick-analysis {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            text-align: center;
-            border: 1px solid #e5e7eb;
-        }
-
-        .delta-preview {
-            margin-bottom: 20px;
-        }
-
-        .delta-preview-value {
-            font-size: 3rem;
-            font-weight: 800;
-            color: #667eea;
-            font-family: 'JetBrains Mono', monospace;
-            margin-bottom: 5px;
-        }
-
-        .delta-preview-label {
-            font-size: 0.875rem;
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .tolerance-preview {
-            margin-bottom: 20px;
-        }
-
-        .tolerance-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: #f3f4f6;
-            color: #6b7280;
-        }
-
-        .tolerance-badge.excellent {
-            background: #10b981;
-            color: white;
-        }
-
-        .tolerance-badge.good {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .tolerance-badge.acceptable {
-            background: #ef4444;
-            color: white;
-        }
-
-        .tolerance-badge.poor {
-            background: #7c2d12;
-            color: white;
-        }
-
-        /* Quick Stats */
-        .quick-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .stat-item {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1f2937;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .color-swatch {
-            width: 80px;
-            height: 80px;
-            border-radius: 10px;
-            border: 3px solid #e5e7eb;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-            background: #f3f4f6;
-        }
-
-        .input-group {
-            margin-bottom: 25px;
-        }
-
-        .input-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #374151;
-        }
-
-        .input-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 15px;
-        }
-
-        .input-field {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .input-field label {
-            font-size: 12px;
-            margin-bottom: 5px;
-            color: #6b7280;
-        }
-
-        .input-field input {
-            padding: 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .input-field input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .calculate-section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .calculate-btn {
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-            width: 100%;
-        }
-
-        .calculate-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .calculate-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .reset-btn,
-        #reset-all-btn {
-            padding: 12px 30px;
-            background: transparent;
-            color: #6b7280;
-            border: 2px solid #e5e7eb;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-
-        .reset-btn:hover,
-        #reset-all-btn:hover {
-            border-color: #667eea;
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        /* Enhanced Results Section */
-        .results-section {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 20px;
-            padding: 40px;
-            margin: 30px 0;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .results-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #f3f4f6;
-        }
-
-        .results-header h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin: 0;
-        }
-
-        .tolerance-zone {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tolerance-indicator {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .tolerance-indicator.excellent {
-            background: #10b981;
-            color: white;
-        }
-
-        .tolerance-indicator.good {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .tolerance-indicator.acceptable {
-            background: #ef4444;
-            color: white;
-        }
-
-        .tolerance-indicator.poor {
-            background: #7c2d12;
-            color: white;
-        }
-
-        /* Primary ΔE Display */
-        .primary-delta-display {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 40px;
-            margin-bottom: 40px;
-            align-items: center;
-        }
-
-        .delta-e-main {
-            text-align: center;
-            padding: 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            color: white;
-        }
-
-        .delta-e-value {
-            font-size: 4rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .delta-e-label {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            font-weight: 500;
-        }
-
-        /* ΔE Suite */
-        .delta-e-suite {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-
-        .delta-method {
-            background: #f8fafc;
-            border: 2px solid #e5e7eb;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .delta-method:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-        }
-
-        .method-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 8px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .method-label {
-            font-size: 0.875rem;
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Component Analysis */
-        .component-analysis {
-            margin-bottom: 30px;
-        }
-
-        .component-analysis h4 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .component-deltas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .delta-component {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .delta-component:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
-        }
-
-        .delta-component-label {
-            font-size: 0.875rem;
-            color: #6b7280;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .delta-component-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 10px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .component-bar {
-            height: 4px;
-            background: #e5e7eb;
-            border-radius: 2px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .component-bar::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
-            border-radius: 2px;
-            transition: width 0.5s ease;
-        }
-
-        /* Correction Suggestions */
-        .correction-suggestions {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 15px;
-            padding: 25px;
-        }
-
-        .correction-suggestions h4 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #0c4a6e;
-            margin-bottom: 15px;
-        }
-
-        .suggestions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .suggestion-item {
-            background: white;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .suggestion-label {
-            font-size: 0.75rem;
-            color: #0369a1;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .suggestion-value {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #0c4a6e;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .advanced-features {
-            display: none;
-            animation: slideDown 0.5s ease;
-        }
-
-        .advanced-features.show {
-            display: block;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .feature-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border-left: 5px solid #3b82f6;
-        }
-
-        .feature-card h3 {
-            margin-bottom: 20px;
-            color: #1f2937;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .control-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .control-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #374151;
-        }
-
-        .control-group select,
-        .control-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .control-group select:focus,
-        .control-group input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .heatmap-container {
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .heatmap-canvas {
-            max-width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 5px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #f3f4f6;
-            color: #374151;
-            border: 1px solid #d1d5db;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 800px;
-            width: 90%;
-            max-height: 90%;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #6b7280;
-        }
-
-        /* Client Profile Modal Styles */
-        .profile-management-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .profile-tabs {
-            display: flex;
-            border-bottom: 2px solid #e5e7eb;
-            margin-bottom: 20px;
-        }
-
-        .tab-btn {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            font-weight: 500;
-            color: #6b7280;
-            transition: all 0.3s ease;
-        }
-
-        .tab-btn:hover {
-            color: #374151;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .tab-btn.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .substrate-checkboxes {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 8px;
-        }
-
-        .substrate-checkboxes label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: normal;
-            margin-bottom: 0;
-        }
-
-        .workflow-settings {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .workflow-settings label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: normal;
-            margin-bottom: 0;
-        }
-
-        .sop-management {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .sop-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .sop-header h4 {
-            margin: 0;
-            color: #374151;
-        }
-
-        .sop-progress {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .progress-bar {
-            width: 150px;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #059669);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .sop-checklist {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .sop-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .sop-item:last-child {
-            border-bottom: none;
-        }
-
-        .sop-checkbox {
-            margin-top: 2px;
-        }
-
-        .sop-text {
-            flex: 1;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .sop-text.completed {
-            text-decoration: line-through;
-            color: #6b7280;
-        }
-
-        .sop-item-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .sop-item-btn {
-            padding: 4px 8px;
-            background: none;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .sop-item-btn:hover {
-            background: #f3f4f6;
-            color: #374151;
-        }
-
-        .sop-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-start;
-        }
-
-        .profile-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .current-profile-status {
-            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-            border: 1px solid #bae6fd;
-        }
-
-        .active-profile-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 10px;
-        }
-
-        .profile-info-item {
-            background: white;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #e0f2fe;
-        }
-
-        .profile-info-label {
-            font-size: 12px;
-            color: #0369a1;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .profile-info-value {
-            font-size: 14px;
-            color: #0c4a6e;
-            font-weight: 500;
-        }
-
-        /* Notification animations */
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-
-        /* Responsive adjustments for profile modal */
-        @media (max-width: 768px) {
-            .profile-tabs {
-                flex-wrap: wrap;
-            }
-            
-            .tab-btn {
-                flex: 1;
-                min-width: 120px;
-                padding: 10px 12px;
-                font-size: 14px;
-            }
-            
-            .substrate-checkboxes {
-                grid-template-columns: 1fr;
-            }
-            
-            .control-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .sop-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .profile-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-
-        .status-bar {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            padding: 15px 25px;
-            border-radius: 50px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            z-index: 100;
-        }
-
-        .extended-gamut {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .extended-gamut h4 {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .ogv-inputs {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-        }
-
-        .ogv-inputs .input-field input {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-        }
-
-        .ogv-inputs .input-field input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .tolerance-indicator {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-left: 15px;
-        }
-
-        .tolerance-excellent {
-            background: #10b981;
-            color: white;
-        }
-
-        .tolerance-good {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .tolerance-poor {
-            background: #ef4444;
-            color: white;
-        }
-
-        @media (max-width: 1024px) {
-            .main-layout {
-                grid-template-columns: 1fr 1fr;
-                gap: 25px;
-            }
-            
-            .analysis-panel {
-                grid-column: 1 / -1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .sticky-header .header-content {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .sticky-header .header-text {
-                text-align: center;
-            }
-
-            .sticky-header h1 {
-                font-size: 1.5rem;
-            }
-
-            .sticky-header .subtitle {
-                font-size: 0.75rem;
-            }
-
-            .header-controls {
-                justify-content: center;
-                gap: 8px;
-            }
-
-            .header-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-
-            .main-card {
-                padding: 25px;
-            }
-
-            .primary-delta-display {
-                grid-template-columns: 1fr;
-                gap: 25px;
-            }
-
-            .delta-e-suite {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .delta-e-value {
-                font-size: 3rem;
-            }
-
-            .method-value {
-                font-size: 1.5rem;
-            }
-
-            .component-deltas {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .control-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .status-bar-content {
-                flex-direction: column;
-                height: auto;
-                padding: 8px 15px;
-                gap: 8px;
-            }
-
-            .status-bar {
-                height: auto;
-                min-height: 50px;
-            }
-
-            .status-bar.visible ~ .container {
-                margin-top: 60px;
-            }
-
-            .quick-actions-bar {
-                justify-content: center;
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 10px;
-            }
-
-            .sticky-header {
-                padding: 10px 0;
-            }
-
-            .sticky-header h1 {
-                font-size: 1.25rem;
-            }
-
-            .main-layout {
-                padding: 20px;
-            }
-
-            .delta-e-value {
-                font-size: 2.5rem;
-            }
-
-            .results-section {
-                padding: 25px;
-            }
-
-            .status-bar-content {
-                padding: 6px 10px;
-            }
-
-            .status-action-btn {
-                padding: 4px 8px;
-                font-size: 0.7rem;
-            }
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>HD CMYK • Pro LAB/CMYK Match Studio — Ultra Stable</title>
+<style>
+  :root{
+    --bg:#0d0f12;--panel:#12151a;--muted:#1b2027;--text:#e9edf3;--soft:#aeb6c2;
+    --accent:#67e8f9;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--card:#0f1318;
+    --chip:#2a313b;--border:#26303a
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0b0e12 0%,#0f1217 100%);color:var(--text);font:14px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  header{position:sticky;top:0;z-index:5;background:rgba(13,15,18,.85);backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--border)}
+  .wrap{max-width:1280px;margin:0 auto;padding:12px 16px}
+  h1{margin:0;font-size:20px;letter-spacing:.2px}
+  .subtitle{color:var(--soft);font-size:12px}
+  .grid{display:grid;gap:12px}
+  @media(min-width:1100px){ .grid.cols-3{grid-template-columns:2fr 1.5fr 1.2fr} .grid.cols-2{grid-template-columns:2fr 1.2fr}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 6px 22px rgba(0,0,0,.25)}
+  .card h2{margin:0 0 8px 0;font-size:16px}
+  label{display:block;margin:10px 0 4px 0;color:#c7ced9;font-size:12px}
+  input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text)}
+  textarea{resize:vertical}
+  input[type="number"]{appearance:textfield}
+  .row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .row-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .row-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px}
+  .btn{cursor:pointer;transition:.15s transform ease,.15s opacity}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(135deg,#2dd4bf,#60a5fa);border:none;color:#071016;font-weight:700}
+  .btn.ghost{background:transparent}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px}
+  .pass{background:rgba(34,197,94,.15);color:#7cf0a3;border:1px solid rgba(34,197,94,.35)}
+  .warn{background:rgba(245,158,11,.15);color:#ffd08a;border:1px solid rgba(245,158,11,.35)}
+  .fail{background:rgba(239,68,68,.15);color:#ff9b9b;border:1px solid rgba(239,68,68,.35)}
+  .swatch{height:42px;border-radius:10px;border:1px solid var(--border)}
+  .tiny{font-size:11px;color:#9aa3af}
+  .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden}
+  th,td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left}
+  th{font-weight:600;color:#cbd5e1;background:#0e1217}
+  tr:hover td{background:#0f141a}
+  .right{text-align:right}
+  .danger{color:#ff8484}
+  .ok{color:#8bf0b1}
+  canvas{width:100%;height:220px;background:#0b0f14;border-radius:12px;border:1px solid var(--border)}
+  .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px}
+  .muted{opacity:.8}
+  .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .kpi .card{padding:10px}
+  .tag{display:inline-block;background:#0b0f14;border:1px dashed var(--border);padding:2px 6px;border-radius:6px;color:#a9b1bc;font-size:11px}
+  #toast{position:fixed;bottom:16px;right:16px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:rgba(15,19,24,.95);color:var(--text);z-index:9999;transition:opacity .2s ease;opacity:0}
+  /* Print */
+  @media print{
+    header{display:none}
+    main.wrap{max-width:none}
+    .card{break-inside:avoid-page}
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <!-- Sticky Header with HD Features -->
-        <header class="header sticky-header" id="main-header">
-            <div class="header-content">
-                <div class="header-text">
-                    <h1>HD CMYK • Pro LAB/CMYK Match Studio</h1>
-                    <p class="subtitle">Ultra Stable • ΔE suite • Patch heatmap • CCM • Substrate simulation • ICC soft proof • CMYKOGV</p>
-                </div>
-                <div class="header-controls">
-                    <button class="header-btn theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
-                        <span class="theme-icon">🌙</span>
-                    </button>
-                    <button class="header-btn" id="client-profile-btn" title="Manage client profiles and SOPs">
-                        👤 Profiles
-                    </button>
-                    <button class="header-btn" id="icc-profile-btn" title="Load ICC profiles for accurate color">
-                        🎨 ICC
-                    </button>
-                    <button class="header-btn" id="advanced-toggle" title="Toggle HD features visibility">
-                        🔬 HD Features
-                    </button>
-                </div>
-            </div>
-        </header>
+<header>
+  <div class="wrap">
+    <h1>HD CMYK — Pro LAB/CMYK Match Studio (Ultra Stable)</h1>
+    <div class="subtitle">ΔE suite • Patch heatmap • CCM • Substrate simulation • Pantone/Brand library • CSV/Folder ingest • ICC soft proof • CMYKOGV • SOP • PDF reports</div>
+  </div>
+</header>
 
-        <!-- Three-Column HD CMYK Layout -->
-        <div class="main-layout">
-            <!-- Column 1: Target Color -->
-            <div class="color-panel target-panel">
-                <div class="panel-header">
-                    <h2>🎯 Target Color</h2>
-                    <div class="panel-status" id="target-status">Ready</div>
-                </div>
-                <div class="color-swatch" id="target-swatch"></div>
-                    
-                    <div class="input-group">
-                        <label>CMYK Values (%)</label>
-                        <div class="input-row">
-                            <div class="input-field">
-                                <label>C%</label>
-                                <input type="number" id="target-c" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>M%</label>
-                                <input type="number" id="target-m" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>Y%</label>
-                                <input type="number" id="target-y" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>K%</label>
-                                <input type="number" id="target-k" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>LAB Values</label>
-                        <div class="input-row">
-                            <div class="input-field">
-                                <label>L*</label>
-                                <input type="number" id="target-l" placeholder="50" min="0" max="100" step="0.01">
-                            </div>
-                            <div class="input-field">
-                                <label>a*</label>
-                                <input type="number" id="target-a" placeholder="0" min="-128" max="127" step="0.01">
-                            </div>
-                            <div class="input-field">
-                                <label>b*</label>
-                                <input type="number" id="target-b" placeholder="0" min="-128" max="127" step="0.01">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Extended Gamut for Target -->
-                    <div class="extended-gamut" id="target-extended-gamut" style="display: none;">
-                        <h4>🌈 Extended Gamut (OGV)</h4>
-                        <div class="ogv-inputs">
-                            <div class="input-field">
-                                <label>O%</label>
-                                <input type="number" id="target-o" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>G%</label>
-                                <input type="number" id="target-g" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>V%</label>
-                                <input type="number" id="target-v" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            <!-- Column 2: Press/Sample Color -->
-            <div class="color-panel press-panel">
-                <div class="panel-header">
-                    <h2>🔍 Press Color</h2>
-                    <div class="panel-status" id="press-status">Ready</div>
-                </div>
-                <div class="color-swatch" id="sample-swatch"></div>
-                    
-                    <div class="input-group">
-                        <label>CMYK Values (%)</label>
-                        <div class="input-row">
-                            <div class="input-field">
-                                <label>C%</label>
-                                <input type="number" id="sample-c" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>M%</label>
-                                <input type="number" id="sample-m" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>Y%</label>
-                                <input type="number" id="sample-y" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>K%</label>
-                                <input type="number" id="sample-k" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>LAB Values</label>
-                        <div class="input-row">
-                            <div class="input-field">
-                                <label>L*</label>
-                                <input type="number" id="sample-l" placeholder="50" min="0" max="100" step="0.01">
-                            </div>
-                            <div class="input-field">
-                                <label>a*</label>
-                                <input type="number" id="sample-a" placeholder="0" min="-128" max="127" step="0.01">
-                            </div>
-                            <div class="input-field">
-                                <label>b*</label>
-                                <input type="number" id="sample-b" placeholder="0" min="-128" max="127" step="0.01">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Extended Gamut for Sample -->
-                    <div class="extended-gamut" id="sample-extended-gamut" style="display: none;">
-                        <h4>🌈 Extended Gamut (OGV)</h4>
-                        <div class="ogv-inputs">
-                            <div class="input-field">
-                                <label>O%</label>
-                                <input type="number" id="sample-o" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>G%</label>
-                                <input type="number" id="sample-g" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="input-field">
-                                <label>V%</label>
-                                <input type="number" id="sample-v" placeholder="0" min="0" max="100" step="0.1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            
-            <!-- Column 3: Analysis & Results -->
-            <div class="analysis-panel">
-                <div class="panel-header">
-                    <h2>📊 Analysis</h2>
-                    <div class="panel-status" id="analysis-status">Waiting</div>
-                </div>
-                
-                <div class="quick-analysis" id="quick-analysis">
-                    <div class="delta-preview">
-                        <div class="delta-preview-value" id="delta-preview">--</div>
-                        <div class="delta-preview-label">ΔE*ab</div>
-                    </div>
-                    
-                    <div class="tolerance-preview" id="tolerance-preview">
-                        <span class="tolerance-badge" id="tolerance-badge">Calculate</span>
-                    </div>
-                </div>
-                
-                <div class="calculate-section">
-                    <button class="calculate-btn" id="calculate-btn">⚡ Calculate Color Difference</button>
-                    <button class="reset-btn" id="reset-all-btn">🔄 Reset All</button>
-                </div>
-                
-                <!-- Quick Stats -->
-                <div class="quick-stats" id="quick-stats" style="display: none;">
-                    <div class="stat-item">
-                        <div class="stat-label">TAC</div>
-                        <div class="stat-value" id="tac-display">0%</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Substrate</div>
-                        <div class="stat-value" id="substrate-display">HPW</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Enhanced Results Section with ΔE Suite -->
-        <div class="results-section" id="results-section" style="display: none;">
-            <div class="results-header">
-                <h3>Color Difference Analysis</h3>
-                <div class="tolerance-zone" id="tolerance-zone">
-                    <span class="tolerance-indicator" id="tolerance-indicator">Calculating...</span>
-                </div>
-            </div>
-            
-            <!-- Primary ΔE Display -->
-            <div class="primary-delta-display">
-                <div class="delta-e-main">
-                    <div class="delta-e-value" id="delta-e-value">--</div>
-                    <div class="delta-e-label">ΔE*ab (CIE76)</div>
-                </div>
-                
-                <!-- ΔE Suite - Multiple Methods -->
-                <div class="delta-e-suite">
-                    <div class="delta-method">
-                        <div class="method-value" id="delta-e-94">--</div>
-                        <div class="method-label">ΔE*94</div>
-                    </div>
-                    <div class="delta-method">
-                        <div class="method-value" id="delta-e-2000">--</div>
-                        <div class="method-label">ΔE*00</div>
-                    </div>
-                    <div class="delta-method">
-                        <div class="method-value" id="delta-cmc">--</div>
-                        <div class="method-label">ΔE CMC</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Component Analysis -->
-            <div class="component-analysis">
-                <h4>Component Analysis</h4>
-                <div class="component-deltas">
-                    <div class="delta-component">
-                        <div class="delta-component-label">ΔL* (Lightness)</div>
-                        <div class="delta-component-value" id="delta-l">--</div>
-                        <div class="component-bar" id="delta-l-bar"></div>
-                    </div>
-                    <div class="delta-component">
-                        <div class="delta-component-label">Δa* (Green-Red)</div>
-                        <div class="delta-component-value" id="delta-a">--</div>
-                        <div class="component-bar" id="delta-a-bar"></div>
-                    </div>
-                    <div class="delta-component">
-                        <div class="delta-component-label">Δb* (Blue-Yellow)</div>
-                        <div class="delta-component-value" id="delta-b">--</div>
-                        <div class="component-bar" id="delta-b-bar"></div>
-                    </div>
-                    <div class="delta-component">
-                        <div class="delta-component-label">ΔC* (Chroma)</div>
-                        <div class="delta-component-value" id="delta-c">--</div>
-                        <div class="component-bar" id="delta-c-bar"></div>
-                    </div>
-                    <div class="delta-component">
-                        <div class="delta-component-label">Δh (Hue Angle)</div>
-                        <div class="delta-component-value" id="delta-h">--</div>
-                        <div class="component-bar" id="delta-h-bar"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Correction Suggestions -->
-            <div class="correction-suggestions" id="correction-suggestions" style="display: none;">
-                <h4>🎯 Correction Suggestions</h4>
-                <div class="suggestions-grid" id="suggestions-grid">
-                    <!-- Dynamic correction suggestions will be populated here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced HD Features -->
-        <div class="advanced-features" id="advanced-features">
-            <!-- Substrate & Settings -->
-            <div class="feature-card">
-                <h3>⚙️ HD Analysis Settings</h3>
-                <div class="control-grid">
-                    <div class="control-group">
-                        <label>Substrate Type</label>
-                        <select id="substrate-select">
-                            <option value="hpw">Hot Press White</option>
-                            <option value="inver">Invercote</option>
-                            <option value="gsm250">250 gsm</option>
-                            <option value="foil">Foil Board</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label>Illuminant / Observer</label>
-                        <select id="illuminant-select">
-                            <option value="D50/2°">D50 / 2°</option>
-                            <option value="D50/10°">D50 / 10°</option>
-                            <option value="D65/2°">D65 / 2°</option>
-                            <option value="D65/10°">D65 / 10°</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label>ΔE Tolerance</label>
-                        <input id="tolerance-input" type="number" step="0.1" value="2.0" min="0.1" max="10">
-                    </div>
-                </div>
-                <div style="margin-top: 15px;">
-                    <span style="font-weight: 600;">Total Area Coverage (TAC): </span>
-                    <span id="tac-value" style="font-weight: 600; color: #3b82f6;">0%</span>
-                </div>
-            </div>
-
-            <!-- Patch Grid System -->
-            <div class="feature-card">
-                <h3>🔥 Batch Color Analysis Grid</h3>
-                <div id="grid-system-container">
-                    <!-- Grid system will be initialized here -->
-                </div>
-            </div>
-
-            <!-- Color Correction Matrix -->
-            <div class="feature-card">
-                <h3>🧮 Color Correction Matrix (CCM)</h3>
-                <div class="control-grid">
-                    <div class="control-group">
-                        <label>Target CSV (L*,a*,b*)</label>
-                        <input type="file" id="ccm-target-csv" accept=".csv">
-                    </div>
-                    <div class="control-group">
-                        <label>Press CSV (L*,a*,b*)</label>
-                        <input type="file" id="ccm-press-csv" accept=".csv">
-                    </div>
-                </div>
-                <div style="margin: 20px 0;">
-                    <button class="btn btn-primary" id="compute-ccm">📊 Compute CCM</button>
-                    <button class="btn btn-secondary" id="apply-ccm">→ Apply CCM</button>
-                </div>
-                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 15px;">
-                    <pre id="ccm-matrix-output" style="font-family: 'Courier New', monospace; margin: 0;">CCM Matrix: (not computed)</pre>
-                </div>
-            </div>
-
-            <!-- Brand Color Library -->
-            <div class="feature-card">
-                <div id="color-library-container">
-                    <!-- Color library will be initialized here -->
-                </div>
-            </div>
-            <!-- Measurement History & Statistical Analysis -->
-            <div class="feature-card">
-                <h3>📊 Measurement History & Statistical Analysis</h3>
-                <div class="control-grid">
-                    <div class="control-group">
-                        <label>Operator Name</label>
-                        <input type="text" id="operator-input" placeholder="Enter operator name" value="System">
-                    </div>
-                    <div class="control-group">
-                        <label>Job ID</label>
-                        <input type="text" id="job-id-input" placeholder="Enter job ID (optional)">
-                    </div>
-                    <div class="control-group">
-                        <label>Notes</label>
-                        <input type="text" id="calculation-notes" placeholder="Add notes (optional)">
-                    </div>
-                </div>
-                
-                <div style="margin: 20px 0;">
-                    <button class="btn btn-primary" id="show-history-btn">📈 View History & Statistics</button>
-                    <button class="btn btn-secondary" id="export-history-btn">📤 Export History</button>
-                    <button class="btn btn-secondary" id="show-trend-chart-btn">📊 Trend Chart</button>
-                </div>
-
-                <!-- Quick Statistics Display -->
-                <div id="quick-stats-display" style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 15px; display: none;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; text-align: center;">
-                        <div>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #1f2937;" id="stat-median">--</div>
-                            <div style="font-size: 0.75rem; color: #6b7280; font-weight: 600;">MEDIAN ΔE</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #1f2937;" id="stat-p95">--</div>
-                            <div style="font-size: 0.75rem; color: #6b7280; font-weight: 600;">95TH %ILE</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #1f2937;" id="stat-max">--</div>
-                            <div style="font-size: 0.75rem; color: #6b7280; font-weight: 600;">MAXIMUM</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #1f2937;" id="stat-count">--</div>
-                            <div style="font-size: 0.75rem; color: #6b7280; font-weight: 600;">SAMPLES</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 10px; text-align: center;">
-                        <span style="font-size: 0.875rem; color: #6b7280;">Process Stability: </span>
-                        <span id="stability-indicator" style="font-size: 0.875rem; font-weight: 600;">--</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pocket Color Converter -->
-            <div class="feature-card">
-                <h3>🎨 Pocket Color Converter</h3>
-                <div class="color-converter">
-                    <div class="converter-grid">
-                        <!-- HEX Section -->
-                        <div class="converter-section">
-                            <div class="converter-header">
-                                <label for="converter-hex">HEX</label>
-                                <button class="converter-copy-btn" data-format="hex" title="Copy HEX value">📋</button>
-                            </div>
-                            <input type="text" id="converter-hex" class="converter-input" placeholder="#FF5733" maxlength="7">
-                            <div class="converter-error" id="converter-hex-error"></div>
-                            <div class="converter-warning" id="converter-hex-warning"></div>
-                        </div>
-
-                        <!-- RGB Section -->
-                        <div class="converter-section">
-                            <div class="converter-header">
-                                <label>RGB</label>
-                                <button class="converter-copy-btn" data-format="rgb" title="Copy RGB value">📋</button>
-                            </div>
-                            <div class="rgb-inputs">
-                                <input type="number" id="converter-rgb-r" class="converter-input rgb-input" placeholder="R" min="0" max="255">
-                                <input type="number" id="converter-rgb-g" class="converter-input rgb-input" placeholder="G" min="0" max="255">
-                                <input type="number" id="converter-rgb-b" class="converter-input rgb-input" placeholder="B" min="0" max="255">
-                            </div>
-                            <div class="converter-error" id="converter-rgb-error"></div>
-                            <div class="converter-warning" id="converter-rgb-warning"></div>
-                        </div>
-
-                        <!-- CMYK Section -->
-                        <div class="converter-section">
-                            <div class="converter-header">
-                                <label>CMYK</label>
-                                <button class="converter-copy-btn" data-format="cmyk" title="Copy CMYK value">📋</button>
-                            </div>
-                            <div class="cmyk-inputs">
-                                <input type="number" id="converter-cmyk-c" class="converter-input cmyk-input" placeholder="C" min="0" max="100" step="0.1">
-                                <input type="number" id="converter-cmyk-m" class="converter-input cmyk-input" placeholder="M" min="0" max="100" step="0.1">
-                                <input type="number" id="converter-cmyk-y" class="converter-input cmyk-input" placeholder="Y" min="0" max="100" step="0.1">
-                                <input type="number" id="converter-cmyk-k" class="converter-input cmyk-input" placeholder="K" min="0" max="100" step="0.1">
-                            </div>
-                            <div class="converter-error" id="converter-cmyk-error"></div>
-                            <div class="converter-warning" id="converter-cmyk-warning"></div>
-                        </div>
-
-                        <!-- LAB Section -->
-                        <div class="converter-section">
-                            <div class="converter-header">
-                                <label>LAB</label>
-                                <button class="converter-copy-btn" data-format="lab" title="Copy LAB value">📋</button>
-                            </div>
-                            <div class="lab-inputs">
-                                <input type="number" id="converter-lab-l" class="converter-input lab-input" placeholder="L*" min="0" max="100" step="0.1">
-                                <input type="number" id="converter-lab-a" class="converter-input lab-input" placeholder="a*" min="-128" max="127" step="0.1">
-                                <input type="number" id="converter-lab-b" class="converter-input lab-input" placeholder="b*" min="-128" max="127" step="0.1">
-                            </div>
-                            <div class="converter-error" id="converter-lab-error"></div>
-                            <div class="converter-warning" id="converter-lab-warning"></div>
-                        </div>
-                    </div>
-
-                    <!-- Color Preview and Actions -->
-                    <div class="converter-preview-section">
-                        <div class="color-preview-container">
-                            <div class="color-preview" id="converter-color-preview" aria-label="Color preview"></div>
-                            <div class="preview-label">Color Preview</div>
-                        </div>
-                        <div class="converter-actions">
-                            <button class="btn btn-secondary" id="converter-clear-btn">🗑️ Clear</button>
-                            <button class="btn btn-primary" id="converter-swap-btn">↗️ Send to Calculator</button>
-                        </div>
-                    </div>
-
-                    <!-- General Error Display -->
-                    <div class="converter-error" id="converter-general-error" style="margin-top: 15px;"></div>
-
-                    <!-- Accuracy Information -->
-                    <div class="converter-info">
-                        <div class="info-item">
-                            <span class="info-icon">ℹ️</span>
-                            <span class="info-text">Color conversions are approximate. Use ICC profiles for print accuracy.</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-icon">⌨️</span>
-                            <span class="info-text">Paste color values directly into any field for quick conversion.</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<main class="wrap grid cols-3" style="margin-top:12px">
+  <!-- Left Column -->
+  <section class="card">
+    <h2>1) Target vs. Press — ΔE & Suggestions</h2>
+    <div class="row-3">
+      <div>
+        <label>Substrate</label>
+        <select id="substrate">
+          <option value="hpw">Hot Press White</option>
+          <option value="inver">Invercote</option>
+          <option value="gsm250">250 gsm</option>
+          <option value="foil">Foil Board</option>
+        </select>
+      </div>
+      <div>
+        <label>Illuminant / Obs.</label>
+        <select id="illuminant">
+          <option>D50 / 2°</option>
+          <option>D50 / 10°</option>
+          <option>D65 / 2°</option>
+          <option>D65 / 10°</option>
+        </select>
+      </div>
+      <div>
+        <label>ΔE Tolerance</label>
+        <input id="tolerance" type="number" step="0.1" value="2.0" />
+      </div>
     </div>
 
-    <!-- Measurement History Modal -->
-    <div class="modal" id="measurement-history-modal">
-        <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h2>📊 Measurement History & Statistical Analysis</h2>
-                <button class="modal-close" id="history-modal-close">×</button>
-            </div>
-            <div class="modal-body">
-                <div id="measurement-history-container">
-                    <!-- Measurement history table will be created here -->
-                </div>
-            </div>
+    <div class="row-2" style="margin-top:6px">
+      <div class="card" style="background:#0f141a">
+        <h3 style="margin:0 0 6px 0;font-size:14px">Target (Proof) — LAB</h3>
+        <div class="row-3">
+          <div><label>L*</label><input id="tL" type="number" step="0.01" value="65"></div>
+          <div><label>a*</label><input id="tA" type="number" step="0.01" value="12"></div>
+          <div><label>b*</label><input id="tB" type="number" step="0.01" value="18"></div>
         </div>
+        <div class="row" style="margin-top:6px;grid-template-columns:repeat(7,1fr)">
+          <div><label>C</label><input id="tC" type="number" step="1" value="0"></div>
+          <div><label>M</label><input id="tM" type="number" step="1" value="55"></div>
+          <div><label>Y</label><input id="tY" type="number" step="1" value="85"></div>
+          <div><label>K</label><input id="tK" type="number" step="1" value="0"></div>
+          <div><label>O</label><input id="tO" type="number" step="1" value="0"></div>
+          <div><label>G</label><input id="tG" type="number" step="1" value="0"></div>
+          <div><label>V</label><input id="tV" type="number" step="1" value="0"></div>
+        </div>
+        <div class="row-3" style="margin-top:6px">
+          <div class="swatch" id="targetSw"></div>
+          <div class="tiny">Helper: CMYKOGV swatch (approx)</div>
+          <div class="tiny">ICC soft proof if loaded</div>
+        </div>
+      </div>
+
+      <div class="card" style="background:#0f141a">
+        <h3 style="margin:0 0 6px 0;font-size:14px">Press (Measured) — LAB</h3>
+        <div class="row-3">
+          <div><label>L*</label><input id="pL" type="number" step="0.01" value="63.5"></div>
+          <div><label>a*</label><input id="pA" type="number" step="0.01" value="15.5"></div>
+          <div><label>b*</label><input id="pB" type="number" step="0.01" value="19.2"></div>
+        </div>
+        <div class="row" style="margin-top:6px;grid-template-columns:repeat(7,1fr)">
+          <div><label>C</label><input id="pC" type="number" step="1" value="0"></div>
+          <div><label>M</label><input id="pM" type="number" step="1" value="58"></div>
+          <div><label>Y</label><input id="pY" type="number" step="1" value="90"></div>
+          <div><label>K</label><input id="pK" type="number" step="1" value="0"></div>
+          <div><label>O</label><input id="pO" type="number" step="1" value="0"></div>
+          <div><label>G</label><input id="pG" type="number" step="1" value="0"></div>
+          <div><label>V</label><input id="pV" type="number" step="1" value="0"></div>
+        </div>
+        <div class="row-3" style="margin-top:6px">
+          <div class="swatch" id="pressSw"></div>
+          <div class="tiny">Helper: CMYKOGV swatch (approx)</div>
+          <div class="tiny">ICC soft proof if loaded</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Trend Chart Modal -->
-    <div class="modal" id="trend-chart-modal">
-        <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h2>📈 Measurement Trend Analysis</h2>
-                <button class="modal-close" id="trend-modal-close">×</button>
-            </div>
-            <div class="modal-body">
-                <div id="trend-chart-container" style="text-align: center; padding: 20px;">
-                    <!-- Trend visualization will be created here -->
-                </div>
-            </div>
-        </div>
+    <div class="flex" style="margin:10px 0">
+      <button class="btn primary" id="calcBtn">Calculate ΔE & Suggestions</button>
+      <button class="btn" id="swapBtn" title="Swap target & press">Swap</button>
+      <span class="pill">Illuminant: <strong id="illumText">D50/2°</strong></span>
+      <span class="pill">Substrate profile: <strong id="subsText">HP White</strong></span>
+      <span class="pill">Profile: <strong id="iccName">(none)</strong></span>
     </div>
 
-    <!-- Client Profile Modal -->
-    <div class="modal" id="client-profile-modal">
-        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h2>👤 Client Profile & SOP Management</h2>
-                <button class="modal-close" id="client-modal-close">×</button>
-            </div>
-            <div class="modal-body">
-                <!-- Profile Selection and Management -->
-                <div class="profile-management-section">
-                    <div class="control-grid">
-                        <div class="control-group">
-                            <label>Select Profile</label>
-                            <select id="client-profile-select">
-                                <option value="">Select a profile...</option>
-                            </select>
-                        </div>
-                        <div class="control-group">
-                            <button class="btn btn-primary" id="new-profile-btn">➕ New Profile</button>
-                        </div>
-                        <div class="control-group">
-                            <button class="btn btn-secondary" id="import-profile-btn">📥 Import</button>
-                        </div>
-                        <div class="control-group">
-                            <button class="btn btn-secondary" id="export-profile-btn" disabled>📤 Export</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profile Editor -->
-                <div id="profile-editor" style="display: none; margin-top: 30px;">
-                    <div class="profile-tabs">
-                        <button class="tab-btn active" data-tab="basic">Basic Settings</button>
-                        <button class="tab-btn" data-tab="preferences">Preferences</button>
-                        <button class="tab-btn" data-tab="sop">SOP Checklist</button>
-                        <button class="tab-btn" data-tab="contact">Contact Info</button>
-                    </div>
-
-                    <!-- Basic Settings Tab -->
-                    <div class="tab-content active" id="basic-tab">
-                        <div class="control-grid">
-                            <div class="control-group">
-                                <label>Profile Name *</label>
-                                <input type="text" id="profile-name" placeholder="Client Name" required>
-                            </div>
-                            <div class="control-group">
-                                <label>ΔE Tolerance</label>
-                                <input type="number" id="profile-tolerance" step="0.1" value="2.0" min="0.1" max="10.0">
-                            </div>
-                            <div class="control-group">
-                                <label>Delta E Method</label>
-                                <select id="profile-delta-method">
-                                    <option value="de2000">CIEDE2000 (Recommended)</option>
-                                    <option value="de94">CIE94</option>
-                                    <option value="de76">CIE76</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label>Client Notes</label>
-                            <textarea id="profile-notes" rows="3" placeholder="Client-specific notes, requirements, special instructions..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical;"></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Preferences Tab -->
-                    <div class="tab-content" id="preferences-tab">
-                        <div class="control-grid">
-                            <div class="control-group">
-                                <label>Preferred Substrate</label>
-                                <select id="profile-substrate">
-                                    <option value="hpw">Hot Press White</option>
-                                    <option value="inver">Invercote</option>
-                                    <option value="gsm250">250gsm</option>
-                                    <option value="foil">Foil Board</option>
-                                </select>
-                            </div>
-                            <div class="control-group">
-                                <label>Illuminant</label>
-                                <select id="profile-illuminant">
-                                    <option value="D50/2°">D50/2° (Standard)</option>
-                                    <option value="D65/10°">D65/10°</option>
-                                    <option value="A/2°">A/2°</option>
-                                    <option value="F2/2°">F2/2°</option>
-                                </select>
-                            </div>
-                            <div class="control-group">
-                                <label>Auto-Apply Settings</label>
-                                <input type="checkbox" id="profile-auto-apply" checked>
-                                <small>Automatically apply profile settings when selected</small>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label>Approved Substrates</label>
-                            <div class="substrate-checkboxes">
-                                <label><input type="checkbox" id="substrate-hpw" value="hpw"> Hot Press White</label>
-                                <label><input type="checkbox" id="substrate-inver" value="inver"> Invercote</label>
-                                <label><input type="checkbox" id="substrate-gsm250" value="gsm250"> 250gsm</label>
-                                <label><input type="checkbox" id="substrate-foil" value="foil"> Foil Board</label>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label>Workflow Settings</label>
-                            <div class="workflow-settings">
-                                <label><input type="checkbox" id="require-approval"> Require approval for color adjustments</label>
-                                <label><input type="checkbox" id="auto-generate-reports"> Auto-generate measurement reports</label>
-                                <label><input type="checkbox" id="enable-notifications"> Enable email notifications</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SOP Checklist Tab -->
-                    <div class="tab-content" id="sop-tab">
-                        <div class="sop-management">
-                            <div class="control-group">
-                                <label>SOP for Substrate</label>
-                                <select id="sop-substrate-select">
-                                    <option value="hpw">Hot Press White</option>
-                                    <option value="inver">Invercote</option>
-                                    <option value="gsm250">250gsm</option>
-                                    <option value="foil">Foil Board</option>
-                                </select>
-                                <button class="btn btn-secondary" id="load-default-sop">Load Default</button>
-                            </div>
-                            
-                            <div class="sop-checklist-container">
-                                <div class="sop-header">
-                                    <h4>Standard Operating Procedure Checklist</h4>
-                                    <div class="sop-progress">
-                                        <span id="sop-progress-text">0 of 0 completed</span>
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" id="sop-progress-fill"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="sop-checklist" id="sop-checklist">
-                                    <!-- SOP items will be populated here -->
-                                </div>
-                                
-                                <div class="sop-actions">
-                                    <button class="btn btn-secondary" id="add-sop-item">➕ Add Item</button>
-                                    <button class="btn btn-secondary" id="reset-sop-checklist">🔄 Reset Checklist</button>
-                                    <button class="btn btn-primary" id="save-sop">💾 Save SOP</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Contact Info Tab -->
-                    <div class="tab-content" id="contact-tab">
-                        <div class="control-grid">
-                            <div class="control-group">
-                                <label>Contact Name</label>
-                                <input type="text" id="contact-name" placeholder="Primary contact name">
-                            </div>
-                            <div class="control-group">
-                                <label>Email Address</label>
-                                <input type="email" id="contact-email" placeholder="client@example.com">
-                            </div>
-                            <div class="control-group">
-                                <label>Phone Number</label>
-                                <input type="tel" id="contact-phone" placeholder="+1 (555) 123-4567">
-                            </div>
-                            <div class="control-group">
-                                <label>Company</label>
-                                <input type="text" id="contact-company" placeholder="Company name">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label>Address</label>
-                            <textarea id="contact-address" rows="3" placeholder="Company address..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical;"></textarea>
-                        </div>
-                        <div class="control-group">
-                            <label>Additional Notes</label>
-                            <textarea id="contact-notes" rows="2" placeholder="Special requirements, preferred communication methods, etc..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical;"></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Profile Actions -->
-                    <div class="profile-actions" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                        <button class="btn btn-primary" id="save-profile">💾 Save Profile</button>
-                        <button class="btn btn-secondary" id="cancel-profile-edit">✖ Cancel</button>
-                        <button class="btn" id="delete-profile" style="background: #ef4444; color: white; margin-left: auto;">🗑️ Delete</button>
-                    </div>
-                </div>
-
-                <!-- Current Profile Status -->
-                <div id="current-profile-status" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; display: none;">
-                    <h4>Current Active Profile</h4>
-                    <div id="active-profile-info">
-                        <!-- Active profile information will be displayed here -->
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="kpi">
+      <div class="card">
+        <label>ΔE76</label><div id="de76" class="badge pass">0.00</div>
+        <label style="margin-top:8px">ΔE94</label><div id="de94" class="badge pass">0.00</div>
+      </div>
+      <div class="card">
+        <label>ΔE2000</label><div id="de00" class="badge pass" style="font-size:18px;padding:6px 10px">0.00</div>
+        <div class="tiny" id="passNote">Within tolerance</div>
+      </div>
+      <div class="card">
+        <label>Press‑Side Guidance</label>
+        <div id="advice" class="tiny">—</div>
+      </div>
     </div>
 
-    <!-- Hidden file input for profile import -->
-    <input type="file" id="profile-import-input" accept=".json" style="display: none;">
+    <div class="card" style="margin-top:10px">
+      <h3 style="margin:0 0 8px 0;font-size:14px">Suggested Ink Corrections (CMYKOGV)</h3>
+      <table id="corrTable">
+        <thead><tr><th>Channel</th><th>Δ</th><th>New %</th><th class="right">Note</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="tiny" style="margin-top:6px">
+        Heuristic: uses ΔE00 vector, gray balance (G7‑style L*), overprint heuristics, substrate profile weights, and O/G/V distribution by hue.
+      </div>
+    </div>
+  </section>
 
-    <!-- Enhanced Status Bar -->
-    <div class="status-bar" id="status-bar">
-        <div class="status-bar-content">
-            <div class="status-info">
-                <span class="status-label">Status</span>
-                <span class="status-value" id="status-value">Ready</span>
-            </div>
-            <div class="delta-info">
-                <span class="delta-label">ΔE</span>
-                <span class="delta-value" id="status-delta-value">--</span>
-            </div>
-            <div class="quick-actions-bar">
-                <button class="status-action-btn" id="status-calculate-btn">Calculate</button>
-                <button class="status-action-btn" id="status-reset-btn">Reset</button>
-                <button class="status-action-btn" id="status-export-btn" disabled>Export</button>
-            </div>
+  <!-- Middle Column -->
+  <section class="grid cols-2">
+    <div class="card">
+      <h2>2) Patch Grid • CSV • Heatmap • Auto‑Balance</h2>
+      <div class="row-2">
+        <div>
+          <label>Import CSV (e.g., eXact export with L*,a*,b*)</label>
+          <input id="csvFile" type="file" accept=".csv" />
         </div>
+        <div>
+          <label>Grid Size</label>
+          <select id="gridSize">
+            <option>4×6</option><option selected>6×8</option><option>10×10</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex" style="margin:8px 0">
+        <button class="btn" id="genGrid">Generate Grid</button>
+        <button class="btn" id="clearGrid">Clear</button>
+        <button class="btn" id="autoBalance">Auto‑Balance (CCM + Gray)</button>
+        <span class="tiny">Click any cell to edit Target/Press LAB. ΔE00 auto‑updates.</span>
+      </div>
+      <div id="gridHost"></div>
+      <div style="margin-top:8px">
+        <canvas id="heatmap" height="220"></canvas>
+        <div class="tiny" id="heatmapHint" style="margin-top:4px"></div>
+      </div>
     </div>
 
-    <!-- Core Scripts -->
-    <script src="src/js/color-science.js"></script>
-    <script src="src/js/pantone-colors.js"></script>
-    <script src="src/js/storage.js"></script>
-    <script src="src/js/export.js"></script>
-    
-    <!-- HD Color Engine Scripts -->
-    <script src="src/js/hd-color-engine.js"></script>
-    <script src="src/js/csv-enhanced.js"></script>
-    <script src="src/js/heatmap-visualization.js"></script>
-    <script src="src/js/grid-manager.js"></script>
-    <script src="src/js/spectrophotometer-integration.js"></script>
-    <script src="src/js/client-profiles.js"></script>
-    <script src="src/js/client-profile-ui.js"></script>
-    <script src="src/js/icc-profile-manager.js"></script>
-    <script src="src/js/substrate-profiles.js"></script>
-    <script src="src/js/correction-suggestions.js"></script>
-    <script src="src/js/pantone-library-data.js"></script>
-    <script src="src/js/color-library.js"></script>
-    <script src="src/js/hd-integration.js"></script>
-    
-    <!-- Color Converter -->
-    <script src="src/js/color-converter.js"></script>
-    
-    <!-- Main Calculator -->
-    <script src="src/js/calculator.js"></script>
-    
-    <!-- Measurement History & Statistical Analysis -->
-    <script src="src/js/measurement-history.js"></script>
-    
-    <!-- ChatGPT-5 UI Integration Script -->
-    <script>
-        // Enhanced UI Controller for ChatGPT-5 Design
-        class HDStudioController {
-            constructor() {
-                this.state = {
-                    hdFeaturesVisible: false,
-                    currentTheme: 'light',
-                    lastCalculationTime: null
-                };
-                
-                this.init();
-            }
+    <div class="card">
+      <h2>3) Resolve‑Style CCM (3×3) from Paired Charts</h2>
+      <div class="tiny" style="margin-top:-4px;margin-bottom:6px">
+        Load two charts (Target & Press) with same patch order to estimate a 3×3 color correction matrix in CIE Lab (linear regression).
+      </div>
+      <div class="row-2">
+        <div>
+          <label>Target CSV (L*,a*,b*)</label>
+          <input id="ccmTarget" type="file" accept=".csv" />
+        </div>
+        <div>
+          <label>Press CSV (L*,a*,b*)</label>
+          <input id="ccmPress" type="file" accept=".csv" />
+        </div>
+      </div>
+      <div class="flex" style="margin:8px 0">
+        <button class="btn primary" id="computeCCM">Compute CCM</button>
+        <button class="btn" id="applyCCM">Apply CCM → Press LAB</button>
+      </div>
+      <pre id="ccmOut" class="code" style="background:#0b0f14;border:1px solid var(--border);padding:10px;border-radius:10px;min-height:84px">CCM: —</pre>
+      <div class="tiny">Tip: 24‑patch chart (Calibrite/Datacolor) on press & proof → generate corrective CCM. Save per stock/inkset.</div>
+    </div>
 
-            init() {
-                console.log('HD CMYK Studio - ChatGPT-5 UI Loading...');
-                this.setupEventListeners();
-                this.setupColorInputs();
-                this.setupRealTimeUpdates();
-                this.initializeHDModules();
-                this.updateStatus('HD CMYK Studio Ready');
-            }
+    <div class="card">
+      <h2>4) Pantone / Brand Library (Local)</h2>
+      <div class="row-2">
+        <div>
+          <label>Import JSON Library</label>
+          <input id="libIn" type="file" accept=".json" />
+        </div>
+        <div>
+          <label>Export JSON</label>
+          <button class="btn" id="libOut">Download</button>
+        </div>
+      </div>
+      <div class="row-2" style="margin-top:6px">
+        <div>
+          <label>Search Name/Code</label>
+          <input id="libQuery" placeholder="e.g., PANTONE 186 C or 'Brand Red'">
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn" id="libFind">Find</button>
+        </div>
+      </div>
+      <div id="libResult" class="flex" style="margin-top:8px"></div>
+      <div class="tiny">Use like PantoneLIVE locally: store approved LAB per substrate/method. Import/Export to share. <strong>Loaded: 1089 Pantone Colors</strong></div>
+    </div>
+  </section>
 
-            initializeHDModules() {
-                // Wait for HD modules to load, then integrate them
-                setTimeout(() => {
-                    this.integrateHDColorEngine();
-                    this.integrateClientProfiles();
-                    this.integrateICCProfiles();
-                    this.integrateHeatmapVisualization();
-                    this.integrateCSVEnhanced();
-                    this.integrateSpectrophotometer();
-                    this.updateStatus('All HD modules integrated successfully', 'success');
-                }, 500);
-            }
+  <!-- Right Column -->
+  <section class="card">
+    <h2>5) Utilities • ICC Soft Proof • Live Spectro Bridge • SOP • Report</h2>
 
-            integrateHDColorEngine() {
-                if (window.hdColorEngine) {
-                    console.log('HD Color Engine integrated');
-                    // Configure HD Color Engine for extended gamut
-                    window.hdColorEngine.setState({
-                        extendedGamutEnabled: true,
-                        activeSubstrate: 'hpw'
-                    });
-                }
-            }
+    <div class="card" style="background:#0f141a;margin-bottom:8px">
+      <h3 style="margin:0 0 6px 0;font-size:14px">ICC Soft Proof (RGB Matrix/TRC v2)</h3>
+      <div class="tiny">Load an RGB display/printer profile to improve swatch previews. Supports ICC v2 matrix/TRC (<span class="tag">rXYZ/gXYZ/bXYZ + rTRC/gTRC/bTRC</span>). CMYK LUT profiles require CSV DeviceLink import below.</div>
+      <div class="row-2" style="margin-top:6px">
+        <div>
+          <label>Load ICC (.icc/.icm)</label>
+          <input id="iccFile" type="file" accept=".icc,.icm" />
+        </div>
+        <div>
+          <label>CMYK→LAB DeviceLink CSV (optional)</label>
+          <input id="dlFile" type="file" accept=".csv" />
+        </div>
+      </div>
+      <div class="row-3" style="margin-top:6px">
+        <div><div class="swatch" id="proofPrev"></div><div class="tiny">Proof (ICC)</div></div>
+        <div><div class="swatch" id="pressPrev"></div><div class="tiny">Press (sim)</div></div>
+        <div><div class="swatch" id="neutralPrev"></div><div class="tiny">Neutral ref</div></div>
+      </div>
+      <div class="row-3" style="margin-top:6px">
+        <div><label>Dot Gain %</label><input id="dotGain" type="number" step="1" value="12"></div>
+        <div><label>Paper Tint a*</label><input id="paperA" type="number" step="0.1" value="0.5"></div>
+        <div><label>Paper Tint b*</label><input id="paperB" type="number" step="0.1" value="2.0"></div>
+      </div>
+    </div>
 
-            integrateClientProfiles() {
-                if (window.clientProfiles) {
-                    console.log('Client Profiles integrated');
-                    // Listen for profile changes
-                    window.addEventListener('profileChanged', (e) => {
-                        this.updateStatus(`Profile switched to: ${e.detail.profile.name}`, 'success');
-                    });
-                }
-            }
+    <div class="card" style="background:#0f141a;margin-bottom:8px">
+      <h3 style="margin:0 0 6px 0;font-size:14px">Live Spectro Bridge (Folder Watch)</h3>
+      <div class="tiny">Connect a folder that receives spectro CSV exports (e.g., X‑Rite eXact). New files are auto‑ingested into the Grid. <span class="muted">Uses the File System Access API when available; otherwise, drag & drop files below.</span></div>
+      <div class="flex" style="margin:8px 0">
+        <button class="btn" id="connectFolder">Connect Folder</button>
+        <span class="pill" id="bridgeStatus">Not connected</span>
+      </div>
+      <div id="dropZone" style="border:1px dashed var(--border);border-radius:12px;padding:12px;text-align:center;">
+        <div class="tiny">Drag & drop CSV files here to ingest</div>
+      </div>
+    </div>
 
-            integrateICCProfiles() {
-                if (window.iccProfileManager) {
-                    console.log('ICC Profile Manager integrated');
-                    // Listen for profile loading
-                    window.addEventListener('iccProfileLoaded', (e) => {
-                        this.updateStatus(`ICC Profile loaded: ${e.detail.filename}`, 'success');
-                    });
-                }
-            }
+    <div class="card" style="background:#0f141a;margin-bottom:8px">
+      <h3 style="margin:0 0 6px 0;font-size:14px">Client Profiles</h3>
+      <div class="row-2">
+        <div>
+          <label>Select Client</label>
+          <select id="clientSelect"></select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn" id="clientNew">New / Edit</button>
+        </div>
+      </div>
+      <div id="clientEditor" style="display:none;margin-top:6px">
+        <div class="row-3">
+          <div><label>Name</label><input id="clientName"></div>
+          <div><label>ΔE Tolerance</label><input id="clientTol" type="number" step="0.1" value="2.0"></div>
+          <div><label>Notes</label><input id="clientNotes"></div>
+        </div>
+        <div><label>SOP (one per line)</label><textarea id="clientSOP" rows="4"></textarea></div>
+        <div class="flex" style="margin-top:6px">
+          <button class="btn primary" id="clientSave">Save</button>
+          <button class="btn" id="clientCancel">Cancel</button>
+          <button class="btn" id="clientDelete">Delete</button>
+        </div>
+      </div>
+    </div>
 
-            integrateHeatmapVisualization() {
-                if (window.heatmapVisualization) {
-                    console.log('Heatmap Visualization integrated');
-                    const canvas = document.getElementById('heatmap-canvas');
-                    if (canvas) {
-                        // Initialize heatmap with canvas
-                        this.heatmapInstance = window.heatmapVisualization.createHeatmap(canvas, {
-                            showLabels: true,
-                            colorScale: 'deltaE',
-                            tolerance: 2.0
-                        });
-                    }
-                }
-            }
+    <div class="card" style="background:#0f141a;margin-bottom:8px">
+      <h3 style="margin:0 0 6px 0;font-size:14px">Operator SOP (Per Substrate)</h3>
+      <div class="tiny">Press‑side checklist saved to this browser (localStorage). Included on PDF report.</div>
+      <div id="sopHost"></div>
+      <div class="flex" style="margin-top:8px">
+        <button id="resetSOP" class="btn">Reset SOP</button>
+        <button id="printReport" class="btn primary">Generate PDF Report</button>
+      </div>
+    </div>
 
-            integrateCSVEnhanced() {
-                if (window.csvEnhanced) {
-                    console.log('CSV Enhanced integrated');
-                    // Setup CSV import handler
-                    const csvInput = document.getElementById('csv-import');
-                    if (csvInput) {
-                        csvInput.addEventListener('change', (e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                                this.handleCSVImport(file);
-                            }
-                        });
-                    }
-                }
-            }
+    <div class="card" style="background:#0f141a;margin-top:8px">
+      <h3 style="margin:0 0 6px 0;font-size:14px">Session History</h3>
+      <table id="history">
+        <thead><tr><th>Time</th><th>ΔE00</th><th>Target LAB</th><th>Press LAB</th><th>Substrate</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="flex" style="margin-top:8px">
+        <button id="clearHist" class="btn">Clear History</button>
+      </div>
+    </div>
 
-            integrateSpectrophotometer() {
-                if (window.SpectrophotometerIntegration && window.GridManager) {
-                    console.log('Spectrophotometer Integration starting...');
-                    
-                    // Initialize grid manager first if not already done
-                    if (!this.gridManager) {
-                        const gridContainer = document.querySelector('.advanced-features') || document.querySelector('.container');
-                        this.gridManager = new window.GridManager(gridContainer, {
-                            defaultLayout: '6x8',
-                            enableEditing: true,
-                            enableHeatmap: true,
-                            tolerance: 2.0,
-                            autoCalculate: true
-                        });
-                    }
-                    
-                    // Initialize spectrophotometer integration
-                    this.spectroIntegration = new window.SpectrophotometerIntegration(this.gridManager, {
-                        monitorInterval: 2000,
-                        autoIngest: true,
-                        showNotifications: true,
-                        maxFileSize: 10 * 1024 * 1024
-                    });
-                    
-                    // Setup callbacks
-                    this.spectroIntegration.setCallbacks({
-                        onConnectionChange: (connected, folderName) => {
-                            const status = connected ? `Connected to ${folderName}` : 'Disconnected from folder';
-                            this.updateStatus(status, connected ? 'success' : 'info');
-                        },
-                        onFileDetected: (filenames) => {
-                            this.updateStatus(`Detected ${filenames.length} new files`, 'info');
-                        },
-                        onFileProcessed: (filename, dataPoints) => {
-                            this.updateStatus(`Processed ${filename}: ${dataPoints} data points`, 'success');
-                        },
-                        onError: (error) => {
-                            this.updateStatus(`Spectrophotometer error: ${error}`, 'error');
-                        }
-                    });
-                    
-                    console.log('✅ Spectrophotometer Integration initialized');
-                } else {
-                    console.warn('⚠️ Spectrophotometer Integration or Grid Manager not available');
-                }
-            }
+    <div class="card" style="background:#0f141a;margin-top:8px">
+      <h3 style="margin:0 0 6px 0;font-size:14px">Pocket Converter (Nix‑style)</h3>
+      <div class="row-2">
+        <div>
+          <label>HEX</label>
+          <input id="uHEX" value="#d81b60">
+        </div>
+        <div>
+          <label>RGB (0–255)</label>
+          <input id="uRGB" value="216,27,96">
+        </div>
+      </div>
+      <div class="row-2" style="margin-top:6px">
+        <div>
+          <label>CMYK (0–100)</label>
+          <input id="uCMYK" value="0,85,55,0">
+        </div>
+        <div>
+          <label>LAB</label>
+          <input id="uLAB" value="56,63,16">
+        </div>
+      </div>
+      <div class="flex" style="margin:8px 0">
+        <button class="btn" id="uConvert">Convert</button>
+        <span class="tiny">Approximate; use ICC for contract proofing.</span>
+      </div>
+    </div>
 
-            setupEventListeners() {
-                // Header controls
-                document.getElementById('advanced-toggle')?.addEventListener('click', () => this.toggleAdvancedFeatures());
-                document.getElementById('client-profile-btn')?.addEventListener('click', () => this.showClientProfiles());
-                document.getElementById('icc-profile-btn')?.addEventListener('click', () => this.showICCProfiles());
-                document.getElementById('theme-toggle')?.addEventListener('click', () => this.toggleTheme());
+  </section>
+</main>
 
-                // Calculate button
-                document.getElementById('calculate-btn')?.addEventListener('click', () => this.performCalculation());
+<div id="toast"></div>
 
-                // Modal controls
-                document.getElementById('client-modal-close')?.addEventListener('click', () => this.closeModal('client-profile-modal'));
-                document.getElementById('client-profile-modal')?.addEventListener('click', (e) => {
-                    if (e.target.id === 'client-profile-modal') this.closeModal('client-profile-modal');
-                });
+<script src="src/js/pantone-colors.js"></script>
+<script>
+"use strict";
 
-                // HD Feature buttons
-                document.getElementById('generate-grid')?.addEventListener('click', () => this.generateGrid());
-                document.getElementById('clear-grid')?.addEventListener('click', () => this.clearGrid());
-                document.getElementById('auto-balance')?.addEventListener('click', () => this.autoBalance());
-                document.getElementById('compute-ccm')?.addEventListener('click', () => this.computeCCM());
+/* ========= Utilities ========= */
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+const byId=id=>document.getElementById(id);
+const fmt=n=>Number(n).toFixed(2);
+const now=()=>new Date().toLocaleString();
+const hasFS = 'showDirectoryPicker' in window;
 
-                // Profile management
-                document.getElementById('new-profile-btn')?.addEventListener('click', () => this.showProfileEditor());
-                document.getElementById('save-profile')?.addEventListener('click', () => this.saveProfile());
-                document.getElementById('cancel-profile-edit')?.addEventListener('click', () => this.hideProfileEditor());
-                document.getElementById('delete-profile')?.addEventListener('click', () => this.deleteProfile());
-            }
+// Debounce & performance helpers
+function debounce(fn, wait){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); }; }
+let __heatRAF=null;
 
-            setupColorInputs() {
-                const colorInputs = [
-                    'target-c', 'target-m', 'target-y', 'target-k',
-                    'target-l', 'target-a', 'target-b',
-                    'sample-c', 'sample-m', 'sample-y', 'sample-k',
-                    'sample-l', 'sample-a', 'sample-b',
-                    'target-o', 'target-g', 'target-v',
-                    'sample-o', 'sample-g', 'sample-v'
-                ];
+// Input sanitation
+function toNum(v, def=0){ const n=parseFloat(v); return Number.isFinite(n)? n: def; }
+function cleanLAB(arr){ return [ clamp(toNum(arr[0],0),0,100), clamp(toNum(arr[1],0),-128,128), clamp(toNum(arr[2],0),-128,128) ]; }
+function sanitizeInputs(){
+  const limits={tL:[0,100],tA:[-128,128],tB:[-128,128],tC:[0,100],tM:[0,100],tY:[0,100],tK:[0,100],tO:[0,100],tG:[0,100],tV:[0,100],
+    pL:[0,100],pA:[-128,128],pB:[-128,128],pC:[0,100],pM:[0,100],pY:[0,100],pK:[0,100],pO:[0,100],pG:[0,100],pV:[0,100],
+    tolerance:[0,10], dotGain:[0,40], paperA:[-5,5], paperB:[-5,10] };
+  Object.entries(limits).forEach(([id,[min,max]])=>{
+    const el=byId(id); if(!el) return;
+    const apply=()=>{ let v=toNum(el.value,0); v=clamp(v,min,max); el.value=String(v); };
+    el.addEventListener('blur',apply); apply();
+  });
+}
 
-                colorInputs.forEach(inputId => {
-                    const input = document.getElementById(inputId);
-                    if (input) {
-                        input.addEventListener('input', this.debounce(() => {
-                            this.updateColorSwatch(inputId);
-                            this.updateTAC();
-                        }, 300));
-                    }
-                });
-            }
+// Toast error guard
+let __toastTimer; function toast(msg){ let el=byId('toast'); if(el){ el.textContent=msg; el.style.opacity='1'; clearTimeout(__toastTimer); __toastTimer=setTimeout(()=>{ el.style.opacity='0'; },3000);} }
+window.addEventListener('error',e=>toast('Error: '+(e.message||'unknown')));
+window.addEventListener('unhandledrejection',e=>toast('Promise: '+((e.reason&&e.reason.message)||e.reason||'unknown')));
 
-            setupRealTimeUpdates() {
-                // Update color swatches on load
-                this.updateColorSwatch('target-c');
-                this.updateColorSwatch('sample-c');
-                this.updateTAC();
-            }
+// Safe call wrapper
+function safeCall(fn, ...args){ try{ if(typeof fn==='function') return fn(...args); } catch(e){ toast(String(e&&e.message||e)); } }
 
-            toggleAdvancedFeatures() {
-                const features = document.getElementById('advanced-features');
-                const toggleBtn = document.getElementById('advanced-toggle');
-                
-                if (features) {
-                    this.state.hdFeaturesVisible = !this.state.hdFeaturesVisible;
-                    features.classList.toggle('show', this.state.hdFeaturesVisible);
-                    
-                    // Show/hide extended gamut inputs
-                    const extendedGamutSections = document.querySelectorAll('[id*="extended-gamut"]');
-                    extendedGamutSections.forEach(section => {
-                        section.style.display = this.state.hdFeaturesVisible ? 'block' : 'none';
-                    });
-                    
-                    if (toggleBtn) {
-                        toggleBtn.textContent = this.state.hdFeaturesVisible ? '🔬 Hide HD Features' : '🔬 HD Features';
-                    }
-                    
-                    this.updateStatus(this.state.hdFeaturesVisible ? 'HD Features Enabled' : 'HD Features Disabled');
-                }
-            }
+/* ========= Basic Color Math ========= */
+function cmykToRgb(c,m,y,k){
+  c/=100;m/=100;y/=100;k/=100;
+  const r=255*(1-c)*(1-k);
+  const g=255*(1-m)*(1-k);
+  const b=255*(1-y)*(1-k);
+  return [r,g,b].map(v=>clamp(Math.round(v),0,255));
+}
+function cmykogvToRgb(C,M,Y,K,O,G,V){
+  let [r,g,b]=cmykToRgb(C,M,Y,K);
+  let R=r/255, Gc=g/255, B=b/255;
+  R = clamp(R + (O/100)*0.25 + (V/100)*0.05, 0, 1);
+  Gc= clamp(Gc+ (G/100)*0.25 + (O/100)*0.05, 0, 1);
+  B = clamp(B + (V/100)*0.25 + (G/100)*0.05, 0, 1);
+  return [Math.round(R*255), Math.round(Gc*255), Math.round(B*255)];
+}
+function rgbToXyz(r,g,b){
+  [r,g,b]=[r,g,b].map(v=>{v/=255;return v<=0.04045? v/12.92: Math.pow((v+0.055)/1.055,2.4)});
+  const x = r*0.4124564 + g*0.3575761 + b*0.1804375;
+  const y = r*0.2126729 + g*0.7151522 + b*0.0721750;
+  const z = r*0.0193339 + g*0.1191920 + b*0.9503041;
+  return [x,y,z];
+}
+function xyzToLab(x,y,z,wp=[0.96422,1.00000,0.82521]){
+  const fx=t=> (t>Math.pow(6/29,3))? Math.cbrt(t): (t/(3*Math.pow(6/29,2))+4/29);
+  const [xr,yr,zr]=[x/wp[0], y/wp[1], z/wp[2]];
+  const fxr=fx(xr), fyr=fx(yr), fzr=fx(zr);
+  const L=116*fyr-16, a=500*(fxr-fyr), b=200*(fyr-fzr);
+  return [L,a,b];
+}
+function rgbToLab(r,g,b){ const [x,y,z]=rgbToXyz(r,g,b); return xyzToLab(x,y,z); }
+function hexToRgb(hex){ hex=hex.replace('#',''); if(hex.length===3) hex=[...hex].map(h=>h+h).join(''); const bigint=parseInt(hex,16); return [(bigint>>16)&255,(bigint>>8)&255,bigint&255]; }
+function rgbToHex(r,g,b){ const h=v=>v.toString(16).padStart(2,'0'); return '#'+h(r)+h(g)+h(b); }
+function approxLabToRgb(L,a,b){
+  let r=128,g=128,bv=128, step=32; const target=[L,a,b];
+  const dist=(A,B)=>Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2]);
+  for(let i=0;i<6;i++){
+    let best=[r,g,bv], bestd=1e9;
+    for(let dr=-1;dr<=1;dr++) for(let dg=-1;dg<=1;dg++) for(let db=-1;db<=1;db++){
+      const nr=clamp(r+dr*step,0,255), ng=clamp(g+dg*step,0,255), nb=clamp(bv+db*step,0,255);
+      const lab=rgbToLab(nr,ng,nb); const d=dist(lab,target);
+      if(d<bestd){best=[nr,ng,nb];bestd=d;}
+    }
+    [r,g,bv]=best; step=Math.max(1,Math.floor(step/2));
+  }
+  return [r,g,bv];
+}
 
-            performCalculation() {
-                try {
-                    const targetLAB = this.getLABValues('target');
-                    const sampleLAB = this.getLABValues('sample');
+/* ΔE implementations */
+function dE76(t,p){ return Math.hypot(t[0]-p[0], t[1]-p[1], t[2]-p[2]); }
+function dE94(t,p){
+  const [L1,a1,b1]=t, [L2,a2,b2]=p; const C1=Math.hypot(a1,b1), C2=Math.hypot(a2,b2);
+  const dL=L1-L2, dC=C1-C2; const da=a1-a2, db=b1-b2;
+  const dH=Math.sqrt(Math.max(0, da*da+db*db - dC*dC));
+  const kL=1,kC=1,kH=1,K1=0.045,K2=0.015; const SL=1, SC=1+K1*C1, SH=1+K2*C1;
+  return Math.sqrt(Math.pow(dL/(kL*SL),2)+Math.pow(dC/(kC*SC),2)+Math.pow(dH/(kH*SH),2));
+}
+function dE00(t,p){
+  let [L1,a1,b1]=t, [L2,a2,b2]=p; const avgLp=(L1+L2)/2;
+  const C1=Math.hypot(a1,b1), C2=Math.hypot(a2,b2); const avgC=(C1+C2)/2;
+  const G=0.5*(1-Math.sqrt(Math.pow(avgC,7)/(Math.pow(avgC,7)+Math.pow(25,7))));
+  const a1p=(1+G)*a1, a2p=(1+G)*a2; const C1p=Math.hypot(a1p,b1), C2p=Math.hypot(a2p,b2);
+  const avgCp=(C1p+C2p)/2; const h1p=((Math.atan2(b1,a1p)*180/Math.PI)+360)%360; const h2p=((Math.atan2(b2,a2p)*180/Math.PI)+360)%360;
+  const dLp=L2-L1, dCp=C2p-C1p; let dhp=h2p-h1p; if (dhp>180) dhp-=360; else if(dhp<-180) dhp+=360;
+  const dHp=2*Math.sqrt(C1p*C2p)*Math.sin((dhp*Math.PI/180)/2);
+  const avgHp = (Math.abs(h1p-h2p)>180)? (h1p+h2p+360)/2 : (h1p+h2p)/2;
+  const T=1 - 0.17*Math.cos((avgHp-30)*Math.PI/180) + 0.24*Math.cos((2*avgHp)*Math.PI/180)
+            + 0.32*Math.cos((3*avgHp+6)*Math.PI/180) - 0.20*Math.cos((4*avgHp-63)*Math.PI/180);
+  const Sl=1+ (0.015*Math.pow(avgLp-50,2))/Math.sqrt(20+Math.pow(avgLp-50,2));
+  const Sc=1+0.045*avgCp; const Sh=1+0.015*avgCp*T;
+  const Rt= -2*Math.sqrt(Math.pow(avgCp,7)/(Math.pow(avgCp,7)+Math.pow(25,7))) *Math.sin((60*Math.exp(-Math.pow((avgHp-275)/25,2))*Math.PI/180));
+  const kl=1,kc=1,kh=1;
+  return Math.sqrt(Math.pow(dLp/(kl*Sl),2)+Math.pow(dCp/(kc*Sc),2)+Math.pow(dHp/(kh*Sh),2)+Rt*(dCp/(kc*Sc))*(dHp/(kh*Sh)));
+}
 
-                    if (!targetLAB || !sampleLAB) {
-                        this.updateStatus('Missing LAB values for calculation', 'error');
-                        return;
-                    }
+/* Substrate factors */
+const SUBSTRATES={
+  hpw:{name:"Hot Press White", toneA:0.2, toneB:1.2, gain:0.10, weight:{C:0.9,M:1.0,Y:1.0,K:0.9,O:0.9,G:0.9,V:0.9}},
+  inver:{name:"Invercote",      toneA:0.3, toneB:1.6, gain:0.12, weight:{C:0.95,M:1.0,Y:1.0,K:0.95,O:0.9,G:0.9,V:0.9}},
+  gsm250:{name:"250 gsm",       toneA:0.1, toneB:0.8, gain:0.09, weight:{C:1.0,M:1.0,Y:1.0,K:1.0,O:1.0,G:1.0,V:1.0}},
+  foil:{name:"Foil Board",      toneA:-0.5,toneB:2.8, gain:0.06, weight:{C:0.85,M:0.9,Y:0.9,K:0.8,O:0.8,G:0.8,V:0.8}}
+};
 
-                    this.updateStatus('Calculating color difference...');
+/* State */
+let LIB=window.pantoneColors ? window.pantoneColors.colors.map(color => ({
+  code: color.name,
+  name: color.name,
+  L: 50, // Approximate LAB values - will need proper conversion
+  a: 0,
+  b: 0,
+  cmyk: color.cmyk,
+  substrate: "HP White"
+})) : []; // library entries with full Pantone integration
+let GRID=[]; // [{t:[L,a,b], p:[L,a,b], de00}]
+let CCM=null; let CCM_DATA={t:[], p:[]};
+let ICC=null; let DLINK=null;
+let BRIDGE={handle:null, lastSeen:{}};
 
-                    // Enhanced Delta E calculation
-                    let deltaE = 0;
-                    if (window.hdColorEngine) {
-                        deltaE = window.hdColorEngine.calculateEnhancedDeltaE(targetLAB, sampleLAB, 'de2000');
-                    } else if (window.colorScience) {
-                        deltaE = window.colorScience.calculateDeltaE(targetLAB, sampleLAB);
-                    } else {
-                        deltaE = this.calculateBasicDeltaE(targetLAB, sampleLAB);
-                    }
+/* ========== UI Hooks ========== */
+const inputIds=["tL","tA","tB","tC","tM","tY","tK","tO","tG","tV","pL","pA","pB","pC","pM","pY","pK","pO","pG","pV"];
+const debouncedSw = debounce(updateSwatches, 50);
+inputIds.forEach(id=>byId(id).addEventListener('input',debouncedSw));
 
-                    // Calculate component deltas
-                    const deltaL = sampleLAB.l - targetLAB.l;
-                    const deltaA = sampleLAB.a - targetLAB.a;
-                    const deltaB = sampleLAB.b - targetLAB.b;
-                    const deltaC = Math.sqrt(targetLAB.a * targetLAB.a + targetLAB.b * targetLAB.b) - 
-                                   Math.sqrt(sampleLAB.a * sampleLAB.a + sampleLAB.b * sampleLAB.b);
-                    const deltaH = Math.sqrt(deltaE * deltaE - deltaL * deltaL - deltaC * deltaC);
+byId('substrate').addEventListener('change',()=>{byId('subsText').textContent=SUBSTRATES[byId('substrate').value].name; updateProofing();});
+byId('illuminant').addEventListener('change',()=>{byId('illumText').textContent=byId('illuminant').value.replace(' ','');});
+byId('calcBtn').addEventListener('click',calcAll);
+byId('swapBtn').addEventListener('click',()=>{
+  const t=["tL","tA","tB","tC","tM","tY","tK","tO","tG","tV"].map(id=>byId(id).value);
+  ["tL","tA","tB","tC","tM","tY","tK","tO","tG","tV"].forEach((id,i)=>byId(id).value=byId(["pL","pA","pB","pC","pM","pY","pK","pO","pG","pV"][i]).value);
+  ["pL","pA","pB","pC","pM","pY","pK","pO","pG","pV"].forEach((id,i)=>byId(id).value=t[i]);
+  updateSwatches();
+});
 
-                    // Update displays
-                    this.updateResults(deltaE, deltaL, deltaA, deltaB, deltaC, deltaH);
-                    this.showResults();
-                    this.updateStatus(`Calculation complete: ΔE = ${deltaE.toFixed(2)}`);
+byId('genGrid').addEventListener('click',genGrid);
+byId('clearGrid').addEventListener('click',()=>{GRID=[]; renderGrid(); drawHeat();});
+byId('csvFile').addEventListener('change',e=>loadCSVtoGrid(e.target.files[0]));
+byId('computeCCM').addEventListener('click',computeCCM);
+byId('applyCCM').addEventListener('click',applyCCM);
+byId('libIn').addEventListener('change',e=>importLib(e.target.files[0]));
+byId('libOut').addEventListener('click',exportLib);
+byId('libFind').addEventListener('click',findLib);
+byId('uConvert').addEventListener('click',doConvert);
+byId('clearHist').addEventListener('click',()=>{localStorage.removeItem('hd_hist'); renderHist();});
+byId('printReport').addEventListener('click',()=>window.print());
+['dotGain','paperA','paperB'].forEach(id=>byId(id).addEventListener('input',updateProofing));
+byId('iccFile').addEventListener('change',e=>loadICC(e.target.files[0]));
+byId('dlFile').addEventListener('change',e=>loadDeviceLink(e.target.files[0]));
+byId('autoBalance').addEventListener('click',autoBalance);
+byId('connectFolder').addEventListener('click',connectFolder);
+byId('resetSOP').addEventListener('click',()=>{localStorage.removeItem('hd_sop'); renderSOP();});
 
-                    this.state.lastCalculationTime = new Date();
+// Drag & Drop ingest (passive)
+const dz=byId('dropZone');
+if(dz){
+  const prevent=e=>{ e.preventDefault(); dz.style.background='#0b0f14'; };
+  const clearBG=e=>{ e.preventDefault(); dz.style.background='transparent'; if(e.type==='drop'){ const files=[...e.dataTransfer.files].filter(f=>f.name.endsWith('.csv')); files.forEach(loadCSVtoGrid); } };
+  dz.addEventListener('dragenter', prevent, {passive:false});
+  dz.addEventListener('dragover', prevent, {passive:false});
+  dz.addEventListener('dragleave', clearBG, {passive:false});
+  dz.addEventListener('drop', clearBG, {passive:false});
+}
 
-                } catch (error) {
-                    console.error('Calculation error:', error);
-                    this.updateStatus('Calculation failed', 'error');
-                }
-            }
+/* ========= Swatches / Proofing ========= */
+function updateSwatches(){
+  const tCMYKOGV=[+tC.value,+tM.value,+tY.value,+tK.value,+tO.value,+tG.value,+tV.value];
+  const pCMYKOGV=[+pC.value,+pM.value,+pY.value,+pK.value,+pO.value,+pG.value,+pV.value];
+  const tRGB=cmykogvToRgb(...tCMYKOGV), pRGB=cmykogvToRgb(...pCMYKOGV);
+  const tRGBfinal = ICC? labToRgbICC([+tL.value,+tA.value,+tB.value]) : tRGB;
+  const pRGBfinal = ICC? labToRgbICC([+pL.value,+pA.value,+pB.value]) : pRGB;
+  byId('targetSw').style.background=rgbToHex(...tRGBfinal);
+  byId('pressSw').style.background=rgbToHex(...pRGBfinal);
+  updateProofing();
+}
 
-            updateResults(deltaE, deltaL, deltaA, deltaB, deltaC, deltaH) {
-                // Update main Delta E display
-                const deltaEValue = document.getElementById('delta-e-value');
-                if (deltaEValue) deltaEValue.textContent = deltaE.toFixed(2);
+function updateProofing(){
+  const t=[+byId('tL').value,+byId('tA').value,+byId('tB').value];
+  const dg=+byId('dotGain').value/100, pa=+byId('paperA').value, pb=+byId('paperB').value;
+  const subs=SUBSTRATES[byId('substrate').value];
+  const proofRGB = ICC? labToRgbICC(t): approxLabToRgb(...t);
+  byId('proofPrev').style.background=rgbToHex(...proofRGB);
+  const pressSim=[ t[0]-dg*6, t[1]+pa+subs.toneA, t[2]+pb+subs.toneB ];
+  const pressRGB = ICC? labToRgbICC(pressSim): approxLabToRgb(...pressSim);
+  byId('pressPrev').style.background=rgbToHex(...pressRGB);
+  const neutral = ICC? labToRgbICC([50,0,0]): approxLabToRgb(50,0,0); byId('neutralPrev').style.background=rgbToHex(...neutral);
+}
 
-                // Update component deltas
-                const components = { 'delta-l': deltaL, 'delta-a': deltaA, 'delta-b': deltaB, 'delta-c': deltaC, 'delta-h': deltaH };
-                Object.entries(components).forEach(([id, value]) => {
-                    const element = document.getElementById(id);
-                    if (element) element.textContent = value.toFixed(2);
-                });
+/* ====== Core Calc ====== */
+function calcAll(){
+  let T=cleanLAB([+tL.value,+tA.value,+tB.value]);
+  let P=cleanLAB([+pL.value,+pA.value,+pB.value]);
+  const de00=dE00(T,P), de76=dE76(T,P), de94=dE94(T,P);
+  const tol=+byId('tolerance').value;
+  const badge=(v)=> v<=tol?'badge pass': (v<=tol*2? 'badge warn':'badge fail');
+  byId('de00').className=badge(de00);  byId('de00').textContent=fmt(de00);
+  byId('de76').className=badge(de76);  byId('de76').textContent=fmt(de76);
+  byId('de94').className=badge(de94);  byId('de94').textContent=fmt(de94);
+  byId('passNote').textContent = de00<=tol? 'Within tolerance':'Out of tolerance';
+  suggestCorrections(T,P,de00);
+  addHist(now(),de00,T,P,SUBSTRATES[byId('substrate').value].name);
+}
 
-                // Update tolerance indicator
-                this.updateToleranceIndicator(deltaE);
-            }
+/* Heuristic corrections: CMYKOGV mapping */
+function suggestCorrections(T,P,de){
+  const subs=SUBSTRATES[byId('substrate').value];
+  const dL=T[0]-P[0], da=T[1]-P[1], db=T[2]-P[2];
+  const hue=Math.atan2(db,da);
+  const mag=Math.hypot(da,db);
+  let dC = clamp(Math.round((-0.35*da -0.55*db)), -12, 12);
+  let dM = clamp(Math.round((0.9*da -0.1*db)), -12, 12);
+  let dY = clamp(Math.round((0.1*da +0.9*db)), -12, 12);
+  let dK = clamp(Math.round((-0.8*dL)), -12, 12);
+  let dO=0,dG=0,dV=0;
+  const sector=((hue+Math.PI)/(2*Math.PI))*6;
+  if(sector>=0&&sector<2){ dO = Math.round( 0.25*mag ); }
+  if(sector>=1&&sector<3){ dY += Math.round( 0.10*mag ); }
+  if(sector>=2&&sector<4){ dG = Math.round( 0.25*mag ); }
+  if(sector>=4&&sector<5.5){ dV = Math.round( 0.25*mag ); }
+  const w=subs.weight, damp=(1-subs.gain);
+  dC=Math.round(dC*w.C*damp); dM=Math.round(dM*w.M*damp); dY=Math.round(dY*w.Y*damp); dK=Math.round(dK*w.K*damp);
+  dO=Math.round(dO*w.O*damp); dG=Math.round(dG*w.G*damp); dV=Math.round(dV*w.V*damp);
 
-            updateToleranceIndicator(deltaE) {
-                const indicator = document.getElementById('tolerance-indicator');
-                if (!indicator) return;
+  const cur=[+pC.value,+pM.value,+pY.value,+pK.value,+pO.value,+pG.value,+pV.value];
+  const deltas=[dC,dM,dY,dK,dO,dG,dV];
+  const next=cur.map((v,i)=>clamp(v+deltas[i],0,100));
+  const rows=[['Cyan',dC,next[0]],['Magenta',dM,next[1]],['Yellow',dY,next[2]],['Black',dK,next[3]],['Orange',dO,next[4]],['Green',dG,next[5]],['Violet',dV,next[6]]];
+  const tbody=byId('corrTable').querySelector('tbody'); tbody.innerHTML='';
+  rows.forEach(([name,delta,newv])=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${name}</td><td class="${delta===0?'':(delta>0?'ok':'danger')}">${delta>0?'+':''}${delta}</td><td>${newv}%</td><td class="right">${delta>0?'Raise ':'Lower '}${name}</td>`;
+    tbody.appendChild(tr);
+  });
 
-                let className, text;
-                if (deltaE <= 1.0) {
-                    className = 'tolerance-excellent';
-                    text = 'Excellent';
-                } else if (deltaE <= 2.0) {
-                    className = 'tolerance-good';
-                    text = 'Good';
-                } else if (deltaE <= 3.5) {
-                    className = 'tolerance-good';
-                    text = 'Acceptable';
-                } else {
-                    className = 'tolerance-poor';
-                    text = 'Needs Adjustment';
-                }
+  const tips=[];
+  if (Math.abs(dL)>2) tips.push(dL>0?'Reduce K/overall density to raise L*':'Increase K/overall density to lower L*');
+  if (Math.abs(da)>2) tips.push(da>0?'Shift toward magenta/orange (reduce C+Y if needed)':'Shift toward greenish (add C+Y / reduce M)');
+  if (Math.abs(db)>2) tips.push(db>0?'Shift toward yellow/green':'Shift toward blue/violet (add C/V / reduce Y)');
+  tips.push(`Check overprint/trapping on ${SUBSTRATES[byId('substrate').value].name}; dot gain ≈ ${(SUBSTRATES[byId('substrate').value].gain*100)|0}%`);
+  byId('advice').innerHTML = tips.map(t=>'• '+t).join('<br>');
+}
 
-                indicator.className = `tolerance-indicator ${className}`;
-                indicator.textContent = text;
-            }
+/* ====== Grid / Heatmap ====== */
+function genGrid(){
+  const sz=byId('gridSize').value.split('×').map(n=>+n);
+  const [R,C]=sz; GRID=[];
+  for(let r=0;r<R;r++){ const row=[]; for(let c=0;c<C;c++){ const t=[65,10,10], p=[65,10,10]; row.push({t,p,de00:0}); } GRID.push(row);} renderGrid(); drawHeat();
+}
+function renderGrid(){
+  const host=byId('gridHost'); host.innerHTML='';
+  if(GRID.length===0){ host.innerHTML='<div class="tiny">No grid — click "Generate Grid".</div>'; return; }
+  const table=document.createElement('table');
+  const thead=document.createElement('thead'); thead.innerHTML='<tr><th>Cell</th><th>Target L a b</th><th>Press L a b</th><th>ΔE00</th></tr>'; table.appendChild(thead);
+  const tb=document.createElement('tbody');
+  GRID.forEach((row,ri)=>{ row.forEach((cell,ci)=>{ const tr=document.createElement('tr'); const cls = cell.de00<=+tolerance.value?'ok':(cell.de00<=+tolerance.value*2?'warn':'danger');
+    tr.innerHTML=`<td>R${ri+1}C${ci+1}</td>
+      <td class="code"><span contenteditable data-rc="${ri},${ci},t">${cell.t.map(v=>fmt(v)).join(', ')}</span></td>
+      <td class="code"><span contenteditable data-rc="${ri},${ci},p">${cell.p.map(v=>fmt(v)).join(', ')}</span></td>
+      <td class="${cls}">${fmt(cell.de00||0)}</td>`; tb.appendChild(tr); }); });
+  table.appendChild(tb); host.appendChild(table);
+  host.querySelectorAll('[contenteditable]').forEach(el=>{
+    el.addEventListener('blur',()=>{
+      const [r,c,which]=el.getAttribute('data-rc').split(',');
+      const nums=el.textContent.split(',').map(s=>+s.trim()).slice(0,3);
+      if(nums.length===3 && nums.every(n=>!isNaN(n))){
+        const clean=cleanLAB(nums); GRID[r][c][which]=clean; GRID[r][c].de00=dE00(GRID[r][c].t, GRID[r][c].p); renderGrid(); drawHeat();
+      }
+    });
+  });
+}
+window.addEventListener('resize',()=>{ drawHeat(); });
 
-            showResults() {
-                const resultsSection = document.getElementById('results-section');
-                if (resultsSection) {
-                    resultsSection.style.display = 'block';
-                    resultsSection.scrollIntoView({ behavior: 'smooth' });
-                }
-            }
+let __heatmapInit=false;
+function drawHeat(){
+  if(__heatRAF) cancelAnimationFrame(__heatRAF);
+  __heatRAF=requestAnimationFrame(()=>{
+    const can=byId('heatmap'); const g=can.getContext('2d');
+    const dpr=window.devicePixelRatio||1; const cssW=can.clientWidth||can.width; const cssH=can.clientHeight||can.height;
+    const w=Math.max(1,Math.round(cssW*dpr)), h=Math.max(1,Math.round(cssH*dpr));
+    if(can.width!==w || can.height!==h){ can.width=w; can.height=h; }
+    g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,cssW,cssH);
+    if(GRID.length===0) return;
+    const R=GRID.length, C=GRID[0].length; const cw=cssW/C, ch=cssH/R; let max=0; GRID.flat().forEach(c=>{ if(Number.isFinite(c.de00) && c.de00>max) max=c.de00; });
+    GRID.forEach((row,ri)=>{ row.forEach((cell,ci)=>{ const x=ci*cw, y=ri*ch; const v=max? (Number.isFinite(cell.de00)? cell.de00/max:0):0; const shade=Math.round(40+v*160); g.fillStyle=`rgb(${shade},40,40)`;
+      g.fillRect(x,y,cw-1,ch-1); g.fillStyle='rgba(255,255,255,.9)'; g.font='12px system-ui'; g.fillText(fmt(cell.de00||0), x+6,y+14); }); });
+    if(!__heatmapInit){
+      const hint=byId('heatmapHint');
+      if(hint){ hint.textContent = hasFS ? 'Heatmap is DPI‑scaled for crispness. Folder bridge is available.' : 'Tip: Your browser does not support folder watching. Use the drag & drop zone to ingest spectro CSVs.'; }
+      __heatmapInit=true;
+    }
+    safeCall(updateGridStats);
+  });
+}
 
-            updateColorSwatch(inputId) {
-                const isTarget = inputId.startsWith('target');
-                const swatchId = isTarget ? 'target-swatch' : 'sample-swatch';
-                
-                try {
-                    const cmyk = this.getCMYKValues(isTarget ? 'target' : 'sample');
-                    const rgb = window.colorScience ? 
-                        window.colorScience.cmykToRgb(cmyk.c, cmyk.m, cmyk.y, cmyk.k) : 
-                        { r: 128, g: 128, b: 128 };
-                    
-                    const swatch = document.getElementById(swatchId);
-                    if (swatch) {
-                        swatch.style.background = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-                    }
-                } catch (error) {
-                    console.warn('Error updating color swatch:', error);
-                }
-            }
-
-            updateTAC() {
-                const targetCMYK = this.getCMYKValues('target');
-                const sampleCMYK = this.getCMYKValues('sample');
-                
-                // Add extended gamut values if available
-                const targetOGV = this.getOGVValues('target');
-                const sampleOGV = this.getOGVValues('sample');
-                
-                const targetTAC = Object.values(targetCMYK).reduce((sum, val) => sum + val, 0) + 
-                                  Object.values(targetOGV).reduce((sum, val) => sum + val, 0);
-                const sampleTAC = Object.values(sampleCMYK).reduce((sum, val) => sum + val, 0) + 
-                                  Object.values(sampleOGV).reduce((sum, val) => sum + val, 0);
-                const maxTAC = Math.max(targetTAC, sampleTAC);
-                
-                const tacDisplay = document.getElementById('tac-value');
-                if (tacDisplay) {
-                    tacDisplay.textContent = `${maxTAC.toFixed(1)}%`;
-                    tacDisplay.style.color = maxTAC > 320 ? '#ef4444' : '#3b82f6';
-                }
-            }
-
-            showClientProfiles() {
-                this.showModal('client-profile-modal');
-                if (window.clientProfiles) {
-                    this.populateClientProfiles();
-                }
-            }
-
-            showICCProfiles() {
-                this.updateStatus('ICC Profile management - Feature in development');
-            }
-
-            showModal(modalId) {
-                const modal = document.getElementById(modalId);
-                if (modal) modal.style.display = 'block';
-            }
-
-            closeModal(modalId) {
-                const modal = document.getElementById(modalId);
-                if (modal) modal.style.display = 'none';
-            }
-
-            populateClientProfiles() {
-                if (!window.clientProfiles) return;
-                
-                const select = document.getElementById('client-profile-select');
-                if (select) {
-                    const profiles = window.clientProfiles.getAllProfiles();
-                    select.innerHTML = '<option value="">Select a profile...</option>';
-                    profiles.forEach(profile => {
-                        const option = document.createElement('option');
-                        option.value = profile.name;
-                        option.textContent = profile.name;
-                        select.appendChild(option);
-                    });
-                }
-            }
-
-            showProfileEditor() {
-                const editor = document.getElementById('profile-editor');
-                if (editor) editor.style.display = 'block';
-            }
-
-            hideProfileEditor() {
-                const editor = document.getElementById('profile-editor');
-                if (editor) editor.style.display = 'none';
-            }
-
-            saveProfile() {
-                // Profile saving logic would go here
-                this.updateStatus('Profile saved successfully');
-                this.hideProfileEditor();
-            }
-
-            deleteProfile() {
-                if (confirm('Delete this profile?')) {
-                    this.updateStatus('Profile deleted');
-                    this.hideProfileEditor();
-                }
-            }
-
-            generateGrid() {
-                this.updateStatus('Generating color grid...');
-                // Grid generation logic would integrate with heatmap module
-            }
-
-            clearGrid() {
-                this.updateStatus('Grid cleared');
-                const canvas = document.getElementById('heatmap-canvas');
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-            }
-
-            autoBalance() {
-                this.updateStatus('Auto-balance in progress...');
-                // Auto-balance logic would integrate with HD Color Engine
-            }
-
-            computeCCM() {
-                this.updateStatus('Computing Color Correction Matrix...');
-                const output = document.getElementById('ccm-matrix-output');
-                if (output) {
-                    output.textContent = 'CCM computation requires paired CSV files';
-                }
-            }
-
-            toggleTheme() {
-                // Theme toggle logic would go here
-                this.updateStatus('Theme toggle - Feature in development');
-            }
-
-            updateStatus(message, type = 'info') {
-                const statusBar = document.getElementById('status-text');
-                if (statusBar) {
-                    statusBar.textContent = message;
-                    
-                    // Add visual feedback based on type
-                    const statusBarEl = document.getElementById('status-bar');
-                    if (statusBarEl) {
-                        statusBarEl.style.background = type === 'error' ? '#fef2f2' : 
-                                                      type === 'success' ? '#f0fdf4' : 'white';
-                        statusBarEl.style.color = type === 'error' ? '#dc2626' : 
-                                                  type === 'success' ? '#16a34a' : '#374151';
-                    }
-                }
-                
-                console.log(`[HD Studio] ${message}`);
-                
-                // Auto-clear status after 5 seconds
-                setTimeout(() => {
-                    if (statusBar && statusBar.textContent === message) {
-                        statusBar.textContent = 'Ready';
-                        if (statusBarEl) {
-                            statusBarEl.style.background = 'white';
-                            statusBarEl.style.color = '#374151';
-                        }
-                    }
-                }, 5000);
-            }
-
-            // Utility functions
-            getLABValues(prefix) {
-                const l = parseFloat(document.getElementById(`${prefix}-l`)?.value);
-                const a = parseFloat(document.getElementById(`${prefix}-a`)?.value);
-                const b = parseFloat(document.getElementById(`${prefix}-b`)?.value);
-                
-                if (isNaN(l) || isNaN(a) || isNaN(b)) return null;
-                return { l, a, b };
-            }
-
-            getCMYKValues(prefix) {
-                return {
-                    c: parseFloat(document.getElementById(`${prefix}-c`)?.value) || 0,
-                    m: parseFloat(document.getElementById(`${prefix}-m`)?.value) || 0,
-                    y: parseFloat(document.getElementById(`${prefix}-y`)?.value) || 0,
-                    k: parseFloat(document.getElementById(`${prefix}-k`)?.value) || 0
-                };
-            }
-
-            getOGVValues(prefix) {
-                return {
-                    o: parseFloat(document.getElementById(`${prefix}-o`)?.value) || 0,
-                    g: parseFloat(document.getElementById(`${prefix}-g`)?.value) || 0,
-                    v: parseFloat(document.getElementById(`${prefix}-v`)?.value) || 0
-                };
-            }
-
-            calculateBasicDeltaE(lab1, lab2) {
-                const deltaL = lab2.l - lab1.l;
-                const deltaA = lab2.a - lab1.a;
-                const deltaB = lab2.b - lab1.b;
-                return Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB);
-            }
-
-            debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
-
-            // HD integration utility methods
-            hasExtendedGamutValues(targetOGV, sampleOGV) {
-                return (targetOGV.o > 0 || targetOGV.g > 0 || targetOGV.v > 0) ||
-                       (sampleOGV.o > 0 || sampleOGV.g > 0 || sampleOGV.v > 0);
-            }
-
-            updateTACDisplay() {
-                const targetCMYK = this.getCMYKValues('target');
-                const sampleCMYK = this.getCMYKValues('sample');
-                const targetOGV = this.getOGVValues('target');
-                const sampleOGV = this.getOGVValues('sample');
-                
-                const targetTAC = Object.values({...targetCMYK, ...targetOGV}).reduce((sum, val) => sum + val, 0);
-                const sampleTAC = Object.values({...sampleCMYK, ...sampleOGV}).reduce((sum, val) => sum + val, 0);
-                const maxTAC = Math.max(targetTAC, sampleTAC);
-                
-                // Update TAC display if element exists
-                const tacDisplay = document.getElementById('tac-value');
-                if (tacDisplay) {
-                    tacDisplay.textContent = `${maxTAC.toFixed(1)}%`;
-                    tacDisplay.className = maxTAC > 400 ? 'tac-over-limit' : '';
-                }
-                
-                console.log(`TAC: Target=${targetTAC.toFixed(1)}%, Sample=${sampleTAC.toFixed(1)}%`);
-            }
-
-            displayHDSuggestions(suggestions) {
-                console.log('HD Color Suggestions:', suggestions);
-                // This would update a suggestions display area in the UI
-                this.updateStatus('HD color suggestions generated', 'success');
-            }
-
-            async handleCSVImport(file) {
-                try {
-                    this.updateStatus('Importing CSV file...');
-                    
-                    if (window.csvEnhanced) {
-                        const result = await window.csvEnhanced.importCSVWithStreaming(file);
-                        if (result.success) {
-                            this.updateStatus(`CSV imported: ${result.data.length} records`, 'success');
-                            
-                            // Update heatmap if available
-                            if (this.heatmapInstance) {
-                                this.heatmapInstance.updateData(result.data);
-                            }
-                        } else {
-                            this.updateStatus('CSV import failed', 'error');
-                        }
-                    } else {
-                        this.updateStatus('CSV Enhanced module not available', 'error');
-                    }
-                } catch (error) {
-                    console.error('CSV import error:', error);
-                    this.updateStatus('CSV import failed', 'error');
-                }
-            }
+/* ====== CSV Loaders (Streaming + Robust small) ====== */
+async function loadCSVtoGridStream(file){
+  try{
+    const chunk=1024*1024; let offset=0; let leftover=''; let Lidx=-1,Aidx=-1,Bidx=-1; const T=[], P=[]; let rowIdx=0; const td=new TextDecoder();
+    while(offset<file.size){
+      const slice=file.slice(offset, Math.min(file.size, offset+chunk));
+      const buf=await slice.arrayBuffer();
+      const txt=td.decode(buf,{stream:true});
+      offset+=chunk;
+      const data=leftover+txt;
+      const lines=data.split(/\r?\n/); leftover=lines.pop()||'';
+      for(const line of lines){
+        const cols=line.split(/,|;|\t/); if(!cols.length) continue;
+        if(Lidx<0){
+          const header=cols.map(h=>String(h).trim().toLowerCase());
+          Lidx=header.findIndex(h=>/^l\*?$/.test(h)); Aidx=header.findIndex(h=>/^a\*?$/.test(h)); Bidx=header.findIndex(h=>/^b\*?$/.test(h));
+          continue;
         }
+        const L=+cols[Lidx], a=+cols[Aidx], b=+cols[Bidx];
+        if([L,a,b].every(n=>Number.isFinite(n))){ if(rowIdx%2===0) T.push([L,a,b]); else P.push([L,a,b]); rowIdx++; }
+      }
+    }
+    if(leftover && Lidx>=0){
+      const cols=leftover.split(/,|;|\t/); const L=+cols[Lidx], a=+cols[Aidx], b=+cols[Bidx];
+      if([L,a,b].every(n=>Number.isFinite(n))){ if(rowIdx%2===0) T.push([L,a,b]); else P.push([L,a,b]); }
+    }
+    buildGridFromPairedData(T,P);
+  }catch(e){ toast('Stream parse failed; falling back'); robustLoadCSV(file); }
+}
+function robustLoadCSV(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const lines=String(reader.result).split(/\r?\n/).filter(Boolean);
+      if(lines.length<2){ toast('CSV empty'); return; }
+      const header=lines[0].split(/,|;|\t/).map(h=>String(h).trim().toLowerCase());
+      const Lidx=header.findIndex(h=>/^l\*?$/.test(h));
+      const Aidx=header.findIndex(h=>/^a\*?$/.test(h));
+      const Bidx=header.findIndex(h=>/^b\*?$/.test(h));
+      if(Lidx<0||Aidx<0||Bidx<0){ toast('CSV needs L,a,b headers'); return; }
+      const data=[];
+      for(let i=1;i<lines.length;i++){
+        const cols=lines[i].split(/,|;|\t/);
+        const L=+cols[Lidx], a=+cols[Aidx], b=+cols[Bidx];
+        if(Number.isFinite(L)&&Number.isFinite(a)&&Number.isFinite(b)) data.push([L,a,b]);
+      }
+      const half=Math.floor(data.length/2); const target=data.slice(0,half), press=data.slice(half,half*2);
+      buildGridFromPairedData(target,press);
+    }catch(e){ toast('CSV parse error'); }
+  };
+  reader.readAsText(file);
+}
+function buildGridFromPairedData(target, press, cap=400){
+  const half=Math.min(target.length, press.length);
+  if(half===0){ toast('No usable LAB rows found.'); return; }
+  const step=Math.max(1, Math.floor(half/Math.min(cap, half)));
+  const Tsel=[], Psel=[];
+  for(let i=0;i<half;i+=step){ Tsel.push(target[i]); Psel.push(press[i]); }
+  const n=Tsel.length; const size=Math.ceil(Math.sqrt(n)); GRID=[]; let k=0;
+  for(let r=0;r<size;r++){
+    const row=[];
+    for(let c=0;c<size;c++){
+      if(k<n){ const t=Tsel[k], p=Psel[k]||Tsel[k]; row.push({t,p,de00:dE00(t,p)}); }
+      k++;
+    }
+    if(row.length) GRID.push(row);
+  }
+  renderGrid(); drawHeat(); safeCall(updateGridStats); toast(`Loaded ${half} pairs (displaying ${n})`);
+}
+function loadCSVtoGrid(file){ if(file && file.size>5*1024*1024){ return loadCSVtoGridStream(file); } return robustLoadCSV(file); }
 
-        // Initialize the HD Studio Controller when DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            window.hdStudio = new HDStudioController();
-            initializeMeasurementHistoryUI();
-        });
+/* ====== CCM (Least Squares) ====== */
+function solveLeastSquares(A,B){
+  function transpose(M){ return M[0].map((_,i)=>M.map(r=>r[i])); }
+  function mult(X,Y){ const out=new Array(X.length).fill(null).map(()=>new Array(Y[0].length).fill(0)); for(let i=0;i<X.length;i++) for(let j=0;j<Y[0].length;j++) for(let k=0;k<Y.length;k++) out[i][j]+=X[i][k]*Y[k][j]; return out; }
+  function inv3(M){ const [a,b,c,d,e,f,g,h,i]=[M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]]; const A=e*i-f*h,B=-(d*i-f*g),C=d*h-e*g,D=-(b*i-c*h),E=a*i-c*g,F=-(a*h-b*g),G=b*f-c*e,H=-(a*f-b*d),I=a*e-b*d; const det=a*A + b*B + c*C; if(Math.abs(det)<1e-9) return null; const inv=[[A/det,D/det,G/det],[B/det,E/det,H/det],[C/det,F/det,I/det]]; return inv; }
+  const At=transpose(A); const AtA=mult(At,A), AtB=mult(At,B); const AtAinv=inv3(AtA); if(!AtAinv) return null; return mult(AtAinv,AtB);
+}
+function computeCCM(){
+  const tF=byId('ccmTarget').files[0], pF=byId('ccmPress').files[0]; if(!tF || !pF){ alert('Load both Target and Press CSVs'); return; }
+  const read=(f)=>new Promise(res=>{
+    const r=new FileReader(); r.onload=()=>{
+      const rows=r.result.split(/\r?\n/).filter(Boolean).map(r=>r.split(/,|;|\t/));
+      const header=rows[0].map(h=>h.trim().toLowerCase());
+      const L=header.findIndex(h=>/^l\*?$/.test(h));
+      const A=header.findIndex(h=>/^a\*?$/.test(h));
+      const B=header.findIndex(h=>/^b\*?$/.test(h));
+      const data=rows.slice(1).map(r=>[+r[L],+r[A],+r[B]]).filter(v=>v.every(n=>!isNaN(n)));
+      res(data);
+    }; r.readAsText(f);
+  });
+  Promise.all([read(tF),read(pF)]).then(([T,P])=>{
+    const n=Math.min(T.length,P.length); if(n<3){ byId('ccmOut').textContent='CCM: Need ≥3 patches'; CCM=null; return; }
+    const A=P.slice(0,n); const B=T.slice(0,n); const X=solveLeastSquares(A,B);
+    if(!X){ byId('ccmOut').textContent='CCM: Singular matrix — need more diverse patches'; CCM=null; return; }
+    CCM=X; CCM_DATA={t:T.slice(0,n),p:P.slice(0,n)};
+    byId('ccmOut').textContent='CCM:\n' + X.map(r=>'[ '+r.map(v=>v.toFixed(6)).join(' , ')+' ]').join('\n');
+  });
+}
+function applyCCM(){
+  if(!CCM){ alert('Compute CCM first'); return; }
+  const p=[+pL.value,+pA.value,+pB.value];
+  const out=[ CCM[0][0]*p[0]+CCM[0][1]*p[1]+CCM[0][2]*p[2],
+              CCM[1][0]*p[0]+CCM[1][1]*p[1]+CCM[1][2]*p[2],
+              CCM[2][0]*p[0]+CCM[2][1]*p[1]+CCM[2][2]*p[2] ];
+  [pL,pA,pB].forEach((el,i)=>el.value=out[i].toFixed(2));
+  calcAll();
+}
 
-        // Fallback initialization if DOM is already loaded
-        if (document.readyState !== 'loading') {
-            window.hdStudio = new HDStudioController();
-            initializeMeasurementHistoryUI();
-        }
+/* ====== Auto‑Balance (CCM + Gray axis) ====== */
+function autoBalance(){
+  if(GRID.length===0){ alert('Generate or import a grid first.'); return; }
+  const T=[], P=[]; GRID.flat().forEach(cell=>{T.push(cell.t); P.push(cell.p);});
+  const X=solveLeastSquares(P,T); if(!X){ alert('CCM failed — need more varied patches.'); return; }
+  const P2=P.map(v=>[ X[0][0]*v[0]+X[0][1]*v[1]+X[0][2]*v[2], X[1][0]*v[0]+X[1][1]*v[1]+X[1][2]*v[2], X[2][0]*v[0]+X[2][1]*v[1]+X[2][2]*v[2] ]);
+  const median=(arr)=>{const s=[...arr].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+  const aErr=T.map((v,i)=>v[1]-P2[i][1]); const bErr=T.map((v,i)=>v[2]-P2[i][2]); const aMed=median(aErr), bMed=median(bErr);
+  const P3=P2.map(v=>[v[0], v[1]+aMed*0.5, v[2]+bMed*0.5]);
+  let idx=0; for(let r=0;r<GRID.length;r++){ for(let c=0;c<GRID[0].length;c++){ GRID[r][c].p=P3[idx++]; GRID[r][c].de00=dE00(GRID[r][c].t, GRID[r][c].p); }}
+  renderGrid(); drawHeat();
+  byId('ccmOut').textContent='Auto‑Balance applied (CCM + gray bias). Review ΔE heatmap.';
+}
 
-        // Initialize Measurement History UI
-        function initializeMeasurementHistoryUI() {
-            console.log('Initializing Measurement History UI...');
+/* ====== Library ====== */
+function importLib(file){ const r=new FileReader(); r.onload=()=>{ try{ LIB=JSON.parse(r.result); renderLib({msg:'Loaded '+LIB.length+' entries'}); } catch(e){ alert('Invalid JSON'); } }; r.readAsText(file); }
+function exportLib(){ const blob=new Blob([JSON.stringify(LIB,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='hdcmyk_library.json'; a.click(); }
+function findLib(){ 
+  const q=byId('libQuery').value.trim().toLowerCase(); 
+  let res = LIB.filter(it=> (it.name||'').toLowerCase().includes(q) || (it.code||'').toLowerCase().includes(q));
+  
+  // If no results and we have the global Pantone data, search there
+  if(res.length === 0 && window.pantoneColors && window.pantoneColors.searchPantoneColors) {
+    const pantoneResults = window.pantoneColors.searchPantoneColors(q);
+    res = pantoneResults.slice(0, 50).map(color => ({
+      code: color.name,
+      name: color.name,
+      L: 50, // Approximate - would need proper CMYK to LAB conversion
+      a: 0,
+      b: 0,
+      cmyk: color.cmyk,
+      substrate: "HP White"
+    }));
+  }
+  renderLib({items:res}); 
+}
+function renderLib({items=[],msg=''}={}){ const box=byId('libResult'); box.innerHTML=''; if(msg) box.innerHTML=`<div class="tiny">${msg}</div>`; items.slice(0,50).forEach(it=>{
+  const sw=document.createElement('div'); sw.className='pill'; sw.style.cursor='pointer'; 
+  
+  let rgb;
+  if(it.cmyk) {
+    // Convert CMYK to RGB for display
+    rgb = cmykToRgb(it.cmyk.c || 0, it.cmyk.m || 0, it.cmyk.y || 0, it.cmyk.k || 0);
+  } else {
+    rgb = approxLabToRgb(it.L,it.a,it.b);
+  }
+  
+  sw.innerHTML=`<span class="swatch" style="width:26px;height:26px;border-radius:6px;background:${rgbToHex(...rgb)}"></span>
+    <strong>${it.code||it.name}</strong> <span class="tiny">${it.cmyk ? `CMYK ${it.cmyk.c},${it.cmyk.m},${it.cmyk.y},${it.cmyk.k}` : `LAB ${fmt(it.L)},${fmt(it.a)},${fmt(it.b)}`} • ${it.substrate||'—'}</span>`;
+  sw.onclick=()=>{ 
+    if(it.cmyk) {
+      // Set CMYK values
+      byId('tC').value = it.cmyk.c || 0;
+      byId('tM').value = it.cmyk.m || 0;
+      byId('tY').value = it.cmyk.y || 0;
+      byId('tK').value = it.cmyk.k || 0;
+      // Convert to approximate LAB for display
+      const labApprox = rgbToLab(...cmykToRgb(it.cmyk.c || 0, it.cmyk.m || 0, it.cmyk.y || 0, it.cmyk.k || 0));
+      byId('tL').value = fmt(labApprox[0]);
+      byId('tA').value = fmt(labApprox[1]);
+      byId('tB').value = fmt(labApprox[2]);
+    } else {
+      byId('tL').value=it.L; byId('tA').value=it.a; byId('tB').value=it.b;
+    }
+    updateSwatches(); 
+  };
+  box.appendChild(sw);
+}); }
 
-            // Update quick stats display
-            function updateQuickStats() {
-                if (window.measurementHistory && window.measurementHistory.statistics) {
-                    const stats = window.measurementHistory.statistics;
-                    
-                    document.getElementById('stat-median').textContent = stats.median || '--';
-                    document.getElementById('stat-p95').textContent = stats.p95 || '--';
-                    document.getElementById('stat-max').textContent = stats.max || '--';
-                    document.getElementById('stat-count').textContent = stats.count || '--';
-                    
-                    const stabilityIndicator = document.getElementById('stability-indicator');
-                    if (stats.stability) {
-                        stabilityIndicator.textContent = stats.stability.level.toUpperCase();
-                        stabilityIndicator.className = `stability-indicator ${stats.stability.level}`;
-                    }
-                    
-                    document.getElementById('quick-stats-display').style.display = 'block';
-                } else {
-                    document.getElementById('quick-stats-display').style.display = 'none';
-                }
-            }
+/* ====== Pocket Converter ====== */
+function doConvert(){ try{
+  const hex=byId('uHEX').value.trim(); const rgbStr=byId('uRGB').value.trim();
+  let rgb = hex? hexToRgb(hex) : rgbStr.split(',').map(n=>+n.trim());
+  const lab=rgbToLab(...rgb);
+  const k=1-(Math.max(...rgb)/255);
+  const C=(1-rgb[0]/255-k)/(1-k)||0, M=(1-rgb[1]/255-k)/(1-k)||0, Y=(1-rgb[2]/255-k)/(1-k)||0;
+  byId('uLAB').value=`${fmt(lab[0])},${fmt(lab[1])},${fmt(lab[2])}`;
+  byId('uCMYK').value=[C,M,Y,k].map(v=>clamp(Math.round(v*100),0,100)).join(',');
+}catch(e){ alert('Could not convert'); }}
 
-            // Show History Button
-            document.getElementById('show-history-btn').addEventListener('click', () => {
-                const modal = document.getElementById('measurement-history-modal');
-                modal.style.display = 'block';
-                
-                // Create history table if not already created
-                if (window.measurementHistory) {
-                    window.measurementHistory.createHistoryTable('measurement-history-container', {
-                        pageSize: 25,
-                        showFilters: true,
-                        showExport: true,
-                        showStatistics: true
-                    });
-                }
-            });
+/* ====== History ====== */
+function addHist(time,de,T,P,subs){ const rec={time,de:fmt(de),T:P3(T),P:P3(P),subs}; const h=JSON.parse(localStorage.getItem('hd_hist')||'[]'); h.unshift(rec); localStorage.setItem('hd_hist',JSON.stringify(h.slice(0,200))); renderHist(); function P3(v){return v.map(n=>+fmt(n))} }
+function renderHist(){ const tb=byId('history').querySelector('tbody'); tb.innerHTML=''; const h=JSON.parse(localStorage.getItem('hd_hist')||'[]'); h.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.time}</td><td>${r.de}</td><td class="code">${r.T.join(', ')}</td><td class="code">${r.P.join(', ')}</td><td>${r.subs}</td>`; tb.appendChild(tr); }); }
 
-            // Export History Button
-            document.getElementById('export-history-btn').addEventListener('click', () => {
-                if (window.measurementHistory) {
-                    // Show export options
-                    const exportChoice = confirm('Export as CSV? (Cancel for JSON)');
-                    if (exportChoice) {
-                        window.measurementHistory.exportToCSV();
-                    } else {
-                        window.measurementHistory.exportToJSON();
-                    }
-                }
-            });
+/* ====== ICC Loader (RGB Matrix/TRC) ====== */
+function loadICC(file){ const r=new FileReader(); r.onload=()=>{ try{ ICC=parseICC(new DataView(r.result)); byId('iccName').textContent=file.name; updateSwatches(); } catch(e){ ICC=null; byId('iccName').textContent='(failed)'; alert('Could not parse ICC. Only matrix/TRC v2 RGB profiles supported.'); } }; r.readAsArrayBuffer(file); }
+function parseICC(dv){
+  function getString(off,len){ let s=''; for(let i=0;i<len;i++){ const c=dv.getUint8(off+i); if(c===0) break; s+=String.fromCharCode(c);} return s; }
+  const sig=getString(36,4); if(sig!=='acsp') throw new Error('Not ICC');
+  const tagCount=dv.getUint32(128); const tags={}; for(let i=0;i<tagCount;i++){ const base=128+4 + i*12; const sig=getString(base,4); const off=dv.getUint32(base+4); const len=dv.getUint32(base+8); tags[sig]={off,len}; }
+  function readXYZ(tag){ const o=tags[tag].off+8; function s15f16(x){ return dv.getInt32(o+x)/65536; } return [s15f16(0), s15f16(4), s15f16(8)]; }
+  function readTRC(tag){ const o=tags[tag].off; const type=getString(o,4); if(type==='curv'){ const n=dv.getUint32(o+8); if(n===1){ const gamma=dv.getUint16(o+12)/256; return {type:'gamma',gamma}; } else { const arr=[]; for(let i=0;i<n;i++){ arr.push(dv.getUint16(o+12+2*i)/65535); } return {type:'lut',table:arr}; } } else { return {type:'gamma',gamma:2.2}; } }
+  const rXYZ=tags['rXYZ']?readXYZ('rXYZ'):[0.9642,0,0]; const gXYZ=tags['gXYZ']?readXYZ('gXYZ'):[0,1,0]; const bXYZ=tags['bXYZ']?readXYZ('bXYZ'):[0,0,0.8249];
+  const rTRC=tags['rTRC']?readTRC('rTRC'):{type:'gamma',gamma:2.2}; const gTRC=tags['gTRC']?readTRC('gTRC'):{type:'gamma',gamma:2.2}; const bTRC=tags['bTRC']?readTRC('bTRC'):{type:'gamma',gamma:2.2};
+  const M=[[rXYZ[0],gXYZ[0],bXYZ[0]],[rXYZ[1],gXYZ[1],bXYZ[1]],[rXYZ[2],gXYZ[2],bXYZ[2]]];
+  function inv3(M){ const [a,b,c,d,e,f,g,h,i]=[M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]]; const A=e*i-f*h,B=-(d*i-f*g),C=d*h-e*g,D=-(b*i-c*h),E=a*i-c*g,F=-(a*h-b*g),G=b*f-c*e,H=-(a*f-b*d),I=a*e-b*d; const det=a*A + b*B + c*C; if(Math.abs(det)<1e-9) return null; const inv=[[A/det,D/det,G/det],[B/det,E/det,H/det],[C/det,F/det,I/det]]; return inv; }
+  const Minv=inv3(M); if(!Minv) throw new Error('Bad ICC matrix');
+  function gammaEncode(v,trc){ if(trc.type==='gamma') return Math.pow(v,1/trc.gamma); if(trc.type==='lut'){ const idx=Math.round(v*(trc.table.length-1)); return trc.table[clamp(idx,0,trc.table.length-1)]; } return v; }
+  return { M, Minv, rTRC, gTRC, bTRC, gammaEncode };
+}
+function labToRgbICC(Lab){
+  if(!ICC){ return approxLabToRgb(...Lab); }
+  const [L,a,b]=Lab;
+  const fy=(L+16)/116; const fx= a/500 + fy; const fz= fy - b/200;
+  function finv(t){ return (t>6/29)? Math.pow(t,3): (t-4/29)/7.787; }
+  const Xn=0.96422, Yn=1.00000, Zn=0.82521;
+  const X=Xn*finv(fx), Y=Yn*finv(fy), Z=Zn*finv(fz);
+  const linR = ICC.Minv[0][0]*X + ICC.Minv[0][1]*Y + ICC.Minv[0][2]*Z;
+  const linG = ICC.Minv[1][0]*X + ICC.Minv[1][1]*Y + ICC.Minv[1][2]*Z;
+  const linB = ICC.Minv[2][0]*X + ICC.Minv[2][1]*Y + ICC.Minv[2][2]*Z;
+  const R = clamp(Math.round(ICC.gammaEncode(clamp(linR,0,1),ICC.rTRC)*255),0,255);
+  const G = clamp(Math.round(ICC.gammaEncode(clamp(linG,0,1),ICC.gTRC)*255),0,255);
+  const B = clamp(Math.round(ICC.gammaEncode(clamp(linB,0,1),ICC.bTRC)*255),0,255);
+  return [R,G,B];
+}
 
-            // Show Trend Chart Button
-            document.getElementById('show-trend-chart-btn').addEventListener('click', () => {
-                const modal = document.getElementById('trend-chart-modal');
-                modal.style.display = 'block';
-                
-                // Create trend visualization
-                if (window.measurementHistory) {
-                    const visualization = window.measurementHistory.createVisualization('trend-chart-container');
-                    if (visualization) {
-                        visualization.updateVisualization();
-                    }
-                }
-            });
+/* ====== DeviceLink CSV (CMYK→LAB LUT) ====== */
+function loadDeviceLink(file){ const r=new FileReader(); r.onload=()=>{ try{ DLINK=parseDeviceLink(r.result); alert('DeviceLink loaded: '+Object.keys(DLINK).length+' entries'); } catch(e){ alert('DeviceLink parse failed'); } }; r.readAsText(file); }
+function parseDeviceLink(text){
+  const rows=text.split(/\r?\n/).filter(Boolean).map(r=>r.split(/,|;|\t/).map(x=>x.trim()));
+  const head=rows[0].map(h=>h.toLowerCase()); const idx={C:head.indexOf('c'),M:head.indexOf('m'),Y:head.indexOf('y'),K:head.indexOf('k'),L:head.indexOf('l'),A:head.indexOf('a'),B:head.indexOf('b')};
+  if(Object.values(idx).some(v=>v<0)) throw new Error('bad header');
+  const map={}; for(let i=1;i<rows.length;i++){ const r=rows[i]; const key=[r[idx.C],r[idx.M],r[idx.Y],r[idx.K]].map(v=>Math.round(+v)).join('-'); map[key]=[+r[idx.L],+r[idx.A],+r[idx.B]]; }
+  return map;
+}
+function cmykToLabViaDL(C,M,Y,K){ if(!DLINK) return null; const key=[C,M,Y,K].map(v=>Math.round(v)).join('-'); return DLINK[key]||null; }
 
-            // Modal close handlers
-            document.getElementById('history-modal-close').addEventListener('click', () => {
-                document.getElementById('measurement-history-modal').style.display = 'none';
-            });
+/* ====== Live Spectro Bridge ====== */
+async function connectFolder(){
+  if(!hasFS){ byId('bridgeStatus').textContent='Not supported (use Chrome/Edge) or drag & drop below.'; byId('bridgeStatus').className='pill'; return; }
+  try{
+    const handle = await window.showDirectoryPicker();
+    BRIDGE.handle=handle; byId('bridgeStatus').textContent='Connected'; byId('bridgeStatus').className='pill';
+    pollFolder();
+  } catch(e){ byId('bridgeStatus').textContent='Permission denied or canceled'; byId('bridgeStatus').className='pill'; }
+}
+async function pollFolder(){
+  if(!BRIDGE.handle) return;
+  for await (const [name,handle] of BRIDGE.handle.entries()){
+    if(name.toLowerCase().endsWith('.csv')){
+      const f=await handle.getFile(); const last=f.lastModified;
+      if(BRIDGE.lastSeen[name] && BRIDGE.lastSeen[name]===last) continue;
+      BRIDGE.lastSeen[name]=last;
+      const text=await f.text();
+      try{ const blob=new Blob([text],{type:'text/csv'}); loadCSVtoGrid(new File([blob], name, {type:'text/csv'})); }catch(e){}
+    }
+  }
+  setTimeout(pollFolder, 2000);
+}
 
-            document.getElementById('trend-modal-close').addEventListener('click', () => {
-                document.getElementById('trend-chart-modal').style.display = 'none';
-            });
+/* ====== SOP ====== */
+const DEFAULT_SOP={
+  hpw:[
+    'Verify plate curve / cutback curve ID',
+    'Check trapping & overprint in Illustrator (company standard)',
+    'Ink limits OK; densities within spec',
+    'Color bar + registration tree placed',
+    'Ink eaters & takeoff bars per color present',
+    'Substrate: Hot Press White confirmed',
+    'Proof EPL aligned',
+    '10 random patches within ΔE00 tolerance',
+    'Customer/QA sign-off recorded'
+  ],
+  inver:[
+    'Verify plate curve / cutback curve ID',
+    'Trapping & overprint checked',
+    'Ink limits OK; densities within spec',
+    'Color bar + registration tree placed',
+    'Ink eaters & takeoff bars per color present',
+    'Substrate: Invercote confirmed',
+    'EPL / proof profile aligned',
+    'ΔE00 within tolerance (record)',
+    'Sign-off recorded'
+  ],
+  gsm250:[
+    'Curve ID verified',
+    'Overprint preview matches',
+    'Ink limits & densities OK',
+    'Color bar present',
+    'Takeoff bars per channel',
+    'Substrate: 250 gsm confirmed',
+    'Proof/press alignment check',
+    'ΔE00 audit',
+    'Sign-off'
+  ],
+  foil:[
+    'Curve ID verified',
+    'White underprint where needed',
+    'Overprint & trapping correct',
+    'Ink limits adjusted for Foil Board',
+    'Color bar + reg marks present',
+    'Substrate: Foil Board confirmed',
+    'Proof EPL aligned',
+    'ΔE00 audit incl. metallic areas',
+    'Sign-off'
+  ]
+};
+function renderSOP(){
+  const host=byId('sopHost'); host.innerHTML=''; const key=byId('substrate').value;
+  const saved=JSON.parse(localStorage.getItem('hd_sop')||'{}');
+  const items=(saved[key]||DEFAULT_SOP[key]);
+  items.forEach((text,i)=>{
+    const id='sop_'+i; const row=document.createElement('div'); row.className='flex';
+    row.innerHTML=`<input type="checkbox" id="${id}"><label for="${id}" style="margin:0 0 0 8px">${text}</label>`;
+    const cb=row.querySelector('input');
+    cb.checked = saved[key]? !!saved[key+'_checked_'+i] : false;
+    cb.addEventListener('change',()=>{ const cur=JSON.parse(localStorage.getItem('hd_sop')||'{}'); cur[key]=items; cur[key+'_checked_'+i]=cb.checked; localStorage.setItem('hd_sop',JSON.stringify(cur)); });
+    host.appendChild(row);
+  });
+}
 
-            // Close modals when clicking outside
-            window.addEventListener('click', (event) => {
-                const historyModal = document.getElementById('measurement-history-modal');
-                const trendModal = document.getElementById('trend-chart-modal');
-                
-                if (event.target === historyModal) {
-                    historyModal.style.display = 'none';
-                }
-                if (event.target === trendModal) {
-                    trendModal.style.display = 'none';
-                }
-            });
+/* ====== KPIs (Median / 95th / Max) ====== */
+function ensureGridStats(){
+  const heat=byId('heatmap'); if(!heat||!heat.parentElement) return;
+  if(byId('gridStats')) return;
+  const stats=document.createElement('div'); stats.id='gridStats'; stats.className='kpi'; stats.style.marginTop='8px';
+  stats.innerHTML=`<div class="card"><div class="tiny">Median ΔE00</div><div id="statMedian" class="badge">—</div></div>
+                   <div class="card"><div class="tiny">95th ΔE00</div><div id="statP95" class="badge">—</div></div>
+                   <div class="card"><div class="tiny">Max ΔE00</div><div id="statMax" class="badge">—</div></div>`;
+  heat.parentElement.appendChild(stats);
+}
+function updateGridStats(){
+  ensureGridStats();
+  const vals = GRID.flat().map(c=>c.de00||0).filter(v=>Number.isFinite(v));
+  const tol = (byId('tolerance')? toNum(byId('tolerance').value,2):2);
+  const stat=(arr,q)=>{ if(arr.length===0) return NaN; const s=[...arr].sort((a,b)=>a-b); const i=Math.round(q*(s.length-1)); return s[Math.max(0,Math.min(s.length-1,i))]; };
+  const median=stat(vals,0.5), p95=stat(vals,0.95), max=vals.length? Math.max(...vals):NaN;
+  function paint(id,v){ const el=byId(id); if(!el) return; if(!isFinite(v)){ el.textContent='—'; el.className='badge'; return; } el.textContent=fmt(v); el.className = v<=tol? 'badge pass' : (v<=tol*2? 'badge warn':'badge fail'); }
+  paint('statMedian', median); paint('statP95', p95); paint('statMax', max);
+}
+if(byId('tolerance')) byId('tolerance').addEventListener('input', debounce(()=>{ safeCall(updateGridStats); }, 80));
 
-            // Listen for measurement updates to refresh quick stats
-            document.addEventListener('calculationComplete', () => {
-                setTimeout(updateQuickStats, 100); // Small delay to ensure statistics are calculated
-            });
+/* ====== Client Profiles ====== */
+let CLIENTS={};
+function saveClients(){ localStorage.setItem('hd_clients', JSON.stringify(CLIENTS)); }
+function applyClient(name){
+  const c=CLIENTS[name]; if(!c) return;
+  localStorage.setItem('hd_current_client', name);
+  if(Number.isFinite(c.tolerance) && byId('tolerance')) byId('tolerance').value=String(c.tolerance);
+  if(Array.isArray(c.sop) && c.sop.length){ const key=byId('substrate').value; const cur=JSON.parse(localStorage.getItem('hd_sop')||'{}'); cur[key]=c.sop; localStorage.setItem('hd_sop', JSON.stringify(cur)); renderSOP(); }
+  safeCall(updateGridStats);
+}
+function loadClients(){
+  let saved={}; try{ saved=JSON.parse(localStorage.getItem('hd_clients')||'{}')||{}; }catch(_){ saved={}; }
+  CLIENTS = (saved && typeof saved==='object')? saved: {};
+  if(Object.keys(CLIENTS).length===0){ CLIENTS={ 'Default': { tolerance:2.0, notes:'General default', sop:[] } }; saveClients(); }
+  const sel=byId('clientSelect'); if(sel){
+    sel.innerHTML=''; Object.keys(CLIENTS).forEach(name=>{ const opt=document.createElement('option'); opt.value=name; opt.textContent=name; sel.appendChild(opt); });
+    const cur=localStorage.getItem('hd_current_client')||Object.keys(CLIENTS)[0]; sel.value=cur; applyClient(cur);
+    sel.onchange=(e)=>applyClient(e.target.value);
+  }
+}
+byId('clientNew').addEventListener('click',()=>{
+  const sel=byId('clientSelect'); const cur=sel.value;
+  const c=CLIENTS[cur]||{tolerance:2.0,notes:'',sop:[]};
+  byId('clientName').value=cur||'';
+  byId('clientTol').value=c.tolerance||2.0;
+  byId('clientNotes').value=c.notes||'';
+  byId('clientSOP').value=(c.sop||[]).join('\n');
+  const ed=byId('clientEditor'); ed.style.display = ed.style.display==='none'?'block':'none';
+});
+byId('clientSave').addEventListener('click',()=>{
+  const name=(byId('clientName').value.trim()||'Untitled');
+  CLIENTS[name]={ tolerance: toNum(byId('clientTol').value,2), notes: byId('clientNotes').value.trim(), sop: byId('clientSOP').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean) };
+  saveClients(); loadClients(); applyClient(name); byId('clientEditor').style.display='none'; toast('Client saved.');
+});
+byId('clientCancel').addEventListener('click',()=>{ byId('clientEditor').style.display='none'; });
+byId('clientDelete').addEventListener('click',()=>{
+  const sel=byId('clientSelect'); const cur=sel.value; if(CLIENTS[cur]){ delete CLIENTS[cur]; saveClients(); loadClients(); byId('clientEditor').style.display='none'; toast('Client deleted.'); }
+});
 
-            // Initial stats update
-            setTimeout(updateQuickStats, 500);
-
-            console.log('Measurement History UI initialized');
-        }
-    </script>
-
-    <!-- HD Color Engine Modules -->
-    <script src="src/js/color-science.js"></script>
-    <script src="src/js/hd-color-engine.js"></script>
-    <script src="src/js/csv-enhanced.js"></script>
-    <script src="src/js/heatmap-visualization.js"></script>
-    <script src="src/js/client-profiles.js"></script>
-    <script src="src/js/icc-profile-manager.js"></script>
-    <script src="src/js/hd-integration.js"></script>
-    
-    <!-- Advanced enhancement scripts -->
-    <script src="src/js/toast-notifications.js"></script>
-    <script src="src/js/debounced-input-handler.js"></script>
-    <script src="src/js/keyboard-shortcuts.js"></script>
-    <script src="src/js/accessibility-enhancements.js"></script>
-    <script src="src/js/performance-optimizations.js"></script>
-    <script src="src/js/enhancement-integration.js"></script>
-    
-    <!-- Integration and testing systems -->
-    <script src="src/js/backward-compatibility.js"></script>
-    <script src="src/js/state-synchronizer.js"></script>
-    <script src="src/js/integration-manager.js"></script>
-    <script src="src/js/integration-tests.js"></script>
-    
-    <!-- PWA Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('PWA: HD CMYK Studio Service Worker registered', registration.scope);
-                        
-                        // Notify about HD modules loading
-                        console.log('PWA: HD Color Engine modules loaded');
-                        if (window.hdStudio) {
-                            window.hdStudio.updateStatus('HD CMYK Studio loaded with advanced features', 'success');
-                        }
-                    })
-                    .catch(error => {
-                        console.log('PWA: Service Worker registration failed', error);
-                    });
-            });
-        }
-    </script>
+/* ====== Init ====== */
+(function init(){
+  // Toast starts hidden
+  byId('toast').style.opacity='0';
+  sanitizeInputs();
+  updateSwatches();
+  renderHist();
+  renderSOP();
+  byId('subsText').textContent=SUBSTRATES[byId('substrate').value].name;
+  if(!hasFS){ const hint=byId('heatmapHint'); if(hint) hint.textContent='Tip: Your browser does not support folder watching. Use the drag & drop zone to ingest spectro CSVs.'; }
+  else { const hint=byId('heatmapHint'); if(hint) hint.textContent='Heatmap is DPI‑scaled for crispness. Folder bridge is active‑capable.'; }
+  ensureGridStats();
+  loadClients();
+  
+  // Initialize Pantone library display
+  if(window.pantoneColors && window.pantoneColors.colors) {
+    console.log(`Pantone library loaded: ${window.pantoneColors.colors.length} colors`);
+    toast(`Pantone library loaded: ${window.pantoneColors.colors.length} colors`);
+  }
+})();
+</script>
 </body>
 </html>

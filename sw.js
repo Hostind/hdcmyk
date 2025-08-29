@@ -2,31 +2,30 @@
 // Enhanced with ChatGPT-5 UI integration and HD features
 // Requirements: 10.1, 10.2, 10.3 - PWA offline functionality
 
-const CACHE_NAME = 'hd-cmyk-studio-v14';
-const STATIC_CACHE_NAME = 'hd-cmyk-studio-static-v14';
-const HD_MODULES_CACHE = 'hd-modules-v14';
+const CACHE_NAME = 'hd-cmyk-studio-gpt5-v15';
+const STATIC_CACHE_NAME = 'hd-cmyk-studio-static-gpt5-v15';
+const HD_MODULES_CACHE = 'hd-modules-gpt5-v15';
 
-// Core files needed for offline functionality
+// Core files needed for offline functionality - Updated for GPT-5 single-file implementation
 const CORE_FILES = [
   '/',
   '/index.html',
-  '/src/css/styles.css',
-  '/src/js/calculator.js',
-  '/src/js/color-science.js',
   '/src/js/pantone-colors.js',
-  '/src/js/storage.js',
-  '/src/js/export.js',
   '/manifest.json'
 ];
 
-// HD Color Engine modules for advanced functionality
+// HD Color Engine modules for advanced functionality - Legacy support maintained
 const HD_MODULE_FILES = [
   '/src/js/hd-color-engine.js',
   '/src/js/csv-enhanced.js',
   '/src/js/heatmap-visualization.js',
   '/src/js/client-profiles.js',
   '/src/js/icc-profile-manager.js',
-  '/src/js/hd-integration.js'
+  '/src/js/hd-integration.js',
+  '/src/js/calculator.js',
+  '/src/js/color-science.js',
+  '/src/js/storage.js',
+  '/src/js/export.js'
 ];
 
 // Optional files that enhance the experience but aren't critical
@@ -74,7 +73,9 @@ self.addEventListener('install', event => {
           client.postMessage({
             type: 'SW_INSTALLED',
             version: CACHE_NAME,
-            hdModulesCount: HD_MODULE_FILES.length
+            hdModulesCount: HD_MODULE_FILES.length,
+            pantoneColorsLoaded: true,
+            uiVersion: 'GPT-5'
           });
         });
       });
@@ -120,7 +121,7 @@ self.addEventListener('activate', event => {
           client.postMessage({
             type: 'SW_ACTIVATED',
             version: CACHE_NAME,
-            features: ['HD Color Engine', 'ChatGPT-5 UI', 'Extended Gamut', 'ICC Profiles']
+            features: ['GPT-5 Single-File UI', '1089 Pantone Colors', 'HD Color Engine', 'Extended Gamut', 'ICC Profiles']
           });
         });
       });
@@ -512,8 +513,8 @@ async function preloadHDModules() {
 // Initialize performance tracking
 PERFORMANCE_METRICS.installStart = Date.now();
 
-console.log('Service Worker: HD CMYK Studio Service Worker v14 loaded');
-console.log('Service Worker: Features - HD Color Engine, ChatGPT-5 UI, Extended Gamut, Test-Free Production');
+console.log('Service Worker: HD CMYK Studio Service Worker v15 loaded - GPT-5 Implementation');
+console.log('Service Worker: Features - GPT-5 Single-File UI, 1089 Pantone Colors, HD Color Engine, Extended Gamut, Test-Free Production');
 
 // Start preloading HD modules if idle
 if (self.registration && self.registration.active) {
