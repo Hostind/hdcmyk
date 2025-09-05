@@ -13,21 +13,26 @@
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,#0b0e12 0%,#0f1217 100%);color:var(--text);font:14px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
   header{position:sticky;top:0;z-index:5;background:rgba(13,15,18,.85);backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--border)}
-  .wrap{max-width:1280px;margin:0 auto;padding:12px 16px}
-  h1{margin:0;font-size:20px;letter-spacing:.2px}
-  .subtitle{color:var(--soft);font-size:12px}
-  .grid{display:grid;gap:12px}
-  @media(min-width:1100px){ .grid.cols-3{grid-template-columns:2fr 1.5fr 1.2fr} .grid.cols-2{grid-template-columns:2fr 1.2fr}}
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 6px 22px rgba(0,0,0,.25)}
-  .card h2{margin:0 0 8px 0;font-size:16px}
+  .wrap{max-width:2400px;margin:0 auto;padding:16px 24px}
+  h1{margin:0;font-size:24px;letter-spacing:.2px;font-weight:600}
+  .subtitle{color:var(--soft);font-size:13px;line-height:1.4}
+  .grid{display:grid;gap:16px}
+  @media(max-width:1200px){ .grid.cols-3{grid-template-columns:1fr} .grid.cols-2{grid-template-columns:1fr} .wrap{padding:12px 16px}}
+  @media(min-width:1200px) and (max-width:1600px){ .grid.cols-3{grid-template-columns:1.5fr 1.2fr 1fr} .grid.cols-2{grid-template-columns:1.4fr 1fr}}
+  @media(min-width:1600px) and (max-width:2000px){ .grid.cols-3{grid-template-columns:1.8fr 1.4fr 1.2fr} .grid.cols-2{grid-template-columns:1.6fr 1fr}}
+  @media(min-width:2000px) and (max-width:2400px){ .grid.cols-3{grid-template-columns:2fr 1.6fr 1.4fr} .grid.cols-2{grid-template-columns:1.8fr 1.2fr}}
+  @media(min-width:2400px){ .grid.cols-3{grid-template-columns:2.2fr 1.8fr 1.6fr} .grid.cols-2{grid-template-columns:2fr 1.4fr}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+  .card h2{margin:0 0 12px 0;font-size:18px;font-weight:600;color:#f1f5f9}
   label{display:block;margin:10px 0 4px 0;color:#c7ced9;font-size:12px}
   input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text)}
   textarea{resize:vertical}
   input[type="number"]{appearance:textfield}
-  .row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-  .row-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .row-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .row-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .row-2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(max-width:1200px){ .row{grid-template-columns:repeat(3,1fr)} .row-4{grid-template-columns:repeat(2,1fr)} .row-3{grid-template-columns:repeat(2,1fr)}}
   .pill{display:inline-flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px}
   .btn{cursor:pointer;transition:.15s transform ease,.15s opacity}
   .btn:hover{transform:translateY(-1px)}
@@ -74,7 +79,13 @@
   <!-- Left Column -->
   <section class="card">
     <h2>1) Target vs. Press — ΔE & Suggestions</h2>
-    <div class="row-3">
+    <div class="row-4">
+      <div>
+        <label>Pantone Preset</label>
+        <select id="pantonePreset">
+          <option value="">Select Pantone Color...</option>
+        </select>
+      </div>
       <div>
         <label>Substrate</label>
         <select id="substrate">
@@ -525,6 +536,7 @@ inputIds.forEach(id=>byId(id).addEventListener('input',debouncedSw));
 
 byId('substrate').addEventListener('change',()=>{byId('subsText').textContent=SUBSTRATES[byId('substrate').value].name; updateProofing();});
 byId('illuminant').addEventListener('change',()=>{byId('illumText').textContent=byId('illuminant').value.replace(' ','');});
+byId('pantonePreset').addEventListener('change',handlePantonePresetChange);
 byId('calcBtn').addEventListener('click',calcAll);
 byId('swapBtn').addEventListener('click',()=>{
   const t=["tL","tA","tB","tC","tM","tY","tK","tO","tG","tV"].map(id=>byId(id).value);
@@ -815,6 +827,93 @@ function autoBalance(){
   byId('ccmOut').textContent='Auto‑Balance applied (CCM + gray bias). Review ΔE heatmap.';
 }
 
+/* ====== Pantone Preset Functionality ====== */
+function handlePantonePresetChange(){
+  const select = byId('pantonePreset');
+  const selectedValue = select.value;
+  
+  if(!selectedValue) return;
+  
+  // Find the selected Pantone color
+  let selectedColor = null;
+  if(window.pantoneColors && window.pantoneColors.colors) {
+    selectedColor = window.pantoneColors.colors.find(color => color.name === selectedValue);
+  }
+  
+  if(selectedColor && selectedColor.cmyk) {
+    // Set CMYK values from selected Pantone color
+    byId('tC').value = selectedColor.cmyk.c || 0;
+    byId('tM').value = selectedColor.cmyk.m || 0;
+    byId('tY').value = selectedColor.cmyk.y || 0;
+    byId('tK').value = selectedColor.cmyk.k || 0;
+    
+    // Convert CMYK to approximate LAB for display
+    const rgb = cmykToRgb(selectedColor.cmyk.c || 0, selectedColor.cmyk.m || 0, selectedColor.cmyk.y || 0, selectedColor.cmyk.k || 0);
+    const lab = rgbToLab(...rgb);
+    byId('tL').value = fmt(lab[0]);
+    byId('tA').value = fmt(lab[1]);
+    byId('tB').value = fmt(lab[2]);
+    
+    // Update swatches
+    updateSwatches();
+    
+    // Show toast notification
+    toast(`Applied ${selectedColor.name} - CMYK: ${selectedColor.cmyk.c},${selectedColor.cmyk.m},${selectedColor.cmyk.y},${selectedColor.cmyk.k}`);
+  }
+}
+
+function populatePantonePresets(){
+  const select = byId('pantonePreset');
+  if(!select) return;
+  
+  // Clear existing options except the first one
+  select.innerHTML = '<option value="">Select Pantone Color...</option>';
+  
+  if(window.pantoneColors && window.pantoneColors.colors) {
+    // Group popular Pantone colors for easy access
+    const popularColors = [
+      'PANTONE 186 PC', 'PANTONE 300 PC', 'PANTONE 485 PC', 'PANTONE 286 PC',
+      'PANTONE 116 PC', 'PANTONE 355 PC', 'PANTONE 264 PC', 'PANTONE 485 PC',
+      'PANTONE Black PC', 'PANTONE Pro. Cyan PC', 'PANTONE Pro. Mag. PC', 'PANTONE Pro. Yel. PC'
+    ];
+    
+    // Add popular colors first
+    const popularGroup = document.createElement('optgroup');
+    popularGroup.label = 'Popular Pantone Colors';
+    
+    popularColors.forEach(colorName => {
+      const color = window.pantoneColors.colors.find(c => c.name === colorName);
+      if(color) {
+        const option = document.createElement('option');
+        option.value = color.name;
+        option.textContent = `${color.name} (C${color.cmyk.c} M${color.cmyk.m} Y${color.cmyk.y} K${color.cmyk.k})`;
+        popularGroup.appendChild(option);
+      }
+    });
+    
+    select.appendChild(popularGroup);
+    
+    // Add all colors grouped by series
+    const allGroup = document.createElement('optgroup');
+    allGroup.label = 'All Pantone Colors';
+    
+    // Sort colors by name for better organization
+    const sortedColors = [...window.pantoneColors.colors]
+      .filter(color => !popularColors.includes(color.name))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 200); // Limit to first 200 to avoid performance issues
+    
+    sortedColors.forEach(color => {
+      const option = document.createElement('option');
+      option.value = color.name;
+      option.textContent = `${color.name} (C${color.cmyk.c} M${color.cmyk.m} Y${color.cmyk.y} K${color.cmyk.k})`;
+      allGroup.appendChild(option);
+    });
+    
+    select.appendChild(allGroup);
+  }
+}
+
 /* ====== Library ====== */
 function importLib(file){ const r=new FileReader(); r.onload=()=>{ try{ LIB=JSON.parse(r.result); renderLib({msg:'Loaded '+LIB.length+' entries'}); } catch(e){ alert('Invalid JSON'); } }; r.readAsText(file); }
 function exportLib(){ const blob=new Blob([JSON.stringify(LIB,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='hdcmyk_library.json'; a.click(); }
@@ -1086,10 +1185,11 @@ byId('clientDelete').addEventListener('click',()=>{
   ensureGridStats();
   loadClients();
   
-  // Initialize Pantone library display
+  // Initialize Pantone library display and presets
   if(window.pantoneColors && window.pantoneColors.colors) {
     console.log(`Pantone library loaded: ${window.pantoneColors.colors.length} colors`);
     toast(`Pantone library loaded: ${window.pantoneColors.colors.length} colors`);
+    populatePantonePresets();
   }
 })();
 </script>

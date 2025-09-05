@@ -11,21 +11,44 @@ const CORE_FILES = [
   '/',
   '/index.html',
   '/src/js/pantone-colors.js',
+  '/src/css/styles.css',
+  '/src/css/grid-styles.css',
+  '/src/css/spectrophotometer-styles.css',
+  '/src/css/measurement-history-styles.css',
   '/manifest.json'
 ];
 
-// HD Color Engine modules for advanced functionality - Legacy support maintained
+// HD Color Engine modules for advanced functionality - Complete module list
 const HD_MODULE_FILES = [
+  '/src/js/calculator.js',
+  '/src/js/color-science.js',
   '/src/js/hd-color-engine.js',
+  '/src/js/hd-integration.js',
+  '/src/js/storage.js',
+  '/src/js/export.js',
   '/src/js/csv-enhanced.js',
   '/src/js/heatmap-visualization.js',
   '/src/js/client-profiles.js',
+  '/src/js/client-profile-ui.js',
   '/src/js/icc-profile-manager.js',
-  '/src/js/hd-integration.js',
-  '/src/js/calculator.js',
-  '/src/js/color-science.js',
-  '/src/js/storage.js',
-  '/src/js/export.js'
+  '/src/js/color-converter.js',
+  '/src/js/color-library.js',
+  '/src/js/pantone-library-data.js',
+  '/src/js/correction-suggestions.js',
+  '/src/js/grid-manager.js',
+  '/src/js/measurement-history.js',
+  '/src/js/spectrophotometer-integration.js',
+  '/src/js/substrate-profiles.js',
+  '/src/js/ccm-processor.js',
+  '/src/js/integration-manager.js',
+  '/src/js/state-synchronizer.js',
+  '/src/js/enhancement-integration.js',
+  '/src/js/performance-optimizations.js',
+  '/src/js/accessibility-enhancements.js',
+  '/src/js/keyboard-shortcuts.js',
+  '/src/js/toast-notifications.js',
+  '/src/js/debounced-input-handler.js',
+  '/src/js/backward-compatibility.js'
 ];
 
 // Optional files that enhance the experience but aren't critical
